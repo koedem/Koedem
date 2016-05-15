@@ -1,8 +1,9 @@
 
 public class Board {
 
-	protected int[][] square = new int[10][10];  // Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6;
+	protected byte[][] square = new byte[10][10];  // Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6;
 									// White pieces get positive values, black pieces negative ones, empty squares a 0.
+	private boolean toMove = true;
 	
 	public Board() {
 		createStartPosition();
@@ -43,11 +44,11 @@ public class Board {
 		}
 	}
 	
-	public int getSquare(int file, int row) {
+	public byte getSquare(int file, int row) {
 		return square[file][row];
 	}
 	
-	public void makePawnMove(String move) {
+	public void makeMove(String move) {
 		if (move.charAt(2) == '-') {
 			int startSquare = Transformation.squareToNumber(move.substring(0, 2));
 			int endSquare = Transformation.squareToNumber(move.substring(3, 5));
@@ -58,4 +59,15 @@ public class Board {
 		}
 	}
 	
+	public boolean getToMove() {
+		return toMove;
+	}
+	
+	public void setToMove(boolean newToMove) {
+		this.toMove = newToMove;
+	}
+	
+	public void changeToMove() {
+		this.toMove = (!toMove);
+	}
 }

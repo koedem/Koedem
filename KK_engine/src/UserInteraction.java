@@ -16,15 +16,16 @@ public class UserInteraction {
 			command = sc.nextLine();
 			if (command.contains("-")) {
 				if (command.length() == 5) {
-					test.makePawnMove(command);
+					test.makeMove(command);
 					test.printBoard();
+					test.changeToMove();
 				} else {
 					System.out.println("Illegal Move. Try again.");
 				}
 			} else if (command.equals("print")) {
 				test.printBoard();
 			} else if (command.equals("print legal moves")) {
-				int[] moves = MoveGenerator.collectMoves(test, true);
+				int[] moves = MoveGenerator.collectMoves(test, test.getToMove());
 				for (int i = 0; i < moves[99]; i++) {
 					System.out.println(Transformation.numberToMove(moves[i]));
 				}
