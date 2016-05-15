@@ -1,9 +1,17 @@
 import java.util.Scanner;
 
-
-public class UserInteraction {
+/**
+ * 
+ * @author Kolja Kuehn
+ *
+ */
+public final class UserInteraction {
 	
-
+	/**
+	 * Interactive loop for user interaction
+	 * 
+	 * @param args : not used
+	 */
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
 		
@@ -34,5 +42,6 @@ public class UserInteraction {
 		sc.close();
 	}
 	
-	
+	private UserInteraction() {
+	}
 }

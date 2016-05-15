@@ -1,7 +1,17 @@
+/**
+ * 
+ * @author Kolja Kuehn
+ *
+ */
+public final class Transformation {
 
-public class Transformation {
-
-	public static String numberToPiece (int piece) {
+	/**
+	 * Transform the board representation of the piece into a String one for output.
+	 * 
+	 * @param piece : number between -6 and +6 used as representation of a piece
+	 * @return String-representation of the piece
+	 */
+	public static String numberToPiece(int piece) {
 		switch (piece) {
 			case 6: return "K"; 
 			case 5: return "Q"; 
@@ -21,7 +31,13 @@ public class Transformation {
 		}
 	}
 	
-	public static int squareToNumber (String square) {
+	/**
+	 * Transform the String representation of a square from input into an internal one.
+	 * 
+	 * @param square : Input square representation as String
+	 * @return internal representation as number
+	 */
+	public static int squareToNumber(String square) {
 		int squareNumber = Character.getNumericValue(square.charAt(1));
 		
 		switch(square.charAt(0)) {
@@ -39,7 +55,13 @@ public class Transformation {
 		return squareNumber;
 	}
 	
-	public static String numberToSquare (int square) {
+	/**
+	 * Transform internal square representation to a String for output.
+	 * 
+	 * @param square : a number, used to internally store squares
+	 * @return square in String form
+	 */
+	public static String numberToSquare(int square) {
 		String squareText = "";
 		
 		switch(square / 10) {
@@ -58,12 +80,24 @@ public class Transformation {
 		return squareText;
 	}
 	
-	public static String numberToMove (int move) {
+	/**
+	 * Transform move which is stored as number internally to a String
+	 * 
+	 * @param move : number of the move in internal representation
+	 * @return move as String (readable to human)
+	 */
+	public static String numberToMove(int move) {
 		String moveText = "";
-		moveText = numberToPiece (move / 10000);
-		moveText += numberToSquare ((move / 100) % 100);
+		moveText = numberToPiece(move / 10000);
+		if (moveText.equals("P")) {
+			moveText = "";
+		}
+		moveText += numberToSquare((move / 100) % 100);
 		moveText += "-";
-		moveText += numberToSquare (move % 100);
+		moveText += numberToSquare(move % 100);
 		return moveText;
+	}
+	
+	private Transformation() {
 	}
 }
