@@ -1,3 +1,5 @@
+package engine;
+
 import java.util.Scanner;
 
 /**
@@ -24,9 +26,24 @@ public final class UserInteraction {
 			command = sc.nextLine();
 			if (command.contains("-")) {
 				if (command.length() == 5) {
-					test.makeMove(command);
-					test.printBoard();
+					boolean gameOver = test.makeMove(command);
+					if (gameOver) {
+						test.printBoard();
+						System.out.println("You captured my King. Congratulations you won the game!");
+						break;
+					}
 					test.changeToMove();
+					// int move = Search.makeRandomMove(test, test.getToMove());
+					Search.nodeCount = 0;
+					int[] move = Search.negaMax(test, test.getToMove(), 5, 5);
+					test.makeMove(move[0]);
+					test.changeToMove();
+					test.printBoard();
+					for (int i = 0; i < move.length - 1; i++) {
+						System.out.print(Transformation.numberToMove(move[i]) + " ");
+					}
+					System.out.println(move[move.length - 1]);
+					System.out.println("Node count: " + Search.nodeCount);
 				} else {
 					System.out.println("Illegal Move. Try again.");
 				}

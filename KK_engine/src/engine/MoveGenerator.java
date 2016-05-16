@@ -1,3 +1,5 @@
+package engine;
+
 /**
  * 
  * @author Kolja Kuehn
@@ -13,7 +15,6 @@ public final class MoveGenerator {
 	 * @param toMove : who to move it is
 	 * @return array of ints, each containing a move
 	 */
-	
 	public static int[] collectMoves(Board board, boolean toMove) {
 		move = new int[100];
 		move[99] = 0;

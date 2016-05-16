@@ -1,3 +1,5 @@
+package engine;
+
 /**
  * 
  * @author Kolja Kuehn
@@ -12,7 +14,6 @@ public class Board {
 	/**
 	 * Constructor, create new Board and setup the chess start position
 	 */
-	
 	public Board() {
 		createStartPosition();
 	}
@@ -30,7 +31,6 @@ public class Board {
 	 * 2 PPPPPPPP
 	 * 1 RNBQKBNR
 	 */
-	
 	public void createStartPosition() {
 		square[1][1] = 4; 
 		square[8][1] = 4; // white rooks on a1 and h1
@@ -76,8 +76,8 @@ public class Board {
 	  * Print out the board, row by row starting at highest row.
 	  * Each row we print file by file from lowest to highest.
 	  */
-	
 	public void printBoard() {
+		System.out.println();
 		for (int i = 8; i > 0; i--) {
 			
 			for (int j = 1; j < 9; j++) {
@@ -86,6 +86,7 @@ public class Board {
 			
 			System.out.println();
 		}
+		System.out.println();
 	}
 	
 	/**
@@ -94,32 +95,47 @@ public class Board {
 	 * @param row : row of the square
 	 * @return the value of the square
 	 */
-	
 	public byte getSquare(int file, int row) {
 		return square[file][row];
 	}
 	
 	/**
-	 * Execute the move on the board.
+	 * Execute the move on the board. Check whether a king was captured in which case the game is over.
 	 * @param move : the move stored as string. Has to be "decoded" first.
+	 * @return whether the game ends or not
 	 */
-	
-	public void makeMove(String move) {
+	public boolean makeMove(String move) {
+		boolean gameEnd = false;
 		if (move.charAt(2) == '-') {
 			int startSquare = Transformation.squareToNumber(move.substring(0, 2));
 			int endSquare = Transformation.squareToNumber(move.substring(3, 5));
+			if (Math.abs(square[endSquare / 10][endSquare % 10]) == 6) {
+				gameEnd = true;
+			}
 			square[endSquare / 10][endSquare % 10] = square[startSquare / 10][startSquare % 10];
 			square[startSquare / 10][startSquare % 10] = 0;
 		} else {
 			System.out.println("Illegal Move. Try again.");
 		}
+		return gameEnd;
+	}
+	
+	/**
+	 * This method takes a move encoded as int and plays that move.
+	 * 
+	 * @param move : the move we play
+	 */
+	public void makeMove(int move) {
+		int moveWithoutPiece = move % 10000;
+		square[(moveWithoutPiece / 10) % 10][moveWithoutPiece % 10] 
+				= square[moveWithoutPiece / 1000][(moveWithoutPiece / 100) % 10];
+		square[moveWithoutPiece / 1000][(moveWithoutPiece / 100) % 10] = 0;
 	}
 	
 	/**
 	 * 
 	 * @return who to move it is.
 	 */
-	
 	public boolean getToMove() {
 		return toMove;
 	}
@@ -128,7 +144,6 @@ public class Board {
 	 * 
 	 * @param newToMove : set the toMove parameter
 	 */
-	
 	public void setToMove(boolean newToMove) {
 		this.toMove = newToMove;
 	}
@@ -136,8 +151,21 @@ public class Board {
 	/**
 	 * negate the toMove parameter
 	 */
-	
 	public void changeToMove() {
 		this.toMove = (!toMove);
+	}
+
+	/**
+	 * This method undoes the given move.
+	 * 
+	 * @param move : move which we want to undo
+	 * @param capturedPiece : piece that got captured in the original move.
+	 * 				We put that piece back on the board (can also be 0 = empty square)
+	 */
+	public void unmakeMove(int move, byte capturedPiece) {
+		int moveWithoutPiece = move % 10000;
+		square[moveWithoutPiece / 1000][(moveWithoutPiece / 100) % 10] 
+				= square[(moveWithoutPiece / 10) % 10][moveWithoutPiece % 10];
+		square[(moveWithoutPiece / 10) % 10][moveWithoutPiece % 10] = capturedPiece;
 	}
 }
