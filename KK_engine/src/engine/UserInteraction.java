@@ -35,7 +35,7 @@ public final class UserInteraction {
 					test.changeToMove();
 					// int move = Search.makeRandomMove(test, test.getToMove());
 					Search.nodeCount = 0;
-					int[] move = Search.negaMax(test, test.getToMove(), 5, 5);
+					int[] move = Search.negaMax(test, test.getToMove(), 4, 4);
 					test.makeMove(move[0]);
 					test.changeToMove();
 					test.printBoard();

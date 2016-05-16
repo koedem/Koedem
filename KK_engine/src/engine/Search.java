@@ -45,7 +45,7 @@ public final class Search {
 				innerPV = negaMax(board, !toMove, depth, depthLeft - 1);
 				innerPV[depth] = -innerPV[depth];
 			} else if (depthLeft == 1) {
-				innerPV[depth] = (int) (1000 * Math.random() - 500);
+				innerPV[depth] = Evaluation.evaluation(board, toMove);
 				nodeCount++;
 			}
 			if (innerPV[depth] > principleVariation[depth]) {
