@@ -76,12 +76,14 @@ public final class MoveGenerator {
 	 * @param toMove : who to move it is
 	 */
 	private static void pawnMove(byte file, byte row, Board board, boolean toMove) {
-		if (toMove && board.getSquare(file, row + 1) == 0) {
-			move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + 1);
-			move[99]++;
-			if (row == 2 && board.getSquare(file, row + 2) == 0) {
-				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + 2);
+		if (toMove) {
+			if (board.getSquare(file, row + 1) == 0) {
+				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + 1);
 				move[99]++;
+				if (row == 2 && board.getSquare(file, row + 2) == 0) {
+					move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + 2);
+					move[99]++;
+				}
 			}
 			if (file > 1 && board.getSquare(file - 1, row + 1) < 0) {
 				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + (row + 1);
@@ -91,12 +93,14 @@ public final class MoveGenerator {
 				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file + 1) * 10 + (row + 1);
 				move[99]++;
 			}
-		} else if (!toMove && board.getSquare(file, row - 1) == 0) {
-			move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - 1);
-			move[99]++;
-			if (row == 7 && board.getSquare(file, row - 2) == 0) {
-				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - 2);
+		} else if (!toMove) {
+			if (board.getSquare(file, row - 1) == 0) {
+				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - 1);
 				move[99]++;
+				if (row == 7 && board.getSquare(file, row - 2) == 0) {
+					move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - 2);
+					move[99]++;
+				}
 			}
 			if (file > 1 && board.getSquare(file - 1, row - 1) > 0) {
 				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + (row - 1);
