@@ -388,6 +388,10 @@ public final class MoveGenerator {
 				move[99]++;
 			}
 		}
+		
+		if (toMove && file == 5 && row == 1) {
+			
+		}
 	}
 	
 	/**

@@ -56,6 +56,18 @@ public final class UserInteraction {
 				}
 			} else if (command.contains("fen")) {
 				test.setFENPosition(command);
+			} else if (command.equals("analyze")) {
+				long time = System.currentTimeMillis();
+				for (int i = 1; i < 10; i++) {
+					Search.nodeCount = 0;
+					int[] move = Search.negaMax(test, test.getToMove(), i, i);
+					for (int j = 0; j < move.length - 1; j++) {
+						System.out.print(Transformation.numberToMove(move[j]) + " ");
+					}
+					System.out.println(move[move.length - 1]);
+					System.out.println("Node count: " + Search.nodeCount + ". Time used: " 
+							+ (System.currentTimeMillis() - time));
+				}
 			}
 		}
 		sc.close();

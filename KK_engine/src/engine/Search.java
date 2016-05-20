@@ -7,7 +7,7 @@ package engine;
  */
 public final class Search {
 	
-	public static int nodeCount = 0;
+	public static long nodeCount = 0;
 	
 	/**
 	 * this function generates all legal moves and then plays a random one
