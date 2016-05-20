@@ -40,18 +40,18 @@ public final class Transformation {
 	 * @return internal representation as number
 	 */
 	public static int squareToNumber(String square) {
-		int squareNumber = Character.getNumericValue(square.charAt(1));
+		int squareNumber = Character.getNumericValue(square.charAt(1)) - 1;
 		
 		switch(square.charAt(0)) {
-			case 'a': squareNumber += 10; break;
-			case 'b': squareNumber += 20; break;
-			case 'c': squareNumber += 30; break;
-			case 'd': squareNumber += 40; break;
-			case 'e': squareNumber += 50; break;
-			case 'f': squareNumber += 60; break;
-			case 'g': squareNumber += 70; break;
-			case 'h': squareNumber += 80; break;
-			default: squareNumber = 0; break;
+			case 'a': squareNumber += 00; break;
+			case 'b': squareNumber += 10; break;
+			case 'c': squareNumber += 20; break;
+			case 'd': squareNumber += 30; break;
+			case 'e': squareNumber += 40; break;
+			case 'f': squareNumber += 50; break;
+			case 'g': squareNumber += 60; break;
+			case 'h': squareNumber += 70; break;
+			default: squareNumber = -1; break;
 		}	
 		
 		return squareNumber;
@@ -67,17 +67,17 @@ public final class Transformation {
 		String squareText = "";
 		
 		switch(square / 10) {
-			case 1: squareText = "a"; break;
-			case 2: squareText = "b"; break;
-			case 3: squareText = "c"; break;
-			case 4: squareText = "d"; break;
-			case 5: squareText = "e"; break;
-			case 6: squareText = "f"; break;
-			case 7: squareText = "g"; break;
-			case 8: squareText = "h"; break;
+			case 0: squareText = "a"; break;
+			case 1: squareText = "b"; break;
+			case 2: squareText = "c"; break;
+			case 3: squareText = "d"; break;
+			case 4: squareText = "e"; break;
+			case 5: squareText = "f"; break;
+			case 6: squareText = "g"; break;
+			case 7: squareText = "h"; break;
 			default: return "x";
 		}
-		squareText += Integer.toString(square % 10);
+		squareText += Integer.toString((square % 10) + 1);
 		
 		return squareText;
 	}

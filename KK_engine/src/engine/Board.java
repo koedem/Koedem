@@ -7,7 +7,7 @@ package engine;
  */
 public class Board {
 
-	protected byte[][] square = new byte[10][10];  // Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6;
+	protected byte[][] square = new byte[8][8];  // Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6;
 									// White pieces get positive values, black pieces negative ones, empty squares a 0.
 	private boolean toMove = true;
 	private byte castlingRights = 0; // 00abcdef a = Ra1, b = Ke1, c = Rh1, d = ra8, e = ke8, f = rh8
@@ -23,8 +23,8 @@ public class Board {
 	
 	public void setFENPosition(String fen) {
 		String position = fen.substring(4);
-		byte file = 1;
-		byte row = 8;
+		byte file = 0;
+		byte row = 7;
 		for (int i = 0; i < position.length(); i++) {
 			if (position.charAt(i) == 'k') {
 				this.square[file][row] = -6;
@@ -64,7 +64,7 @@ public class Board {
 				file++;
 			} else if (position.charAt(i) == '/') {
 				row--;
-				file = 1;
+				file = 0;
 			} else if (position.charAt(i) == ' ') {
 				if (position.charAt(i + 1) == 'w') {
 					this.toMove = true;
@@ -109,9 +109,9 @@ public class Board {
 	  */
 	public void printBoard() {
 		System.out.println();
-		for (int i = 8; i > 0; i--) {
+		for (int i = 7; i >= 0; i--) {
 			
-			for (int j = 1; j < 9; j++) {
+			for (int j = 0; j < 8; j++) {
 				System.out.print(Transformation.numberToPiece(square[j][i]) + " ");
 			}
 			
@@ -143,29 +143,29 @@ public class Board {
 			if (Math.abs(square[endSquare / 10][endSquare % 10]) == 6) {
 				gameEnd = true;
 			}
-			if (startSquare == 51 && square[5][1] == 6) {
-				if (endSquare == 71) {
-					square[7][1] = 6;
-					square[5][1] = 0;
-					square[6][1] = 4; // rook move in castling
-					square[8][1] = 0;
-				} else if (endSquare == 31) {
-					square[3][1] = 6;
-					square[5][1] = 0;
-					square[4][1] = 4; // rook move in castling
-					square[1][1] = 0;
+			if (startSquare == 40 && square[4][0] == 6) {
+				if (endSquare == 60) {
+					square[6][0] = 6;
+					square[4][0] = 0;
+					square[5][0] = 4; // rook move in castling
+					square[7][0] = 0;
+				} else if (endSquare == 20) {
+					square[2][0] = 6;
+					square[4][0] = 0;
+					square[3][0] = 4; // rook move in castling
+					square[0][0] = 0;
 				}
-			} else if (startSquare == 58 && square[5][8] == -6) {
-				if (endSquare == 78) {
-					square[7][8] = -6;
-					square[5][8] = 0;
-					square[6][8] = -4; // rook move in castling
-					square[8][8] = 0;
-				} else if (endSquare == 38) {
-					square[3][8] = -6;
-					square[5][8] = 0;
-					square[4][8] = -4; // rook move in castling
-					square[1][8] = 0;
+			} else if (startSquare == 47 && square[4][7] == -6) {
+				if (endSquare == 67) {
+					square[6][7] = -6;
+					square[4][7] = 0;
+					square[5][7] = -4; // rook move in castling
+					square[7][7] = 0;
+				} else if (endSquare == 27) {
+					square[2][7] = -6;
+					square[4][7] = 0;
+					square[3][7] = -4; // rook move in castling
+					square[0][7] = 0;
 				}
 			} else {
 				square[endSquare / 10][endSquare % 10] = square[startSquare / 10][startSquare % 10];
