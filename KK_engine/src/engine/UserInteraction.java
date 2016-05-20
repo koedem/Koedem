@@ -35,7 +35,7 @@ public final class UserInteraction {
 					test.changeToMove();
 					// int move = Search.makeRandomMove(test, test.getToMove());
 					Search.nodeCount = 0;
-					int[] move = Search.negaMax(test, test.getToMove(), 4, 4);
+					short[] move = Search.negaMax(test, test.getToMove(), 4, 4);
 					test.makeMove(move[0]);
 					test.changeToMove();
 					test.printBoard();
@@ -50,7 +50,7 @@ public final class UserInteraction {
 			} else if (command.equals("print")) {
 				test.printBoard();
 			} else if (command.equals("print legal moves")) {
-				int[] moves = MoveGenerator.collectMoves(test, test.getToMove());
+				short[] moves = MoveGenerator.collectMoves(test, test.getToMove());
 				for (int i = 0; i < moves[99]; i++) {
 					System.out.println(Transformation.numberToMove(moves[i]));
 				}
@@ -60,7 +60,7 @@ public final class UserInteraction {
 				long time = System.currentTimeMillis();
 				for (int i = 1; i < 10; i++) {
 					Search.nodeCount = 0;
-					int[] move = Search.negaMax(test, test.getToMove(), i, i);
+					short[] move = Search.negaMax(test, test.getToMove(), i, i);
 					for (int j = 0; j < move.length - 1; j++) {
 						System.out.print(Transformation.numberToMove(move[j]) + " ");
 					}

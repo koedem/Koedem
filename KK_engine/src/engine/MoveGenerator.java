@@ -7,7 +7,7 @@ package engine;
  */
 public final class MoveGenerator {
 
-	private static int[] move = new int[100];
+	private static short[] move = new short[100];
 	
 	/**
 	 * 
@@ -15,8 +15,8 @@ public final class MoveGenerator {
 	 * @param toMove : who to move it is
 	 * @return array of ints, each containing a move
 	 */
-	public static int[] collectMoves(Board board, boolean toMove) {
-		move = new int[100];
+	public static short[] collectMoves(Board board, boolean toMove) {
+		move = new short[100];
 		move[99] = 0;
 		for (byte i = 0; i < 8; i++) {
 			for (byte j = 0; j < 8; j++) {
@@ -78,36 +78,36 @@ public final class MoveGenerator {
 	private static void pawnMove(byte file, byte row, Board board, boolean toMove) {
 		if (toMove) {
 			if (board.getSquare(file, row + 1) == 0) {
-				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + 1);
+				move[move[99]] = (short) (1 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1));
 				move[99]++;
 				if (row == 1 && board.getSquare(file, row + 2) == 0) {
-					move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + 2);
+					move[move[99]] = (short) (1 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 2));
 					move[99]++;
 				}
 			}
 			if (file > 0 && board.getSquare(file - 1, row + 1) < 0) {
-				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + (row + 1);
+				move[move[99]] = (short) (1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1));
 				move[99]++;
 			}
 			if (file < 7 && board.getSquare(file + 1, row + 1) < 0) {
-				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file + 1) * 10 + (row + 1);
+				move[move[99]] = (short) (1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1));
 				move[99]++;
 			}
 		} else if (!toMove) {
 			if (board.getSquare(file, row - 1) == 0) {
-				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - 1);
+				move[move[99]] = (short) (1 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1));
 				move[99]++;
 				if (row == 6 && board.getSquare(file, row - 2) == 0) {
-					move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - 2);
+					move[move[99]] = (short) (1 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 2));
 					move[99]++;
 				}
 			}
 			if (file > 0 && board.getSquare(file - 1, row - 1) > 0) {
-				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + (row - 1);
+				move[move[99]] = (short) (1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1));
 				move[99]++;
 			}
 			if (file < 7 && board.getSquare(file + 1, row - 1) > 0) {
-				move[move[99]] = 1 * 10000 + file * 1000 + row * 100 + (file + 1) * 10 + (row - 1);
+				move[move[99]] = (short) (1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1));
 				move[99]++;
 			}
 		}
@@ -128,7 +128,7 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file - 1][row - 2] <= 0) 
 					|| ((!toMove) && board.square[file - 1][row - 2] >= 0)) {
 				
-				move[move[99]] = 2 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + (row - 2);
+				move[move[99]] = (short) (2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 2));
 				move[99]++;
 			}
 			
@@ -137,7 +137,7 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file - 1][row + 2] <= 0) 
 					|| ((!toMove) && board.square[file - 1][row + 2] >= 0)) {
 				
-				move[move[99]] = 2 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + (row + 2);
+				move[move[99]] = (short) (2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 2));
 				move[99]++;
 			}
 			
@@ -146,7 +146,7 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file - 2][row - 1] <= 0) 
 					|| ((!toMove) && board.square[file - 2][row - 1] >= 0)) {
 				
-				move[move[99]] = 2 * 10000 + file * 1000 + row * 100 + (file - 2) * 10 + (row - 1);
+				move[move[99]] = (short) (2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row - 1));
 				move[99]++;
 			}
 			
@@ -155,7 +155,7 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file - 2][row + 1] <= 0) 
 					|| ((!toMove) && board.square[file - 2][row + 1] >= 0)) {
 				
-				move[move[99]] = 2 * 10000 + file * 1000 + row * 100 + (file - 2) * 10 + (row + 1);
+				move[move[99]] = (short) (2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row + 1));
 				move[99]++;
 			}
 			
@@ -164,7 +164,7 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file + 2][row - 1] <= 0) 
 					|| ((!toMove) && board.square[file + 2][row - 1] >= 0)) {
 				
-				move[move[99]] = 2 * 10000 + file * 1000 + row * 100 + (file + 2) * 10 + (row - 1);
+				move[move[99]] = (short) (2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row - 1));
 				move[99]++;
 			}
 		}
@@ -172,7 +172,7 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file + 2][row + 1] <= 0) 
 					|| ((!toMove) && board.square[file + 2][row + 1] >= 0)) {
 				
-				move[move[99]] = 2 * 10000 + file * 1000 + row * 100 + (file + 2) * 10 + (row + 1);
+				move[move[99]] = (short) (2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row + 1));
 				move[99]++;
 			}
 		}
@@ -180,7 +180,7 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file + 1][row - 2] <= 0) 
 					|| ((!toMove) && board.square[file + 1][row - 2] >= 0)) {
 				
-				move[move[99]] = 2 * 10000 + file * 1000 + row * 100 + (file + 1) * 10 + (row - 2);
+				move[move[99]] = (short) (2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 2));
 				move[99]++;
 			}
 		}
@@ -188,7 +188,7 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file + 1][row + 2] <= 0) 
 					|| ((!toMove) && board.square[file + 1][row + 2] >= 0)) {
 				
-				move[move[99]] = 2 * 10000 + file * 1000 + row * 100 + (file + 1) * 10 + (row + 2);
+				move[move[99]] = (short) (2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 2));
 				move[99]++;
 			}
 		}
@@ -208,7 +208,7 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), row, board, toMove);
 			if (squareValue >= 0) {
-				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file + i) * 10 + row;
+				move[move[99]] = (short) (thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + row);
 				move[99]++;
 				if (squareValue == 0) {
 					break;
@@ -221,7 +221,7 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), row, board, toMove);
 			if (squareValue >= 0) {
-				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file - i) * 10 + row;
+				move[move[99]] = (short) (thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + row);
 				move[99]++;
 				if (squareValue == 0) {
 					break;
@@ -234,7 +234,7 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row + i), board, toMove);
 			if (squareValue >= 0) {
-				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + i);
+				move[move[99]] = (short) (thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row + i));
 				move[99]++;
 				if (squareValue == 0) {
 					break;
@@ -247,7 +247,7 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row - i), board, toMove);
 			if (squareValue >= 0) {
-				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - i);
+				move[move[99]] = (short) (thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row - i));
 				move[99]++;
 				if (squareValue == 0) {
 					break;
@@ -272,7 +272,7 @@ public final class MoveGenerator {
 		for (byte i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row + i), board, toMove);
 			if (squareValue >= 0) {
-				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file + i) * 10 + (row + i);
+				move[move[99]] = (short) (thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row + i));
 				move[99]++;
 				if (squareValue == 0) {
 					break;
@@ -285,7 +285,7 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row - i), board, toMove);
 			if (squareValue >= 0) {
-				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file - i) * 10 + (row - i);
+				move[move[99]] = (short) (thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row - i));
 				move[99]++;
 				if (squareValue == 0) {
 					break;
@@ -298,7 +298,7 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row - i), board, toMove);
 			if (squareValue >= 0) {
-				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file + i) * 10 + (row - i);
+				move[move[99]] = (short) (thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i));
 				move[99]++;
 				if (squareValue == 0) {
 					break;
@@ -311,7 +311,7 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row + i), board, toMove);
 			if (squareValue >= 0) {
-				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file - i) * 10 + (row + i);
+				move[move[99]] = (short) (thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row + i));
 				move[99]++;
 				if (squareValue == 0) {
 					break;
@@ -332,14 +332,14 @@ public final class MoveGenerator {
 	private static void kingMove(byte file, byte row, Board board, boolean toMove) {
 		if (file > 0) {
 			if ((toMove && board.getSquare(file - 1, row) <= 0) || (!toMove && board.getSquare(file - 1, row) >= 0)) {
-				move[move[99]] = 6 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + row;
+				move[move[99]] = (short) (6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + row);
 				move[99]++;
 			}
 			if (row > 0) {
 				if ((toMove && board.getSquare(file - 1, row - 1) <= 0) 
 						|| (!toMove && board.getSquare(file - 1, row - 1) >= 0)) {
 					
-					move[move[99]] = 6 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + (row - 1);
+					move[move[99]] = (short) (6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1));
 					move[99]++;
 				}
 			}
@@ -347,7 +347,7 @@ public final class MoveGenerator {
 				if ((toMove && board.getSquare(file - 1, row + 1) <= 0) 
 						|| (!toMove && board.getSquare(file - 1, row + 1) >= 0)) {
 					
-					move[move[99]] = 6 * 10000 + file * 1000 + row * 100 + (file - 1) * 10 + (row + 1);
+					move[move[99]] = (short) (6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1));
 					move[99]++;
 				}
 			}
@@ -355,14 +355,14 @@ public final class MoveGenerator {
 		
 		if (file < 7) {
 			if ((toMove && board.getSquare(file + 1, row) <= 0) || (!toMove && board.getSquare(file + 1, row) >= 0)) {
-				move[move[99]] = 6 * 10000 + file * 1000 + row * 100 + (file + 1) * 10 + row;
+				move[move[99]] = (short) (6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + row);
 				move[99]++;
 			}
 			if (row > 0) {
 				if ((toMove && board.getSquare(file + 1, row - 1) <= 0) 
 						|| (!toMove && board.getSquare(file + 1, row - 1) >= 0)) {
 					
-					move[move[99]] = 6 * 10000 + file * 1000 + row * 100 + (file + 1) * 10 + (row - 1);
+					move[move[99]] = (short) (6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1));
 					move[99]++;
 				}
 			}
@@ -370,7 +370,7 @@ public final class MoveGenerator {
 				if ((toMove && board.getSquare(file + 1, row + 1) <= 0) 
 						|| (!toMove && board.getSquare(file + 1, row + 1) >= 0)) {
 					
-					move[move[99]] = 6 * 10000 + file * 1000 + row * 100 + (file + 1) * 10 + (row + 1);
+					move[move[99]] = (short) (6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1));
 					move[99]++;
 				}
 			}
@@ -378,13 +378,13 @@ public final class MoveGenerator {
 		
 		if (row > 0) {
 			if ((toMove && board.getSquare(file, row - 1) <= 0) || (!toMove && board.getSquare(file, row - 1) >= 0)) {
-				move[move[99]] = 6 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - 1);
+				move[move[99]] = (short) (6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1));
 				move[99]++;
 			}
 		}
 		if (row < 7) {
 			if ((toMove && board.getSquare(file, row + 1) <= 0) || (!toMove && board.getSquare(file, row + 1) >= 0)) {
-				move[move[99]] = 6 * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + 1);
+				move[move[99]] = (short) (6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1));
 				move[99]++;
 			}
 		}

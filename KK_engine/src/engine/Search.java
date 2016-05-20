@@ -18,8 +18,8 @@ public final class Search {
 	 * @return the move we just played
 	 */
 	public static int makeRandomMove(Board board, boolean toMove) {
-		int[] moves = MoveGenerator.collectMoves(board, toMove);
-		int randomMove = moves[(int) (moves[99] * Math.random())];
+		short[] moves = MoveGenerator.collectMoves(board, toMove);
+		short randomMove = moves[(int) (moves[99] * Math.random())];
 		board.makeMove(randomMove);
 		return randomMove;
 	}
@@ -33,17 +33,17 @@ public final class Search {
 	 * @param depthLeft : how many plies are left in the recursion
 	 * @return the principle variation we get for the position
 	 */
-	public static int[] negaMax(Board board, boolean toMove, int depth, int depthLeft) {
-		int[] principleVariation = new int[depth + 1];
-		principleVariation[depth] = -1000000;
-		int[] moves = MoveGenerator.collectMoves(board, toMove);
+	public static short[] negaMax(Board board, boolean toMove, int depth, int depthLeft) {
+		short[] principleVariation = new short[depth + 1];
+		principleVariation[depth] = -30000;
+		short[] moves = MoveGenerator.collectMoves(board, toMove);
 		for (int i = 0; i < moves[99]; i++) {
-			byte capturedPiece = board.getSquare((moves[i] / 10) % 10, moves[i] % 10);
+			byte capturedPiece = board.getSquare((moves[i] / 8) % 8, moves[i] % 8);
 			board.makeMove(moves[i]);
-			int[] innerPV = new int[depth + 1];
+			short[] innerPV = new short[depth + 1];
 			if (depthLeft > 1) {
 				innerPV = negaMax(board, !toMove, depth, depthLeft - 1);
-				innerPV[depth] = -innerPV[depth];
+				innerPV[depth] = (short) -innerPV[depth];
 			} else if (depthLeft == 1) {
 				innerPV[depth] = Evaluation.evaluation(board, toMove);
 				nodeCount++;

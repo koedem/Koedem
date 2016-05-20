@@ -43,14 +43,14 @@ public final class Transformation {
 		int squareNumber = Character.getNumericValue(square.charAt(1)) - 1;
 		
 		switch(square.charAt(0)) {
-			case 'a': squareNumber += 00; break;
-			case 'b': squareNumber += 10; break;
-			case 'c': squareNumber += 20; break;
-			case 'd': squareNumber += 30; break;
-			case 'e': squareNumber += 40; break;
-			case 'f': squareNumber += 50; break;
-			case 'g': squareNumber += 60; break;
-			case 'h': squareNumber += 70; break;
+			case 'a': squareNumber += 0; break;
+			case 'b': squareNumber += 8; break;
+			case 'c': squareNumber += 16; break;
+			case 'd': squareNumber += 24; break;
+			case 'e': squareNumber += 32; break;
+			case 'f': squareNumber += 40; break;
+			case 'g': squareNumber += 48; break;
+			case 'h': squareNumber += 56; break;
 			default: squareNumber = -1; break;
 		}	
 		
@@ -66,7 +66,7 @@ public final class Transformation {
 	public static String numberToSquare(int square) {
 		String squareText = "";
 		
-		switch(square / 10) {
+		switch(square / 8) {
 			case 0: squareText = "a"; break;
 			case 1: squareText = "b"; break;
 			case 2: squareText = "c"; break;
@@ -77,7 +77,7 @@ public final class Transformation {
 			case 7: squareText = "h"; break;
 			default: return "x";
 		}
-		squareText += Integer.toString((square % 10) + 1);
+		squareText += Integer.toString((square % 8) + 1);
 		
 		return squareText;
 	}
@@ -90,13 +90,13 @@ public final class Transformation {
 	 */
 	public static String numberToMove(int move) {
 		String moveText = "";
-		moveText = numberToPiece(move / 10000);
+		moveText = numberToPiece(move / 4096);
 		if (moveText.equals("P")) {
 			moveText = "";
 		}
-		moveText += numberToSquare((move / 100) % 100);
+		moveText += numberToSquare((move / 64) % 64);
 		moveText += "-";
-		moveText += numberToSquare(move % 100);
+		moveText += numberToSquare(move % 64);
 		return moveText;
 	}
 	

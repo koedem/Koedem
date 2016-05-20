@@ -141,36 +141,36 @@ public class Board {
 		if (move.charAt(2) == '-') {
 			int startSquare = Transformation.squareToNumber(move.substring(0, 2));
 			int endSquare = Transformation.squareToNumber(move.substring(3, 5));
-			if (Math.abs(square[endSquare / 10][endSquare % 10]) == 6) {
+			if (Math.abs(square[endSquare / 8][endSquare % 8]) == 6) {
 				gameEnd = true;
 			}
-			if (startSquare == 40 && square[4][0] == 6) {
-				if (endSquare == 60) {
+			if (startSquare == 32 && square[4][0] == 6) {
+				if (endSquare == 48) {
 					square[6][0] = 6;
 					square[4][0] = 0;
 					square[5][0] = 4; // rook move in castling
 					square[7][0] = 0;
-				} else if (endSquare == 20) {
+				} else if (endSquare == 16) {
 					square[2][0] = 6;
 					square[4][0] = 0;
 					square[3][0] = 4; // rook move in castling
 					square[0][0] = 0;
 				}
-			} else if (startSquare == 47 && square[4][7] == -6) {
-				if (endSquare == 67) {
+			} else if (startSquare == 39 && square[4][7] == -6) {
+				if (endSquare == 55) {
 					square[6][7] = -6;
 					square[4][7] = 0;
 					square[5][7] = -4; // rook move in castling
 					square[7][7] = 0;
-				} else if (endSquare == 27) {
+				} else if (endSquare == 23) {
 					square[2][7] = -6;
 					square[4][7] = 0;
 					square[3][7] = -4; // rook move in castling
 					square[0][7] = 0;
 				}
 			} else {
-				square[endSquare / 10][endSquare % 10] = square[startSquare / 10][startSquare % 10];
-				square[startSquare / 10][startSquare % 10] = 0;
+				square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8];
+				square[startSquare / 8][startSquare % 8] = 0;
 			}
 		} else {
 			System.out.println("Illegal Move. Try again.");
@@ -184,10 +184,10 @@ public class Board {
 	 * @param move : the move we play
 	 */
 	public void makeMove(int move) {
-		int moveWithoutPiece = move % 10000;
-		square[(moveWithoutPiece / 10) % 10][moveWithoutPiece % 10] 
-				= square[moveWithoutPiece / 1000][(moveWithoutPiece / 100) % 10];
-		square[moveWithoutPiece / 1000][(moveWithoutPiece / 100) % 10] = 0;
+		int moveWithoutPiece = move % 4096;
+		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] 
+				= square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8];
+		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = 0;
 	}
 	
 	/**
@@ -221,9 +221,9 @@ public class Board {
 	 * 				We put that piece back on the board (can also be 0 = empty square)
 	 */
 	public void unmakeMove(int move, byte capturedPiece) {
-		int moveWithoutPiece = move % 10000;
-		square[moveWithoutPiece / 1000][(moveWithoutPiece / 100) % 10] 
-				= square[(moveWithoutPiece / 10) % 10][moveWithoutPiece % 10];
-		square[(moveWithoutPiece / 10) % 10][moveWithoutPiece % 10] = capturedPiece;
+		int moveWithoutPiece = move % 4096;
+		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] 
+				= square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
+		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = capturedPiece;
 	}
 }
