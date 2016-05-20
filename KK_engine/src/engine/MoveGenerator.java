@@ -205,7 +205,7 @@ public final class MoveGenerator {
 	 */
 	private static void rookMove(byte file, byte row, Board board, boolean toMove) {
 		byte thisPiece = (byte) Math.abs(board.getSquare(file, row));
-		for (int i = 0; i < 7; i++) {
+		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), row, board, toMove);
 			if (squareValue >= 0) {
 				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file + i) * 10 + row;
@@ -218,7 +218,7 @@ public final class MoveGenerator {
 			}
 		}
 
-		for (int i = 0; i < 7; i++) {
+		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), row, board, toMove);
 			if (squareValue >= 0) {
 				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file - i) * 10 + row;
@@ -231,7 +231,7 @@ public final class MoveGenerator {
 			}
 		}
 		
-		for (int i = 0; i < 7; i++) {
+		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row + i), board, toMove);
 			if (squareValue >= 0) {
 				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file) * 10 + (row + i);
@@ -244,7 +244,7 @@ public final class MoveGenerator {
 			}
 		}
 		
-		for (int i = 0; i < 7; i++) {
+		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row - i), board, toMove);
 			if (squareValue >= 0) {
 				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file) * 10 + (row - i);
@@ -269,7 +269,7 @@ public final class MoveGenerator {
 	 */
 	private static void bishopMove(byte file, byte row, Board board, boolean toMove) {
 		byte thisPiece = (byte) Math.abs(board.getSquare(file, row));
-		for (byte i = 0; i < 7; i++) {
+		for (byte i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row + i), board, toMove);
 			if (squareValue >= 0) {
 				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file + i) * 10 + (row + i);
@@ -282,7 +282,7 @@ public final class MoveGenerator {
 			}
 		}
 
-		for (int i = 0; i < 7; i++) {
+		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row - i), board, toMove);
 			if (squareValue >= 0) {
 				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file - i) * 10 + (row - i);
@@ -295,7 +295,7 @@ public final class MoveGenerator {
 			}
 		}
 		
-		for (int i = 0; i < 7; i++) {
+		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row - i), board, toMove);
 			if (squareValue >= 0) {
 				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file + i) * 10 + (row - i);
@@ -308,7 +308,7 @@ public final class MoveGenerator {
 			}
 		}
 		
-		for (int i = 0; i < 7; i++) {
+		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row + i), board, toMove);
 			if (squareValue >= 0) {
 				move[move[99]] = thisPiece * 10000 + file * 1000 + row * 100 + (file - i) * 10 + (row + i);

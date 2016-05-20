@@ -72,7 +72,8 @@ public class Board {
 					this.toMove = false;
 				} else {
 					throw new IllegalArgumentException();
-				} if (position.charAt(i + 2) == ' ') {
+				} 
+				if (position.charAt(i + 2) == ' ') {
 					setCastlingRights(position.substring(i + 3));
 				} else {
 					throw new IllegalArgumentException();
@@ -80,7 +81,7 @@ public class Board {
 				break;
 			} else {
 				int emptySquares = Character.getNumericValue(position.charAt(i));
-				for (int j  = 0; j < emptySquares; j++) {
+				for (int j = 0; j < emptySquares; j++) {
 					this.square[file][row] = 0;
 					file++;
 				}
