@@ -54,6 +54,8 @@ public final class UserInteraction {
 				for (int i = 0; i < moves[99]; i++) {
 					System.out.println(Transformation.numberToMove(moves[i]));
 				}
+			} else if (command.contains("fen")) {
+				test.setFENPosition(command);
 			}
 		}
 		sc.close();

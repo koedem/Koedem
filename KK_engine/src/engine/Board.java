@@ -10,68 +10,99 @@ public class Board {
 	protected byte[][] square = new byte[10][10];  // Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6;
 									// White pieces get positive values, black pieces negative ones, empty squares a 0.
 	private boolean toMove = true;
+	private byte castlingRights = 0; // 00abcdef a = Ra1, b = Ke1, c = Rh1, d = ra8, e = ke8, f = rh8
+										// 1 means the piece hasn't moved yet.
+	private byte materialCount = 0;
 	
 	/**
 	 * Constructor, create new Board and setup the chess start position
 	 */
 	public Board() {
-		createStartPosition();
+		setFENPosition("fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq"); // fen of start position
 	}
 	
-	/**
-	 * set up the chess start position like this:
-	 * 
-	 *   12345678
-	 * 8 rnbqkbnr
-	 * 7 pppppppp
-	 * 6 --------
-	 * 5 --------
-	 * 4 --------
-	 * 3 --------
-	 * 2 PPPPPPPP
-	 * 1 RNBQKBNR
-	 */
-	public void createStartPosition() {
-		square[1][1] = 4; 
-		square[8][1] = 4; // white rooks on a1 and h1
-		square[2][1] = 2;
-		square[7][1] = 2; // white knights on b1 and g1
-		square[3][1] = 3;
-		square[6][1] = 3; // white bishops on c1 and f1
-		square[4][1] = 5; // white queen on d1
-		square[5][1] = 6; // white king on e1
-		square[1][2] = 1;
-		square[2][2] = 1;
-		square[3][2] = 1;
-		square[4][2] = 1;
-		square[5][2] = 1;
-		square[6][2] = 1;
-		square[7][2] = 1;
-		square[8][2] = 1; // white pawns on a2, b2, c2, d2, e2, f2, g2, h2
-		
-		square[1][8] = -4;
-		square[8][8] = -4; // black rooks on a8 and h8
-		square[2][8] = -2;
-		square[7][8] = -2; // black knights on b8 and g8
-		square[3][8] = -3;
-		square[6][8] = -3; // black bishops on c8 and f8
-		square[4][8] = -5; // black queen on d8
-		square[5][8] = -6; // black king on e8
-		square[1][7] = -1;
-		square[2][7] = -1;
-		square[3][7] = -1;
-		square[4][7] = -1;
-		square[5][7] = -1;
-		square[6][7] = -1;
-		square[7][7] = -1;
-		square[8][7] = -1; // black pawns on a7, b7, c7, d7, e7, f7, g7, h7
-		
-		for (int i = 1; i < 9; i++) {
-			for (int j = 3; j < 7; j++) {
-				square[i][j] = 0;
+	public void setFENPosition(String fen) {
+		String position = fen.substring(4);
+		byte file = 1;
+		byte row = 8;
+		for (int i = 0; i < position.length(); i++) {
+			if (position.charAt(i) == 'k') {
+				this.square[file][row] = -6;
+				file++;
+			} else if (position.charAt(i) == 'q') {
+				this.square[file][row] = -5;
+				file++;
+			} else if (position.charAt(i) == 'r') {
+				this.square[file][row] = -4;
+				file++;
+			} else if (position.charAt(i) == 'b') {
+				this.square[file][row] = -3;
+				file++;
+			} else if (position.charAt(i) == 'n') {
+				this.square[file][row] = -2;
+				file++;
+			} else if (position.charAt(i) == 'p') {
+				this.square[file][row] = -1;
+				file++;
+			} else if (position.charAt(i) == 'P') {
+				this.square[file][row] = 1;
+				file++;
+			} else if (position.charAt(i) == 'N') {
+				this.square[file][row] = 2;
+				file++;
+			} else if (position.charAt(i) == 'B') {
+				this.square[file][row] = 3;
+				file++;
+			} else if (position.charAt(i) == 'R') {
+				this.square[file][row] = 4;
+				file++;
+			} else if (position.charAt(i) == 'Q') {
+				this.square[file][row] = 5;
+				file++;
+			} else if (position.charAt(i) == 'K') {
+				this.square[file][row] = 6;
+				file++;
+			} else if (position.charAt(i) == '/') {
+				row--;
+				file = 1;
+			} else if (position.charAt(i) == ' ') {
+				if (position.charAt(i + 1) == 'w') {
+					this.toMove = true;
+				} else if (position.charAt(i + 1) == 'b') {
+					this.toMove = false;
+				} else {
+					throw new IllegalArgumentException();
+				} if (position.charAt(i + 2) == ' ') {
+					setCastlingRights(position.substring(i + 3));
+				} else {
+					throw new IllegalArgumentException();
+				}
+				break;
+			} else {
+				int emptySquares = Character.getNumericValue(position.charAt(i));
+				for (int j  = 0; j < emptySquares; j++) {
+					this.square[file][row] = 0;
+					file++;
+				}
 			}
 		}
 	}
+	
+	private void setCastlingRights(String castling) {
+		this.castlingRights = 0;
+		for (int i = 0; i < castling.length(); i++) {
+			if (castling.charAt(i) == 'K') {
+				this.castlingRights = (byte) (this.castlingRights | 0x18);
+			} else if (castling.charAt(i) == 'Q') {
+				this.castlingRights = (byte) (this.castlingRights | 0x30);
+			} else if (castling.charAt(i) == 'k') {
+				this.castlingRights = (byte) (this.castlingRights | 0x3);
+			} else if (castling.charAt(i) == 'q') {
+				this.castlingRights = (byte) (this.castlingRights | 0x6);
+			}
+		}
+	}
+	
 	 /**
 	  * Print out the board, row by row starting at highest row.
 	  * Each row we print file by file from lowest to highest.
@@ -112,8 +143,34 @@ public class Board {
 			if (Math.abs(square[endSquare / 10][endSquare % 10]) == 6) {
 				gameEnd = true;
 			}
-			square[endSquare / 10][endSquare % 10] = square[startSquare / 10][startSquare % 10];
-			square[startSquare / 10][startSquare % 10] = 0;
+			if (startSquare == 51 && square[5][1] == 6) {
+				if (endSquare == 71) {
+					square[7][1] = 6;
+					square[5][1] = 0;
+					square[6][1] = 4; // rook move in castling
+					square[8][1] = 0;
+				} else if (endSquare == 31) {
+					square[3][1] = 6;
+					square[5][1] = 0;
+					square[4][1] = 4; // rook move in castling
+					square[1][1] = 0;
+				}
+			} else if (startSquare == 58 && square[5][8] == -6) {
+				if (endSquare == 78) {
+					square[7][8] = -6;
+					square[5][8] = 0;
+					square[6][8] = -4; // rook move in castling
+					square[8][8] = 0;
+				} else if (endSquare == 38) {
+					square[3][8] = -6;
+					square[5][8] = 0;
+					square[4][8] = -4; // rook move in castling
+					square[1][8] = 0;
+				}
+			} else {
+				square[endSquare / 10][endSquare % 10] = square[startSquare / 10][startSquare % 10];
+				square[startSquare / 10][startSquare % 10] = 0;
+			}
 		} else {
 			System.out.println("Illegal Move. Try again.");
 		}
