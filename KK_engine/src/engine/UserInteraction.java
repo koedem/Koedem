@@ -1,5 +1,6 @@
 package engine;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
@@ -50,9 +51,9 @@ public final class UserInteraction {
 			} else if (command.equals("print")) {
 				test.printBoard();
 			} else if (command.equals("print legal moves")) {
-				short[] moves = MoveGenerator.collectMoves(test, test.getToMove());
-				for (int i = 0; i < moves[99]; i++) {
-					System.out.println(Transformation.numberToMove(moves[i]));
+				ArrayList<Short> moves = MoveGenerator.collectMoves(test, test.getToMove());
+				for (Short move : moves) {
+					System.out.println(Transformation.numberToMove(move));
 				}
 			} else if (command.contains("fen")) {
 				test.setFENPosition(command);

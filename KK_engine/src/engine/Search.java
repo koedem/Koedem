@@ -1,5 +1,7 @@
 package engine;
 
+import java.util.ArrayList;
+
 /**
  * 
  * @author Kolja Kuehn
@@ -18,8 +20,8 @@ public final class Search {
 	 * @return the move we just played
 	 */
 	public static int makeRandomMove(Board board, boolean toMove) {
-		short[] moves = MoveGenerator.collectMoves(board, toMove);
-		short randomMove = moves[(int) (moves[99] * Math.random())];
+		ArrayList<Short> moves = MoveGenerator.collectMoves(board, toMove);
+		short randomMove = moves.get((int) (moves.size() * Math.random()));
 		board.makeMove(randomMove);
 		return randomMove;
 	}
@@ -36,10 +38,10 @@ public final class Search {
 	public static short[] negaMax(Board board, boolean toMove, int depth, int depthLeft) {
 		short[] principleVariation = new short[depth + 1];
 		principleVariation[depth] = -30000;
-		short[] moves = MoveGenerator.collectMoves(board, toMove);
-		for (int i = 0; i < moves[99]; i++) {
-			byte capturedPiece = board.getSquare((moves[i] / 8) % 8, moves[i] % 8);
-			board.makeMove(moves[i]);
+		ArrayList<Short> moves = MoveGenerator.collectMoves(board, toMove);
+		for (Short move : moves) {
+			byte capturedPiece = board.getSquare((move / 8) % 8, move % 8);
+			board.makeMove(move);
 			short[] innerPV = new short[depth + 1];
 			if (depthLeft > 1) {
 				innerPV = negaMax(board, !toMove, depth, depthLeft - 1);
@@ -50,10 +52,10 @@ public final class Search {
 			}
 			if (innerPV[depth] > principleVariation[depth]) {
 				principleVariation = innerPV;
-				principleVariation[depth - depthLeft] = moves[i];
+				principleVariation[depth - depthLeft] = move;
 				
 			}
-			board.unmakeMove(moves[i], capturedPiece);
+			board.unmakeMove(move, capturedPiece);
 		}
 		return principleVariation;
 	}
