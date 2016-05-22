@@ -12,7 +12,7 @@ public class Board {
 	private boolean toMove = true;
 	private byte castlingRights = 0; // 00abcdef a = Ra1, b = Ke1, c = Rh1, d = ra8, e = ke8, f = rh8
 										// 1 means the piece hasn't moved yet.
-	private byte materialCount = 0;
+	private short materialCount = 0;
 	
 	/**
 	 * Constructor, create new Board and setup the chess start position
@@ -21,6 +21,12 @@ public class Board {
 		setFENPosition("fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq"); // fen of start position
 	}
 	
+	/**
+	 * This method takes a fen code and sets that position on the board. Note that it only takes position,
+	 * who to move it is and castling rights, no move number or 50 move rule counter.
+	 * 
+	 * @param fen : Position that the method sets.
+	 */
 	public void setFENPosition(String fen) {
 		String position = fen.substring(4);
 		byte file = 0;
@@ -169,6 +175,34 @@ public class Board {
 					square[0][7] = 0;
 				}
 			} else {
+				int piece = square[endSquare / 8][endSquare % 8];
+				if (piece != 0) {
+					if (piece > 0) {
+						if (piece == 1) {
+							materialCount -= 100;
+						} else if (piece == 2 || piece == 3) {
+							materialCount -= 300;
+						} else if (piece == 4) {
+							materialCount -= 500;
+						} else if (piece == 5) {
+							materialCount -= 900;
+						} else if (piece == 6) {
+							materialCount -= 10000;
+						}
+					} else {
+						if (piece == -1) {
+							materialCount += 100;
+						} else if (piece == -2 || piece == -3) {
+							materialCount += 300;
+						} else if (piece == -4) {
+							materialCount += 500;
+						} else if (piece == -5) {
+							materialCount += 900;
+						} else if (piece == -6) {
+							materialCount += 10000;
+						}
+					}
+				}
 				square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8];
 				square[startSquare / 8][startSquare % 8] = 0;
 			}
@@ -185,6 +219,34 @@ public class Board {
 	 */
 	public void makeMove(int move) {
 		int moveWithoutPiece = move % 4096;
+		int piece = square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
+		if (piece != 0) {
+			if (piece > 0) {
+				if (piece == 1) {
+					materialCount -= 100;
+				} else if (piece == 2 || piece == 3) {
+					materialCount -= 300;
+				} else if (piece == 4) {
+					materialCount -= 500;
+				} else if (piece == 5) {
+					materialCount -= 900;
+				} else if (piece == 6) {
+					materialCount -= 10000;
+				}
+			} else {
+				if (piece == -1) {
+					materialCount += 100;
+				} else if (piece == -2 || piece == -3) {
+					materialCount += 300;
+				} else if (piece == -4) {
+					materialCount += 500;
+				} else if (piece == -5) {
+					materialCount += 900;
+				} else if (piece == -6) {
+					materialCount += 10000;
+				}
+			}
+		}
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] 
 				= square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8];
 		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = 0;
@@ -222,8 +284,40 @@ public class Board {
 	 */
 	public void unmakeMove(int move, byte capturedPiece) {
 		int moveWithoutPiece = move % 4096;
+		int piece = capturedPiece;
+		if (piece != 0) {
+			if (piece > 0) {
+				if (piece == 1) {
+					materialCount += 100;
+				} else if (piece == 2 || piece == 3) {
+					materialCount += 300;
+				} else if (piece == 4) {
+					materialCount += 500;
+				} else if (piece == 5) {
+					materialCount += 900;
+				} else if (piece == 6) {
+					materialCount += 10000;
+				}
+			} else {
+				if (piece == -1) {
+					materialCount -= 100;
+				} else if (piece == -2 || piece == -3) {
+					materialCount -= 300;
+				} else if (piece == -4) {
+					materialCount -= 500;
+				} else if (piece == -5) {
+					materialCount -= 900;
+				} else if (piece == -6) {
+					materialCount -= 10000;
+				}
+			}
+		}
 		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] 
 				= square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = capturedPiece;
+	}
+	
+	public int getMaterialCount() {
+		return materialCount;
 	}
 }

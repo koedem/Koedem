@@ -13,9 +13,9 @@ public final class Evaluation {
 	 * @param toMove : who to move it is
 	 * @return evaluation based on material
 	 */
-	public static short evaluation(Board board, boolean toMove) {
-		short eval = 0;
-		for (byte i = 0; i < 8; i++) {
+	public static int evaluation(Board board, boolean toMove) {
+		int eval = 0;
+		/*for (byte i = 0; i < 8; i++) {
 			for (byte j = 0; j < 8; j++) {
 				if (board.square[i][j] == 1) {
 					eval += 100;
@@ -49,6 +49,13 @@ public final class Evaluation {
 		}
 		eval += (Math.random() * 200) - 100;
 		
+		return eval;*/
+		eval = board.getMaterialCount();
+		if (!toMove) {
+			eval = (short) -eval;
+		}
+		eval += (Math.random() * 100) - 50;
+		Search.nodeCountPlusOne();
 		return eval;
 	}
 	
