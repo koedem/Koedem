@@ -15,6 +15,14 @@ public final class Evaluation {
 	 */
 	public static int evaluation(Board board, boolean toMove) {
 		int eval = 0;
+		int advancement = 0;
+		for (byte i = 0; i < 8; i++) {
+			for (byte j = 0; j < 8; j++) {
+				if (board.square[i][j] != 0) {
+					advancement += 2 * j - 7;
+				}
+			}
+		}
 		/*for (byte i = 0; i < 8; i++) {
 			for (byte j = 0; j < 8; j++) {
 				if (board.square[i][j] == 1) {
@@ -51,10 +59,11 @@ public final class Evaluation {
 		
 		return eval;*/
 		eval = board.getMaterialCount();
+		eval += advancement;
 		if (!toMove) {
 			eval = (short) -eval;
 		}
-		eval += (Math.random() * 100) - 50;
+		//eval += (Math.random() * 100) - 50;
 		Search.nodeCountPlusOne();
 		return eval;
 	}

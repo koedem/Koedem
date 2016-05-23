@@ -85,8 +85,8 @@ public final class Transformation {
 	/**
 	 * Transform move which is stored as number internally to a String
 	 * 
-	 * @param move : number of the move in internal representation
-	 * @return move as String (readable to human)
+	 * @param move Number of the move in internal representation
+	 * @return Move as String (readable to human)
 	 */
 	public static String numberToMove(int move) {
 		String moveText = "";
@@ -98,6 +98,28 @@ public final class Transformation {
 		moveText += "-";
 		moveText += numberToSquare(move % 64);
 		return moveText;
+	}
+	
+	/**
+	 * 
+	 * @param castlingRights Byte castling rights (saved in the board).
+	 * @return String of format KQkq.
+	 */
+	public static String numberToCastling(byte castlingRights) {
+		String castling = "";
+		if ((castlingRights & 0x18) == 0x18) {
+			castling += "K";
+		}
+		if ((castlingRights & 0x30) == 0x30) {
+			castling += "Q";
+		}
+		if ((castlingRights & 0x3) == 0x3) {
+			castling += "k";
+		}
+		if ((castlingRights & 0x6) == 0x6) {
+			castling += "q";
+		}
+		return castling;
 	}
 	
 	private Transformation() {

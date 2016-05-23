@@ -48,6 +48,7 @@ public final class Search {
 				principleVariation[depth] = 10000;
 				return principleVariation;
 			}
+			byte castlingRights = board.getCastlingRights();
 			board.makeMove(move);
 			int[] innerPV = new int[depth + 1];
 			if (depthLeft > 1) {
@@ -69,6 +70,7 @@ public final class Search {
 				
 			}
 			board.unmakeMove(move, capturedPiece);
+			board.addCastlingRights(castlingRights);
 		}
 		return principleVariation;
 	}
@@ -129,6 +131,9 @@ public final class Search {
 		return nodeCount;
 	}
 	
+	/**
+	 * Add one to nodeCount.
+	 */
 	public static void nodeCountPlusOne() {
 		nodeCount++;
 	}

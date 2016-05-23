@@ -7,25 +7,34 @@ package engine;
  */
 public class Board {
 
-	protected byte[][] square = new byte[8][8];  // Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6;
-									// White pieces get positive values, black pieces negative ones, empty squares a 0.
+	protected byte[][] square = new byte[8][8]; // Pawn = 1, Knight = 2, Bishop
+												// = 3, Rook = 4, Queen = 5,
+												// King = 6;
+	// White pieces get positive values, black pieces negative ones, empty
+	// squares a 0.
 	private boolean toMove = true;
-	private byte castlingRights = 0; // 00abcdef a = Ra1, b = Ke1, c = Rh1, d = ra8, e = ke8, f = rh8
+	private byte castlingRights = 0; // 00abcdef a = Ra1, b = Ke1, c = Rh1, d =
+										// ra8, e = ke8, f = rh8
 										// 1 means the piece hasn't moved yet.
 	private short materialCount = 0;
-	
+
 	/**
 	 * Constructor, create new Board and setup the chess start position
 	 */
 	public Board() {
-		setFENPosition("fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq"); // fen of start position
+		setFENPosition("fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq"); // fen
+																					// of
+																					// start
+																					// position
 	}
-	
+
 	/**
-	 * This method takes a fen code and sets that position on the board. Note that it only takes position,
-	 * who to move it is and castling rights, no move number or 50 move rule counter.
+	 * This method takes a fen code and sets that position on the board. Note
+	 * that it only takes position, who to move it is and castling rights, no
+	 * move number or 50 move rule counter.
 	 * 
-	 * @param fen : Position that the method sets.
+	 * @param fen
+	 *            : Position that the method sets.
 	 */
 	public void setFENPosition(String fen) {
 		String position = fen.substring(4);
@@ -78,7 +87,7 @@ public class Board {
 					this.toMove = false;
 				} else {
 					throw new IllegalArgumentException();
-				} 
+				}
 				if (position.charAt(i + 2) == ' ') {
 					setCastlingRights(position.substring(i + 3));
 				} else {
@@ -94,7 +103,7 @@ public class Board {
 			}
 		}
 	}
-	
+
 	private void setCastlingRights(String castling) {
 		this.castlingRights = 0;
 		for (int i = 0; i < castling.length(); i++) {
@@ -109,37 +118,44 @@ public class Board {
 			}
 		}
 	}
-	
-	 /**
-	  * Print out the board, row by row starting at highest row.
-	  * Each row we print file by file from lowest to highest.
-	  */
+
+	/**
+	 * Print out the board, row by row starting at highest row. Each row we
+	 * print file by file from lowest to highest.
+	 */
 	public void printBoard() {
 		System.out.println();
 		for (int i = 7; i >= 0; i--) {
-			
+
 			for (int j = 0; j < 8; j++) {
 				System.out.print(Transformation.numberToPiece(square[j][i]) + " ");
 			}
-			
+
 			System.out.println();
 		}
 		System.out.println();
+		System.out.println(Transformation.numberToCastling(castlingRights) + "\n");
+		
 	}
-	
+
 	/**
 	 * 
-	 * @param file : file of the square
-	 * @param row : row of the square
+	 * @param file
+	 *            : file of the square
+	 * @param row
+	 *            : row of the square
 	 * @return the value of the square
 	 */
 	public byte getSquare(int file, int row) {
 		return square[file][row];
 	}
-	
+
 	/**
-	 * Execute the move on the board. Check whether a king was captured in which case the game is over.
-	 * @param move : the move stored as string. Has to be "decoded" first.
+	 * Execute the move on the board. Check whether a king was captured in which
+	 * case the game is over.
+	 * 
+	 * @param move
+	 *            : the move stored as string. Has to be "decoded" first.
 	 * @return whether the game ends or not
 	 */
 	public boolean makeMove(String move) {
@@ -151,71 +167,86 @@ public class Board {
 				gameEnd = true;
 			}
 			if (startSquare == 32 && square[4][0] == 6) {
+				removeCastlingRights((byte) 0x38);
 				if (endSquare == 48) {
 					square[6][0] = 6;
 					square[4][0] = 0;
 					square[5][0] = 4; // rook move in castling
 					square[7][0] = 0;
+					return gameEnd;
 				} else if (endSquare == 16) {
 					square[2][0] = 6;
 					square[4][0] = 0;
 					square[3][0] = 4; // rook move in castling
 					square[0][0] = 0;
+					return gameEnd;
 				}
 			} else if (startSquare == 39 && square[4][7] == -6) {
+				removeCastlingRights((byte) 0x7);
 				if (endSquare == 55) {
 					square[6][7] = -6;
 					square[4][7] = 0;
 					square[5][7] = -4; // rook move in castling
 					square[7][7] = 0;
+					return gameEnd;
 				} else if (endSquare == 23) {
 					square[2][7] = -6;
 					square[4][7] = 0;
 					square[3][7] = -4; // rook move in castling
 					square[0][7] = 0;
+					return gameEnd;
 				}
-			} else {
-				int piece = square[endSquare / 8][endSquare % 8];
-				if (piece != 0) {
-					if (piece > 0) {
-						if (piece == 1) {
-							materialCount -= 100;
-						} else if (piece == 2 || piece == 3) {
-							materialCount -= 300;
-						} else if (piece == 4) {
-							materialCount -= 500;
-						} else if (piece == 5) {
-							materialCount -= 900;
-						} else if (piece == 6) {
-							materialCount -= 10000;
-						}
-					} else {
-						if (piece == -1) {
-							materialCount += 100;
-						} else if (piece == -2 || piece == -3) {
-							materialCount += 300;
-						} else if (piece == -4) {
-							materialCount += 500;
-						} else if (piece == -5) {
-							materialCount += 900;
-						} else if (piece == -6) {
-							materialCount += 10000;
-						}
+			}
+			int piece = square[endSquare / 8][endSquare % 8];
+			if (piece != 0) {
+				if (piece > 0) {
+					if (piece == 1) {
+						materialCount -= 100;
+					} else if (piece == 2 || piece == 3) {
+						materialCount -= 300;
+					} else if (piece == 4) {
+						materialCount -= 500;
+					} else if (piece == 5) {
+						materialCount -= 900;
+					} else if (piece == 6) {
+						materialCount -= 10000;
+					}
+				} else {
+					if (piece == -1) {
+						materialCount += 100;
+					} else if (piece == -2 || piece == -3) {
+						materialCount += 300;
+					} else if (piece == -4) {
+						materialCount += 500;
+					} else if (piece == -5) {
+						materialCount += 900;
+					} else if (piece == -6) {
+						materialCount += 10000;
 					}
 				}
-				square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8];
-				square[startSquare / 8][startSquare % 8] = 0;
+			}
+			square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8];
+			square[startSquare / 8][startSquare % 8] = 0;
+			if (startSquare == 0 || endSquare == 0) {
+				removeCastlingRights((byte) 0x30);
+			} else if (startSquare == 7 || endSquare == 7) {
+				removeCastlingRights((byte) 0x6);
+			} else if (startSquare == 56 || endSquare == 56) {
+				removeCastlingRights((byte) 0x18);
+			} else if (startSquare == 63 || endSquare == 63) {
+				removeCastlingRights((byte) 0x3);
 			}
 		} else {
 			System.out.println("Illegal Move. Try again.");
 		}
 		return gameEnd;
 	}
-	
+
 	/**
 	 * This method takes a move encoded as int and plays that move.
 	 * 
-	 * @param move : the move we play
+	 * @param move
+	 *            : the move we play
 	 */
 	public void makeMove(int move) {
 		int moveWithoutPiece = move % 4096;
@@ -247,11 +278,60 @@ public class Board {
 				}
 			}
 		}
-		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] 
-				= square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8];
+		if (moveWithoutPiece / 64 == 32) {
+			removeCastlingRights((byte) 0x38);
+		}
+		if (moveWithoutPiece / 64 == 39) {
+			removeCastlingRights((byte) 0x7);
+		}
+		if (moveWithoutPiece / 64 == 0 || moveWithoutPiece % 64 == 0) { // If Ra1 moves or captures we can't castle
+																		// queenside anymore.
+			removeCastlingRights((byte) 0x30);
+		}
+		if (moveWithoutPiece / 64 == 7 || moveWithoutPiece % 64 == 7) {
+			removeCastlingRights((byte) 0x6);
+		}
+		if (moveWithoutPiece / 64 == 56 || moveWithoutPiece % 64 == 56) {
+			removeCastlingRights((byte) 0x18);
+		}
+		if (moveWithoutPiece / 64 == 63 || moveWithoutPiece % 64 == 63) {
+			removeCastlingRights((byte) 0x3);
+		}
+		
+		if (moveWithoutPiece / 64 == 32 && square[4][0] == 6) {
+			if (moveWithoutPiece % 64 == 48) {
+				square[6][0] = 6;
+				square[4][0] = 0;
+				square[5][0] = 4; // rook move in castling
+				square[7][0] = 0;
+				return;
+			} else if (moveWithoutPiece % 64 == 16) {
+				square[2][0] = 6;
+				square[4][0] = 0;
+				square[3][0] = 4; // rook move in castling
+				square[0][0] = 0;
+				return;
+			}
+		} else if (moveWithoutPiece / 64 == 39 && square[4][7] == -6) {
+			if (moveWithoutPiece % 64 == 55) {
+				square[6][7] = -6;
+				square[4][7] = 0;
+				square[5][7] = -4; // rook move in castling
+				square[7][7] = 0;
+				return;
+			} else if (moveWithoutPiece % 64 == 23) {
+				square[2][7] = -6;
+				square[4][7] = 0;
+				square[3][7] = -4; // rook move in castling
+				square[0][7] = 0;
+				return;
+			}
+		}
+		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece
+				% 8] = square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8];
 		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = 0;
 	}
-	
+
 	/**
 	 * 
 	 * @return who to move it is.
@@ -259,15 +339,16 @@ public class Board {
 	public boolean getToMove() {
 		return toMove;
 	}
-	
+
 	/**
 	 * 
-	 * @param newToMove : set the toMove parameter
+	 * @param newToMove
+	 *            : set the toMove parameter
 	 */
 	public void setToMove(boolean newToMove) {
 		this.toMove = newToMove;
 	}
-	
+
 	/**
 	 * negate the toMove parameter
 	 */
@@ -278,11 +359,42 @@ public class Board {
 	/**
 	 * This method undoes the given move.
 	 * 
-	 * @param move : move which we want to undo
-	 * @param capturedPiece : piece that got captured in the original move.
-	 * 				We put that piece back on the board (can also be 0 = empty square)
+	 * @param move
+	 *            : move which we want to undo
+	 * @param capturedPiece
+	 *            : piece that got captured in the original move. We put that
+	 *            piece back on the board (can also be 0 = empty square)
 	 */
 	public void unmakeMove(int move, byte capturedPiece) {
+		if (move == 26640) { // White castle queen side.
+			square[4][0] = 6; // King move gets undone.
+			square[2][0] = 0;
+			square[3][0] = 0; // Rook move get undone.
+			square[0][0] = 4;
+			return;
+		}
+		if (move == 26672) { // White castle king side.
+			square[4][0] = 6; 
+			square[6][0] = 0;
+			square[5][0] = 0; 
+			square[7][0] = 4;
+			return;
+		}
+		if (move == 27095) { // Black castle queen side.
+			square[4][7] = -6;
+			square[2][7] = 0;
+			square[3][7] = 0; 
+			square[0][7] = -4;
+			return;
+		}
+		if (move == 27127) { // Black castle king side.
+			square[4][7] = -6; 
+			square[6][7] = 0;
+			square[5][7] = 0; 
+			square[7][7] = -4;
+			return;
+		}
+		
 		int moveWithoutPiece = move % 4096;
 		int piece = capturedPiece;
 		if (piece != 0) {
@@ -312,12 +424,44 @@ public class Board {
 				}
 			}
 		}
-		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] 
-				= square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
+		square[moveWithoutPiece / 512][(moveWithoutPiece / 64)
+				% 8] = square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = capturedPiece;
 	}
-	
+
+	/**
+	 * 
+	 * @return The material count in centi pawns.
+	 */
 	public int getMaterialCount() {
 		return materialCount;
+	}
+	
+	/**
+	 * Castling rights is a byte. Check for white King side castle with & 0x18 == 0x18, Q side & 0x30 == 0x30,
+	 * black K side 0x3 == 0x3, Q side 0x6 == 0x6.
+	 * 
+	 * @return Which castlings are still possible.
+	 */
+	public byte getCastlingRights() {
+		return castlingRights;
+	}
+	
+	/**
+	 * This method takes a byte and sets the 1s in the byte to 0 in castlingRights.
+	 * 
+	 * @param change Which castling rights should be removed.
+	 */
+	public void removeCastlingRights(byte change) {
+		this.castlingRights = (byte) (this.castlingRights & (~change));
+	}
+	
+	/**
+	 * This method takes a byte and sets the 1s in the byte to 1 in castlingRights.
+	 * 
+	 * @param change Which castling rights should be added.
+	 */
+	public void addCastlingRights(byte change) {
+		this.castlingRights = (byte) (this.castlingRights | change);
 	}
 }

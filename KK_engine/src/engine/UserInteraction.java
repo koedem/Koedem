@@ -37,6 +37,11 @@ public final class UserInteraction {
 					// int move = Search.makeRandomMove(test, test.getToMove());
 					Search.setNodeCount(0);
 					int[] move = Search.negaMax(test, test.getToMove(), 4, 4);
+					if (move[move.length - 1] == -9999) {
+						test.printBoard();
+						System.out.println("Mate, you win! \"newgame\" starts a new game.");
+						continue;
+					}
 					test.makeMove(move[0]);
 					test.changeToMove();
 					test.printBoard();
@@ -62,6 +67,7 @@ public final class UserInteraction {
 				}
 			} else if (command.contains("fen")) {
 				test.setFENPosition(command);
+				test.printBoard();
 			} else if (command.equals("analyze")) {
 				long time = System.currentTimeMillis();
 				for (int i = 1; i < 10; i++) {
@@ -83,6 +89,11 @@ public final class UserInteraction {
 				}
 				System.out.println("Node count: " + Search.getNodeCount());
 				Search.setNodeCount(0);
+			} else if (command.equals("evaluate")) {
+				System.out.println(Evaluation.evaluation(test, test.getToMove()));
+			} else if (command.equals("newgame")) {
+				test = new Board();
+				test.printBoard();
 			}
 		}
 		sc.close();

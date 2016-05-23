@@ -481,10 +481,27 @@ public final class MoveGenerator {
 			}
 		}
 		
-		//if (toMove && file == 4 && row == 0) {
-			// TODO: castling
-			
-		//}
+		if (toMove && file == 4 && row == 0) {
+			if ((board.getCastlingRights() & 0x18) == 0x18) {
+				if (board.square[5][0] == 0 && board.square[6][0] == 0) {
+					nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + row);
+				}
+			} else if (((board.getCastlingRights() & 0x30) == 0x30)) {
+				if (board.square[3][0] == 0 && board.square[2][0] == 0 && board.square[1][0] == 0) {
+					nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + row);
+				}
+			}
+		} else if ((!toMove) && file == 4 && row == 7) {
+			if ((board.getCastlingRights() & 0x3) == 0x3) {
+				if (board.square[5][7] == 0 && board.square[6][7] == 0) {
+					nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + row);
+				}
+			} else if (((board.getCastlingRights() & 0x6) == 0x6)) {
+				if (board.square[3][7] == 0 && board.square[2][7] == 0 && board.square[1][7] == 0) {
+					nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + row);
+				}
+			}
+		}
 	}
 	
 	// TODO: finish this rewrite
