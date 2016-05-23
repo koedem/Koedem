@@ -70,10 +70,13 @@ public final class UserInteraction {
 				test.printBoard();
 			} else if (command.equals("analyze")) {
 				long time = System.currentTimeMillis();
-				for (int i = 1; i < 10; i++) {
+				for (int i = 1; i < 15; i++) {
 					Search.setNodeCount(0);
 					int[] move = Search.negaMax(test, test.getToMove(), i, i);
 					for (int j = 0; j < move.length - 1; j++) {
+						if (j % 2 == 0) {
+							System.out.print((j + 2) / 2 + ".");
+						}
 						System.out.print(Transformation.numberToMove(move[j]) + " ");
 					}
 					System.out.println(move[move.length - 1]);

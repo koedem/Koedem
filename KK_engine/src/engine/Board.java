@@ -1,5 +1,7 @@
 package engine;
 
+import java.util.Scanner;
+
 /**
  * 
  * @author Kolja Kuehn
@@ -236,6 +238,36 @@ public class Board {
 			} else if (startSquare == 63 || endSquare == 63) {
 				removeCastlingRights((byte) 0x3);
 			}
+			
+			if (square[endSquare / 8][endSquare % 8] == 1 && (endSquare % 8) == 7) {
+				System.out.println("What piece do you want to promote in? [Q/R/B/N]");
+				Scanner sca = new Scanner(System.in);
+				String pieceString = sca.next();
+				byte pieceByte = Transformation.stringToPiece(pieceString);
+				square[endSquare / 8][endSquare % 8] = pieceByte;
+				if (pieceByte == 2 || pieceByte == 3) {
+					materialCount += 200;
+				} else if (pieceByte == 4) {
+					materialCount += 400;
+				} else if (pieceByte == 5) {
+					materialCount += 800;
+				}
+				sca.close();
+			} else if (square[endSquare / 8][endSquare % 8] == -1 && (endSquare % 8) == 0) {
+				System.out.println("What piece do you want to promote in? [q/r/b/n]");
+				Scanner sca = new Scanner(System.in);
+				String pieceString = sca.next();
+				byte pieceByte = Transformation.stringToPiece(pieceString);
+				square[endSquare / 8][endSquare % 8] = pieceByte;
+				if (pieceByte == -2 || pieceByte == -3) {
+					materialCount -= 200;
+				} else if (pieceByte == -4) {
+					materialCount -= 400;
+				} else if (pieceByte == -5) {
+					materialCount -= 800;
+				}
+				sca.close();
+			}
 		} else {
 			System.out.println("Illegal Move. Try again.");
 		}
@@ -330,6 +362,13 @@ public class Board {
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece
 				% 8] = square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8];
 		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = 0;
+		if (square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] == 1 && (moveWithoutPiece % 8) == 7) {
+			square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = 5;
+			materialCount += 800;
+		} else if (square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] == -1 && (moveWithoutPiece % 8) == 0) {
+			square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = -5;
+			materialCount -= 800;
+		}
 	}
 
 	/**
@@ -424,9 +463,18 @@ public class Board {
 				}
 			}
 		}
-		square[moveWithoutPiece / 512][(moveWithoutPiece / 64)
-				% 8] = square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
+		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8]
+				= square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = capturedPiece;
+		if (Math.abs(square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8]) != move / 4096) {
+			if ((moveWithoutPiece / 64) % 8 == 6) {
+				square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = 1;
+				materialCount -= 800;
+			} else if (((moveWithoutPiece / 64) % 8 == 1)) {
+				square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = -1;
+				materialCount += 800;
+			}
+		}
 	}
 
 	/**

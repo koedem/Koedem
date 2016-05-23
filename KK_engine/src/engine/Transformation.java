@@ -102,6 +102,41 @@ public final class Transformation {
 	
 	/**
 	 * 
+	 * @param piece Should be a char containing a the first letter of a piece.
+	 * @return The numerical value of the piece.
+	 */
+	public static byte stringToPiece(String piece) {
+		if ("P".equals(piece)) {
+			return 1;
+		} else if ("N".equals(piece)) {
+			return 2;
+		} else if ("B".equals(piece)) {
+			return 3;
+		} else if ("R".equals(piece)) {
+			return 4;
+		} else if ("Q".equals(piece)) {
+			return 5;
+		} else if ("K".equals(piece)) {
+			return 6;
+		} else if ("p".equals(piece)) {
+			return -1;
+		} else if ("n".equals(piece)) {
+			return -2;
+		} else if ("b".equals(piece)) {
+			return -3;
+		} else if ("r".equals(piece)) {
+			return -4;
+		} else if ("q".equals(piece)) {
+			return -5;
+		} else if ("k".equals(piece)) {
+			return -6;
+		} else {
+			return 0;
+		}
+	}
+	
+	/**
+	 * 
 	 * @param castlingRights Byte castling rights (saved in the board).
 	 * @return String of format KQkq.
 	 */
