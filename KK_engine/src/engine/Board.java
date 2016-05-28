@@ -19,6 +19,7 @@ public class Board {
 										// ra8, e = ke8, f = rh8
 										// 1 means the piece hasn't moved yet.
 	private short materialCount = 0;
+	private int piecesLeft = 32;
 
 	/**
 	 * Constructor, create new Board and setup the chess start position
@@ -39,45 +40,59 @@ public class Board {
 	 *            : Position that the method sets.
 	 */
 	public void setFENPosition(String fen) {
+		materialCount = 0;
 		String position = fen.substring(4);
 		byte file = 0;
 		byte row = 7;
 		for (int i = 0; i < position.length(); i++) {
 			if (position.charAt(i) == 'k') {
 				this.square[file][row] = -6;
+				materialCount -= 10000;
+				piecesLeft++;
 				file++;
 			} else if (position.charAt(i) == 'q') {
 				this.square[file][row] = -5;
+				materialCount -= 900;
 				file++;
 			} else if (position.charAt(i) == 'r') {
 				this.square[file][row] = -4;
+				materialCount -= 500;
 				file++;
 			} else if (position.charAt(i) == 'b') {
 				this.square[file][row] = -3;
+				materialCount -= 300;
 				file++;
 			} else if (position.charAt(i) == 'n') {
 				this.square[file][row] = -2;
+				materialCount -= 300;
 				file++;
 			} else if (position.charAt(i) == 'p') {
 				this.square[file][row] = -1;
+				materialCount -= 100;
 				file++;
 			} else if (position.charAt(i) == 'P') {
 				this.square[file][row] = 1;
+				materialCount += 100;
 				file++;
 			} else if (position.charAt(i) == 'N') {
 				this.square[file][row] = 2;
+				materialCount += 300;
 				file++;
 			} else if (position.charAt(i) == 'B') {
 				this.square[file][row] = 3;
+				materialCount += 300;
 				file++;
 			} else if (position.charAt(i) == 'R') {
 				this.square[file][row] = 4;
+				materialCount += 500;
 				file++;
 			} else if (position.charAt(i) == 'Q') {
 				this.square[file][row] = 5;
+				materialCount += 900;
 				file++;
 			} else if (position.charAt(i) == 'K') {
 				this.square[file][row] = 6;
+				materialCount += 10000;
 				file++;
 			} else if (position.charAt(i) == '/') {
 				row--;
@@ -126,11 +141,12 @@ public class Board {
 	 * print file by file from lowest to highest.
 	 */
 	public void printBoard() {
+		piecesLeft = 0;
 		System.out.println();
 		for (int i = 7; i >= 0; i--) {
 
 			for (int j = 0; j < 8; j++) {
-				System.out.print(Transformation.numberToPiece(square[j][i]) + " ");
+				System.out.print(Transformation.numberToPiece(square[j][i], this) + " ");
 			}
 
 			System.out.println();
@@ -160,7 +176,7 @@ public class Board {
 	 *            : the move stored as string. Has to be "decoded" first.
 	 * @return whether the game ends or not
 	 */
-	public boolean makeMove(String move) {
+	public boolean makeMove(String move, Scanner sc) {
 		boolean gameEnd = false;
 		if (move.charAt(2) == '-') {
 			int startSquare = Transformation.squareToNumber(move.substring(0, 2));
@@ -255,8 +271,7 @@ public class Board {
 				sca.close();
 			} else if (square[endSquare / 8][endSquare % 8] == -1 && (endSquare % 8) == 0) {
 				System.out.println("What piece do you want to promote in? [q/r/b/n]");
-				Scanner sca = new Scanner(System.in);
-				String pieceString = sca.next();
+				String pieceString = sc.next();
 				byte pieceByte = Transformation.stringToPiece(pieceString);
 				square[endSquare / 8][endSquare % 8] = pieceByte;
 				if (pieceByte == -2 || pieceByte == -3) {
@@ -266,7 +281,6 @@ public class Board {
 				} else if (pieceByte == -5) {
 					materialCount -= 800;
 				}
-				sca.close();
 			}
 		} else {
 			System.out.println("Illegal Move. Try again.");
@@ -511,5 +525,21 @@ public class Board {
 	 */
 	public void addCastlingRights(byte change) {
 		this.castlingRights = (byte) (this.castlingRights | change);
+	}
+	
+	public int getPiecesLeft() {
+		return piecesLeft;
+	}
+	
+	public void setPiecesLeft(int newCount) {
+		piecesLeft = newCount;
+	}
+	
+	public void incrementPiecesLeft() {
+		piecesLeft++;
+	}
+	
+	public void decrementPiecesLeft() {
+		piecesLeft--;
 	}
 }

@@ -9,10 +9,6 @@ import java.util.ArrayList;
  */
 public final class Search {
 	
-	/**
-	 * Used to count the nodes we calculate in a Search.
-	 */
-	private static long nodeCount = 0;
 	
 	/**
 	 * this function generates all legal moves and then plays a random one
@@ -38,7 +34,7 @@ public final class Search {
 	 * @param depthLeft : how many plies are left in the recursion
 	 * @return the principle variation we get for the position
 	 */
-	public static int[] negaMax(Board board, boolean toMove, int depth, int depthLeft) {
+	public static int[] negaMax(Board board, boolean toMove, int depth, int depthLeft, int alphaBound) {
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
 		ArrayList<Integer> moves = MoveGenerator.collectMoves(board, toMove);
@@ -52,7 +48,7 @@ public final class Search {
 			board.makeMove(move);
 			int[] innerPV = new int[depth + 1];
 			if (depthLeft > 1) {
-				innerPV = negaMax(board, !toMove, depth, depthLeft - 1);
+				innerPV = negaMax(board, !toMove, depth, depthLeft - 1, -principleVariation[depth]);
 				innerPV[depth] = -innerPV[depth];
 				if (innerPV[depth] > 0) {
 					innerPV[depth]--;
@@ -60,17 +56,24 @@ public final class Search {
 					innerPV[depth]++;
 				}
 			} else if (depthLeft == 1) {
-				//ArrayList<Integer> qsearch = qSearch(board, !toMove);
-				//innerPV[depth] = -qsearch.get(0);
-				innerPV[depth] = Evaluation.evaluation(board, toMove);
+				if (UserInteraction.qSearch) {
+					ArrayList<Integer> qsearch = qSearch(board, !toMove, -principleVariation[depth]);
+					innerPV[depth] = -qsearch.get(0);
+				} else {
+					innerPV[depth] = Evaluation.evaluation(board, toMove, principleVariation[depth]);
+				}
 			}
 			if (innerPV[depth] > principleVariation[depth]) {
 				principleVariation = innerPV;
 				principleVariation[depth - depthLeft] = move;
 				
+				
 			}
 			board.unmakeMove(move, capturedPiece);
 			board.addCastlingRights(castlingRights);
+			if (principleVariation[depth] > alphaBound) {
+				return principleVariation;
+			}
 		}
 		return principleVariation;
 	}
@@ -83,22 +86,22 @@ public final class Search {
 	 * @param toMove : Who to move it is.
 	 * @return The best chain of captures and its evaluation. (can be empty if captures are bad)
 	 */
-	public static ArrayList<Integer> qSearch(Board board, boolean toMove) {
+	public static ArrayList<Integer> qSearch(Board board, boolean toMove, int alphaBound) {
 		ArrayList<Integer> principleVariation = new ArrayList<Integer>(1);
-		int eval = Evaluation.evaluation(board, toMove);
+		int eval = Evaluation.evaluation(board, toMove, alphaBound);
 		principleVariation.add(eval);
 		if (Math.abs(eval) > 5000) {
 			principleVariation.set(0, -10001);
 			return principleVariation;
 		}
-		if (nodeCount % 10000000 == 0) {
-			board.printBoard();
-		}
+		//if (nodeCount % 10000000 == 0) {
+			//board.printBoard();
+		//}
 		ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, toMove);
 		for (Integer capture : captures) {
 			byte capturedPiece = board.getSquare((capture / 8) % 8, capture % 8);
 			board.makeMove(capture);
-			ArrayList<Integer> innerPV = qSearch(board, !toMove);
+			ArrayList<Integer> innerPV = qSearch(board, !toMove, -principleVariation.get(0));
 			if (innerPV.get(0) == -10001) {
 				principleVariation = new ArrayList<Integer>(1);
 				principleVariation.add(0, 10000);
@@ -111,32 +114,13 @@ public final class Search {
 				principleVariation.add(capture);
 			}
 			board.unmakeMove(capture, capturedPiece);
+			if (principleVariation.get(0) > alphaBound) {
+				return principleVariation;
+			}
 		}
 		return principleVariation;
 	}
-	
-	/**
-	 * 
-	 * @param newNodeCount 
-	 */
-	public static void setNodeCount(long newNodeCount) {
-		nodeCount = newNodeCount;
-	}
-	
-	/**
-	 * 
-	 * @return nodeCount
-	 */
-	public static long getNodeCount() {
-		return nodeCount;
-	}
-	
-	/**
-	 * Add one to nodeCount.
-	 */
-	public static void nodeCountPlusOne() {
-		nodeCount++;
-	}
+
 	private Search() {
 	}
 }

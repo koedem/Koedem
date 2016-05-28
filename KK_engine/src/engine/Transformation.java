@@ -13,7 +13,8 @@ public final class Transformation {
 	 * @param piece : number between -6 and +6 used as representation of a piece
 	 * @return String-representation of the piece
 	 */
-	public static String numberToPiece(int piece) {
+	public static String numberToPiece(int piece, Board board) {
+		board.incrementPiecesLeft();
 		switch (piece) {
 			case 6: return "K"; 
 			case 5: return "Q"; 
@@ -21,7 +22,7 @@ public final class Transformation {
 			case 3: return "B";
 			case 2: return "N"; 
 			case 1: return "P";
-			case 0: return "-"; 
+			case 0: board.decrementPiecesLeft(); return "-"; 
 			case -6: return "k"; 
 			case -5: return "q"; 
 			case -4: return "r";
@@ -88,9 +89,9 @@ public final class Transformation {
 	 * @param move Number of the move in internal representation
 	 * @return Move as String (readable to human)
 	 */
-	public static String numberToMove(int move) {
+	public static String numberToMove(int move, Board board) {
 		String moveText = "";
-		moveText = numberToPiece(move / 4096);
+		moveText = numberToPiece(move / 4096, board);
 		if (moveText.equals("P")) {
 			moveText = "";
 		}
@@ -155,6 +156,45 @@ public final class Transformation {
 			castling += "q";
 		}
 		return castling;
+	}
+	
+	public static String nodeCountOutput(long nodeCount) {
+		long count = nodeCount;
+		String output = "";
+		if (nodeCount > 100000) {
+			output = "kN";
+			if (nodeCount > 100000000) {
+				output = "mN";
+				count /= 1000;
+			}
+			count /= 1000;
+		} else {
+			output = "N";
+		}
+		output = count + output;
+		return output;
+	}
+	
+	/**
+	 * 
+	 * @param time The time, given in milli seconds.
+	 * @return Time in a human readable format.
+	 */
+	public static String timeUsedOutput(long time) {
+		long timeUsed = time;
+		if (time > 60000) {
+			timeUsed /= 1000;
+			if (time > 3600000) {
+				timeUsed /= 60;
+				if (time > 86400000) {
+					timeUsed /= 60;
+					return (timeUsed / 24) + "d " + (timeUsed % 24) + "h";
+				}
+				return (timeUsed / 60) + "h" + (timeUsed % 24) + "m";
+			}
+			return (timeUsed / 60) + "m " + (timeUsed % 24) + "s";
+		}
+		return (timeUsed / 1000) + "s " + (timeUsed % 1000) + "ms";
 	}
 	
 	private Transformation() {

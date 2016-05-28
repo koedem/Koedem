@@ -1,11 +1,19 @@
 package engine;
 
+import java.util.ArrayList;
+
 /**
  * 
  * @author Kolja Kuehn
  *
  */
 public final class Evaluation {
+	
+	/**
+	 * Used to count the nodes we calculate in a Search.
+	 */
+	private static long nodeCount = 0;
+	private static long abortedNodes = 0;
 
 	/**
 	 * 
@@ -13,8 +21,15 @@ public final class Evaluation {
 	 * @param toMove : who to move it is
 	 * @return evaluation based on material
 	 */
-	public static int evaluation(Board board, boolean toMove) {
-		int eval = 0;
+	public static int evaluation(Board board, boolean toMove, int lowBound) {
+		int eval = board.getMaterialCount();
+		if (toMove && eval + 100 < lowBound) {
+			abortedNodes++;
+			return eval;
+		} else if (!toMove && -eval + 100 < lowBound) {
+			abortedNodes++;
+			return -eval;
+		}
 		int advancement = 0;
 		for (byte i = 0; i < 8; i++) {
 			for (byte j = 0; j < 8; j++) {
@@ -58,14 +73,56 @@ public final class Evaluation {
 		eval += (Math.random() * 200) - 100;
 		
 		return eval;*/
-		eval = board.getMaterialCount();
+		ArrayList whiteMove = MoveGenerator.collectMoves(board, true);
+		ArrayList blackMove = MoveGenerator.collectMoves(board, false);
+		eval += whiteMove.size() - blackMove.size();
 		eval += advancement;
+		if (board.getPiecesLeft() > 25) {
+			if (board.square[3][0] != 5) {
+				eval -= (board.getPiecesLeft() - 25) * 5;
+			}
+			if (board.square[3][7] != -5) {
+				eval += (board.getPiecesLeft() - 25) * 5;
+			}
+		}
 		if (!toMove) {
 			eval = (short) -eval;
 		}
 		//eval += (Math.random() * 100) - 50;
-		Search.nodeCountPlusOne();
+		nodeCount++;
 		return eval;
+	}
+	
+	/**
+	 * 
+	 * @param newNodeCount 
+	 */
+	public static void setNodeCount(long newNodeCount) {
+		nodeCount = newNodeCount;
+	}
+	
+	/**
+	 * 
+	 * @return nodeCount
+	 */
+	public static long getNodeCount() {
+		return nodeCount;
+	}
+	
+	/**
+	 * 
+	 * @param newNodeCount 
+	 */
+	public static void setAbortedNodes(long newNodeCount) {
+		abortedNodes = newNodeCount;
+	}
+	
+	/**
+	 * 
+	 * @return nodeCount
+	 */
+	public static long getAbortedNodes() {
+		return abortedNodes;
 	}
 	
 	private Evaluation() {
