@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 /**
  * 
- * @author Kolja Kuehn
+ * @author Anon
  *
  */
 public class Board {
@@ -48,7 +48,6 @@ public class Board {
 			if (position.charAt(i) == 'k') {
 				this.square[file][row] = -6;
 				materialCount -= 10000;
-				piecesLeft++;
 				file++;
 			} else if (position.charAt(i) == 'q') {
 				this.square[file][row] = -5;

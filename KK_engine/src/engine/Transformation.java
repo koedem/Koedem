@@ -2,7 +2,7 @@ package engine;
 
 /**
  * 
- * @author Kolja Kuehn
+ * @author Anon
  *
  */
 public final class Transformation {
@@ -14,7 +14,6 @@ public final class Transformation {
 	 * @return String-representation of the piece
 	 */
 	public static String numberToPiece(int piece, Board board) {
-		board.incrementPiecesLeft();
 		switch (piece) {
 			case 6: return "K"; 
 			case 5: return "Q"; 
@@ -22,7 +21,7 @@ public final class Transformation {
 			case 3: return "B";
 			case 2: return "N"; 
 			case 1: return "P";
-			case 0: board.decrementPiecesLeft(); return "-"; 
+			case 0: return "-"; 
 			case -6: return "k"; 
 			case -5: return "q"; 
 			case -4: return "r";

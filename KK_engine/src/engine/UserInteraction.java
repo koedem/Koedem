@@ -5,12 +5,12 @@ import java.util.Scanner;
 
 /**
  * 
- * @author Kolja Kuehn
+ * @author Anon
  *
  */
 public final class UserInteraction {
 	
-	public static boolean qSearch = false;
+	public static boolean qSearch = true;
 	
 	/**
 	 * Interactive loop for user interaction
@@ -43,7 +43,7 @@ public final class UserInteraction {
 					int depthCap = 15;
 					long time = System.currentTimeMillis();
 					for (int i = 1; i <= depthCap; i++) {
-						move = Search.negaMax(test, test.getToMove(), i, i, 30000);
+						move = Search.negaMax(test, test.getToMove(), i, i, -30000, 30000);
 						for (int j = 0; j < move.length - 1; j++) {
 							System.out.print(Transformation.numberToMove(move[j], test) + " ");
 						}
@@ -96,7 +96,7 @@ public final class UserInteraction {
 				Evaluation.setNodeCount(0);
 				Evaluation.setAbortedNodes(0);
 				for (int i = 1; i < 15; i++) {
-					int[] move = Search.negaMax(test, test.getToMove(), i, i, 30000);
+					int[] move = Search.negaMax(test, test.getToMove(), i, i, -30000, 30000);
 					if (Math.abs(move[move.length - 1]) < 9000) {
 						for (int j = 0; j < move.length - 1; j++) {
 							if (j % 2 == 0) {
@@ -123,7 +123,7 @@ public final class UserInteraction {
 					}
 				}
 			} else if (command.equals("q search")) {
-				ArrayList<Integer> reversePV = Search.qSearch(test, test.getToMove(), 30000);
+				ArrayList<Integer> reversePV = Search.qSearch(test, test.getToMove(), -30000, 30000);
 				System.out.println(reversePV.get(0));
 				reversePV.remove(0);
 				for (Integer capture : reversePV) {

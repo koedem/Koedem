@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 /**
  * 
- * @author Kolja Kuehn
+ * @author Anon
  *
  */
 public final class MoveGenerator {
