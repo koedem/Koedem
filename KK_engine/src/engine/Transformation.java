@@ -13,7 +13,7 @@ public final class Transformation {
 	 * @param piece : number between -6 and +6 used as representation of a piece
 	 * @return String-representation of the piece
 	 */
-	public static String numberToPiece(int piece, Board board) {
+	public static String numberToPiece(int piece) {
 		switch (piece) {
 			case 6: return "K"; 
 			case 5: return "Q"; 
@@ -88,9 +88,9 @@ public final class Transformation {
 	 * @param move Number of the move in internal representation
 	 * @return Move as String (readable to human)
 	 */
-	public static String numberToMove(int move, Board board) {
+	public static String numberToMove(int move) {
 		String moveText = "";
-		moveText = numberToPiece(move / 4096, board);
+		moveText = numberToPiece(move / 4096);
 		if (moveText.equals("P")) {
 			moveText = "";
 		}

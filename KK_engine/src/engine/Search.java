@@ -10,6 +10,8 @@ import java.util.ArrayList;
 public final class Search {
 	
 	
+	public static long qNodes = 0;
+	
 	/**
 	 * this function generates all legal moves and then plays a random one
 	 * on the board and returns that move as int.
@@ -46,7 +48,7 @@ public final class Search {
 		principleVariation[depth] = alpha - 1;
 		ArrayList<Integer> moves = MoveGenerator.collectMoves(board, toMove);
 		for (Integer move : moves) {
-			if (depthLeft == 1) {
+			/*if (depthLeft == 1) {
 				int a = 0;
 			} else if (depthLeft == 2) {
 				int a = 0;
@@ -60,7 +62,7 @@ public final class Search {
 				int a = 0;
 			} else if (depthLeft == 7) {
 				int a = 0;
-			}
+			}*/
 			byte capturedPiece = board.getSquare((move / 8) % 8, move % 8);
 			if (Math.abs(capturedPiece) == 6) {
 				principleVariation[depth] = 10000;
@@ -93,7 +95,7 @@ public final class Search {
 			}
 			board.unmakeMove(move, capturedPiece);
 			board.addCastlingRights(castlingRights);
-			if (principleVariation[depth] > beta) {
+			if (principleVariation[depth] >= beta) {
 				return principleVariation;
 			}
 		}
@@ -114,7 +116,7 @@ public final class Search {
 		int alpha = alphaBound;
 		int beta = betaBound;
 		ArrayList<Integer> principleVariation = new ArrayList<Integer>(1);
-		int eval = Evaluation.evaluation(board, toMove, alphaBound);
+		int eval = Evaluation.evaluation(board, toMove, alpha);
 		principleVariation.add(alpha);
 		if (eval > principleVariation.get(0)) {
 			principleVariation.set(0, eval);
@@ -124,14 +126,22 @@ public final class Search {
 			principleVariation.set(0, -10001);
 			return principleVariation;
 		}
+		if (principleVariation.get(0) >= beta) {
+			return principleVariation;
+		}
 		//if (nodeCount % 10000000 == 0) {
 			//board.printBoard();
 		//}
 		ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, toMove);
+		if (captures.size() > 0 && captures.get(0) == -1) {
+			principleVariation.set(0, 10000);
+			return principleVariation;
+		}
 		for (Integer capture : captures) {
 			byte capturedPiece = board.getSquare((capture / 8) % 8, capture % 8);
 			board.makeMove(capture);
 			ArrayList<Integer> innerPV = qSearch(board, !toMove, -beta, -alpha);
+			qNodes++;
 			if (innerPV.get(0) == -10001) {
 				principleVariation = new ArrayList<Integer>(1);
 				principleVariation.add(0, 10000);
@@ -145,7 +155,7 @@ public final class Search {
 				alpha = principleVariation.get(0);
 			}
 			board.unmakeMove(capture, capturedPiece);
-			if (principleVariation.get(0) > beta) {
+			if (principleVariation.get(0) >= beta) {
 				return principleVariation;
 			}
 		}

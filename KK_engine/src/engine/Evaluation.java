@@ -23,13 +23,13 @@ public final class Evaluation {
 	 */
 	public static int evaluation(Board board, boolean toMove, int lowBound) {
 		int eval = board.getMaterialCount();
-		/*if (toMove && eval + 100 < lowBound) {
+		if (toMove && eval + 100 < lowBound) {
 			abortedNodes++;
 			return eval;
 		} else if (!toMove && -eval + 100 < lowBound) {
 			abortedNodes++;
 			return -eval;
-		}*/
+		}
 		int pieceCounter = 0;
 		int advancement = 0;
 		for (byte i = 0; i < 8; i++) {

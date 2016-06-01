@@ -1,5 +1,7 @@
 package engine;
 
+import java.util.Hashtable;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -20,6 +22,8 @@ public class Board {
 										// 1 means the piece hasn't moved yet.
 	private short materialCount = 0;
 	private int piecesLeft = 32;
+	
+	private Hashtable<List<Byte>, Node> hashTable = new Hashtable<List<Byte>, Node>();
 
 	/**
 	 * Constructor, create new Board and setup the chess start position
@@ -145,7 +149,7 @@ public class Board {
 		for (int i = 7; i >= 0; i--) {
 
 			for (int j = 0; j < 8; j++) {
-				System.out.print(Transformation.numberToPiece(square[j][i], this) + " ");
+				System.out.print(Transformation.numberToPiece(square[j][i]) + " ");
 			}
 
 			System.out.println();
@@ -177,9 +181,9 @@ public class Board {
 	 */
 	public boolean makeMove(String move, Scanner sc) {
 		boolean gameEnd = false;
-		if (move.charAt(2) == '-') {
-			int startSquare = Transformation.squareToNumber(move.substring(0, 2));
-			int endSquare = Transformation.squareToNumber(move.substring(3, 5));
+		if (move.substring(0, 5).equals("move ") && move.charAt(7) == '-') {
+			int startSquare = Transformation.squareToNumber(move.substring(5, 7));
+			int endSquare = Transformation.squareToNumber(move.substring(8, 10));
 			if (Math.abs(square[endSquare / 8][endSquare % 8]) == 6) {
 				gameEnd = true;
 			}
@@ -256,8 +260,7 @@ public class Board {
 			
 			if (square[endSquare / 8][endSquare % 8] == 1 && (endSquare % 8) == 7) {
 				System.out.println("What piece do you want to promote in? [Q/R/B/N]");
-				Scanner sca = new Scanner(System.in);
-				String pieceString = sca.next();
+				String pieceString = sc.nextLine();
 				byte pieceByte = Transformation.stringToPiece(pieceString);
 				square[endSquare / 8][endSquare % 8] = pieceByte;
 				if (pieceByte == 2 || pieceByte == 3) {
@@ -267,10 +270,9 @@ public class Board {
 				} else if (pieceByte == 5) {
 					materialCount += 800;
 				}
-				sca.close();
 			} else if (square[endSquare / 8][endSquare % 8] == -1 && (endSquare % 8) == 0) {
 				System.out.println("What piece do you want to promote in? [q/r/b/n]");
-				String pieceString = sc.next();
+				String pieceString = sc.nextLine();
 				byte pieceByte = Transformation.stringToPiece(pieceString);
 				square[endSquare / 8][endSquare % 8] = pieceByte;
 				if (pieceByte == -2 || pieceByte == -3) {
@@ -540,5 +542,15 @@ public class Board {
 	
 	public void decrementPiecesLeft() {
 		piecesLeft--;
+	}
+	
+	public void putHashTableElement(Node node) {
+		hashTable.put(node.squares, node);
+	}
+	
+	public void getHashTable() {
+		for (Node value : hashTable.values()) {
+			value.print();
+		}
 	}
 }
