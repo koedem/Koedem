@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public final class Search {
 	
 	
-	public static long qNodes = 0;
+	protected static long qNodes = 0;
 	
 	/**
 	 * this function generates all legal moves and then plays a random one
@@ -45,10 +45,14 @@ public final class Search {
 		int alpha = alphaBound;
 		int beta = betaBound;
 		int[] principleVariation = new int[depth + 1];
-		principleVariation[depth] = alpha - 1;
+		principleVariation[depth] = -30000;
 		ArrayList<Integer> moves = MoveGenerator.collectMoves(board, toMove);
+		if (moves.get(0) == -1) {
+			principleVariation[depth] = 10000;
+			return principleVariation;
+		}
 		for (Integer move : moves) {
-			/*if (depthLeft == 1) {
+			if (depthLeft == 1) {
 				int a = 0;
 			} else if (depthLeft == 2) {
 				int a = 0;
@@ -62,12 +66,8 @@ public final class Search {
 				int a = 0;
 			} else if (depthLeft == 7) {
 				int a = 0;
-			}*/
-			byte capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			if (Math.abs(capturedPiece) == 6) {
-				principleVariation[depth] = 10000;
-				return principleVariation;
 			}
+			byte capturedPiece = board.getSquare((move / 8) % 8, move % 8);
 			byte castlingRights = board.getCastlingRights();
 			board.makeMove(move);
 			int[] innerPV = new int[depth + 1];
@@ -83,6 +83,11 @@ public final class Search {
 				if (UserInteraction.qSearch) {
 					ArrayList<Integer> qsearch = qSearch(board, !toMove, -beta, -alpha);
 					innerPV[depth] = -qsearch.get(0);
+					if (innerPV[depth] > 9000) {
+						innerPV[depth]--;
+					} else if (innerPV[depth] < -9000) {
+						innerPV[depth]++;
+					}
 				} else {
 					innerPV[depth] = Evaluation.evaluation(board, toMove, alpha);
 				}
@@ -90,12 +95,20 @@ public final class Search {
 			if (innerPV[depth] > principleVariation[depth]) {
 				principleVariation = innerPV;
 				principleVariation[depth - depthLeft] = move;
-				alpha = principleVariation[depth];
-				
+				if (innerPV[depth] > alpha) {
+					alpha = principleVariation[depth];
+				}
 			}
 			board.unmakeMove(move, capturedPiece);
 			board.addCastlingRights(castlingRights);
 			if (principleVariation[depth] >= beta) {
+				return principleVariation;
+			}
+		}
+		if (principleVariation[depth] == -9999) {
+			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
+			if (captures.size() == 0 || captures.get(0) != -1) {
+				principleVariation[depth] = 0;
 				return principleVariation;
 			}
 		}
@@ -116,22 +129,21 @@ public final class Search {
 		int alpha = alphaBound;
 		int beta = betaBound;
 		ArrayList<Integer> principleVariation = new ArrayList<Integer>(1);
+		principleVariation.add(-30000);
 		int eval = Evaluation.evaluation(board, toMove, alpha);
-		principleVariation.add(alpha);
 		if (eval > principleVariation.get(0)) {
 			principleVariation.set(0, eval);
-			alpha = eval;
+			if (eval > alpha) {
+				alpha = eval;
+			}
 		}
 		if (Math.abs(eval) > 5000) {
-			principleVariation.set(0, -10001);
+			principleVariation.set(0, -10000);
 			return principleVariation;
 		}
 		if (principleVariation.get(0) >= beta) {
 			return principleVariation;
 		}
-		//if (nodeCount % 10000000 == 0) {
-			//board.printBoard();
-		//}
 		ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, toMove);
 		if (captures.size() > 0 && captures.get(0) == -1) {
 			principleVariation.set(0, 10000);
@@ -142,7 +154,7 @@ public final class Search {
 			board.makeMove(capture);
 			ArrayList<Integer> innerPV = qSearch(board, !toMove, -beta, -alpha);
 			qNodes++;
-			if (innerPV.get(0) == -10001) {
+			if (innerPV.get(0) == -10000) {
 				principleVariation = new ArrayList<Integer>(1);
 				principleVariation.add(0, 10000);
 				board.unmakeMove(capture, capturedPiece);
@@ -152,7 +164,9 @@ public final class Search {
 			if (innerPV.get(0) > principleVariation.get(0)) {
 				principleVariation = innerPV;
 				principleVariation.add(capture);
-				alpha = principleVariation.get(0);
+				if (innerPV.get(0) > alpha) {
+					alpha = principleVariation.get(0);
+				}
 			}
 			board.unmakeMove(capture, capturedPiece);
 			if (principleVariation.get(0) >= beta) {

@@ -10,7 +10,7 @@ import java.util.Scanner;
  */
 public final class UserInteraction {
 	
-	public static boolean qSearch = true;
+	protected static boolean qSearch = true;
 	
 	/**
 	 * Interactive loop for user interaction
@@ -72,6 +72,10 @@ public final class UserInteraction {
 				test.printBoard();
 			} else if (command.equals("print legal moves")) {
 				ArrayList<Integer> moves = MoveGenerator.collectMoves(test, test.getToMove());
+				if (moves.get(0) == -1) {
+					System.out.println("Illegal position.");
+					continue;
+				}
 				for (Integer move : moves) {
 					System.out.println(Transformation.numberToMove(move));
 				}
@@ -82,7 +86,7 @@ public final class UserInteraction {
 					continue;
 				}
 				if (captures.get(0) == -1) {
-					System.out.println("Illegal Position.");
+					System.out.println("Illegal position.");
 					continue;
 				}
 				for (Integer capture : captures) {
@@ -105,12 +109,12 @@ public final class UserInteraction {
 							System.out.print(Transformation.numberToMove(move[j]) + " ");
 						}
 						System.out.println(move[move.length - 1]);
-						System.out.println("Node count: " + Transformation.nodeCountOutput((Evaluation.getNodeCount()
-					+ Evaluation.getAbortedNodes())) + "("  + Transformation.nodeCountOutput(Evaluation.getNodeCount())
+						System.out.println("Node count: " + Transformation.nodeCountOutput(((Evaluation.getNodeCount()
+					+ Evaluation.getAbortedNodes()))) + "("  + Transformation.nodeCountOutput( Evaluation.getNodeCount())
 					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(Search.qNodes) + ". Time used: "
 								+ Transformation.timeUsedOutput((System.currentTimeMillis() - time)));
 					} else {
-						for (int j = 0; j < move.length - 3; j++) {
+						for (int j = 0; j < move.length - 2; j++) {
 							if (j % 2 == 0) {
 								System.out.print((j + 2) / 2 + ".");
 							}

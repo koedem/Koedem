@@ -4,10 +4,10 @@ import java.util.List;
 
 public class Node {
 
-	public int evaluation;
-	public int depth;
-	public int bestMove;
-	public List<Byte> squares;
+	protected int evaluation;
+	protected int depth;
+	protected int bestMove;
+	protected List<Byte> squares;
 	
 	public Node(Board board, int eval, int depth, int bestMove, List<Byte> squares) {
 		evaluation = eval;

@@ -16,52 +16,60 @@ public final class MoveGenerator {
 	 * @return array of ints, each containing a move
 	 */
 	public static ArrayList<Integer> collectMoves(Board board, boolean toMove) {
-		ArrayList<Integer> captures = new ArrayList<Integer>(1);
+		ArrayList<Integer> captures = new ArrayList<Integer>(1); // save all Qs getting captured
+		ArrayList<Integer> captureR = new ArrayList<Integer>(1); // save all Rs getting captured
+		ArrayList<Integer> captureB = new ArrayList<Integer>(1);
+		ArrayList<Integer> captureN = new ArrayList<Integer>(1);
+		ArrayList<Integer> captureP = new ArrayList<Integer>(1);
 		ArrayList<Integer> nonCaptures = new ArrayList<Integer>(10);
 		for (byte i = 0; i < 8; i++) {
 			for (byte j = 0; j < 8; j++) {
 				
 				if (toMove) {
 					if (board.square[i][j] == 1) {
-						pawnMove(i, j, board, toMove, captures, nonCaptures);
+						pawnMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 						continue;
 					} else if (board.square[i][j] == 2) {
-						knightMove(i, j, board, toMove, captures, nonCaptures);
+						knightMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 						continue;
 					} else if (board.square[i][j] == 3) {
-						bishopMove(i, j, board, toMove, captures, nonCaptures);
+						bishopMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 						continue;
 					} else if (board.square[i][j] == 4) {
-						rookMove(i, j, board, toMove, captures, nonCaptures);
+						rookMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 						continue;
 					} else if (board.square[i][j] == 5) { // queen moves like rook + bishop
-						rookMove(i, j, board, toMove, captures, nonCaptures);
-						bishopMove(i, j, board, toMove, captures, nonCaptures);
+						rookMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
+						bishopMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 					} else if (board.square[i][j] == 6) {
-						kingMove(i, j, board, toMove, captures, nonCaptures);
+						kingMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 					}
 				} else {
 					if (board.square[i][j] == -1) {
-						pawnMove(i, j, board, toMove, captures, nonCaptures);
+						pawnMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 						continue;
 					} else if (board.square[i][j] == -2) {
-						knightMove(i, j, board, toMove, captures, nonCaptures);
+						knightMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 						continue;
 					} else if (board.square[i][j] == -3) {
-						bishopMove(i, j, board, toMove, captures, nonCaptures);
+						bishopMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 						continue;
 					} else if (board.square[i][j] == -4) {
-						rookMove(i, j, board, toMove, captures, nonCaptures);
+						rookMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 						continue;
 					} else if (board.square[i][j] == -5) { // queen moves like rook + bishop
-						rookMove(i, j, board, toMove, captures, nonCaptures);
-						bishopMove(i, j, board, toMove, captures, nonCaptures);
+						rookMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
+						bishopMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 					} else if (board.square[i][j] == -6) {
-						kingMove(i, j, board, toMove, captures, nonCaptures);
+						kingMove(i, j, board, toMove, captures, captureR, captureB, captureN, captureP, nonCaptures);
 					}
 				}
 			}
 		}
+		captures.addAll(captureR);
+		captures.addAll(captureB);
+		captures.addAll(captureN);
+		captures.addAll(captureP);
 		captures.addAll(nonCaptures);
 		return captures;
 	}
@@ -143,9 +151,14 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
+	 * @param nonCaptures2 
+	 * @param captureP 
+	 * @param captureN 
+	 * @param captureB 
 	 */
 	private static void pawnMove(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> nonCaptures) {
+			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB,
+			ArrayList<Integer> captureN, ArrayList<Integer> captureP, ArrayList<Integer> nonCaptures) {
 		if (toMove) {
 			if (board.getSquare(file, row + 1) == 0) {
 				nonCaptures.add((1 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1)));
@@ -154,10 +167,40 @@ public final class MoveGenerator {
 				}
 			}
 			if (file > 0 && board.getSquare(file - 1, row + 1) < 0) {
-				captures.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+				if (board.getSquare(file - 1, row + 1) == -6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (board.getSquare(file - 1, row + 1) == -5) {
+					captures.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+				} else if (board.getSquare(file - 1, row + 1) == -4) {
+					captureR.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+				} else if (board.getSquare(file - 1, row + 1) == -3) {
+					captureB.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+				} else if (board.getSquare(file - 1, row + 1) == -2) {
+					captureN.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+				} else if (board.getSquare(file - 1, row + 1) == -1) {
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+				}
 			}
 			if (file < 7 && board.getSquare(file + 1, row + 1) < 0) {
-				captures.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+				if (board.getSquare(file + 1, row + 1) == -6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (board.getSquare(file + 1, row + 1) == -5) {
+					captures.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+				} else if (board.getSquare(file + 1, row + 1) == -4) {
+					captureR.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+				} else if (board.getSquare(file + 1, row + 1) == -3) {
+					captureB.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+				} else if (board.getSquare(file + 1, row + 1) == -2) {
+					captureN.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+				} else if (board.getSquare(file + 1, row + 1) == -1) {
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+				}
 			}
 		} else if (!toMove) {
 			if (board.getSquare(file, row - 1) == 0) {
@@ -167,10 +210,40 @@ public final class MoveGenerator {
 				}
 			}
 			if (file > 0 && board.getSquare(file - 1, row - 1) > 0) {
-				captures.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+				if (board.getSquare(file - 1, row - 1) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (board.getSquare(file - 1, row - 1) == 5) {
+					captures.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+				} else if (board.getSquare(file - 1, row - 1) == 4) {
+					captureR.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+				} else if (board.getSquare(file - 1, row - 1) == 3) {
+					captureB.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+				} else if (board.getSquare(file - 1, row - 1) == 2) {
+					captureN.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+				} else if (board.getSquare(file - 1, row - 1) == 1) {
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+				}
 			}
 			if (file < 7 && board.getSquare(file + 1, row - 1) > 0) {
-				captures.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+				if (board.getSquare(file + 1, row - 1) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (board.getSquare(file + 1, row - 1) == 5) {
+					captures.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+				} else if (board.getSquare(file + 1, row - 1) == 4) {
+					captureR.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+				} else if (board.getSquare(file + 1, row - 1) == 3) {
+					captureB.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+				} else if (board.getSquare(file + 1, row - 1) == 2) {
+					captureN.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+				} else if (board.getSquare(file + 1, row - 1) == 1) {
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+				}
 			}
 		}
 		
@@ -184,14 +257,33 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
+	 * @param nonCaptures2 
+	 * @param captureP 
+	 * @param captureN 
+	 * @param captureB 
 	 */
 	private static void knightMove(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> nonCaptures) {
+			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB, ArrayList<Integer> captureN, ArrayList<Integer> captureP, ArrayList<Integer> nonCaptures) {
 		if (file > 0 && row > 1) {
 			if ((toMove && board.square[file - 1][row - 2] < 0) 
 					|| ((!toMove) && board.square[file - 1][row - 2] > 0)) {
 				
-				captures.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 2)));
+				if (Math.abs(board.square[file - 1][row - 2]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file - 1][row - 2]) == 5) {
+					captures.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 2)));
+				} else if (Math.abs(board.square[file - 1][row - 2]) == 4) {
+					captureR.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 2)));
+				} else if (Math.abs(board.square[file - 1][row - 2]) == 3) {
+					captureB.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 2)));
+				} else if (Math.abs(board.square[file - 1][row - 2]) == 2) {
+					captureN.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 2)));
+				} else if (Math.abs(board.square[file - 1][row - 2]) == 1) {
+					captureP.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 2)));
+				}
 			} else if ((toMove && board.square[file - 1][row - 2] == 0) 
 					|| ((!toMove) && board.square[file - 1][row - 2] == 0)) {
 				
@@ -203,7 +295,22 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file - 1][row + 2] < 0) 
 					|| ((!toMove) && board.square[file - 1][row + 2] > 0)) {
 				
-				captures.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 2)));
+				if (Math.abs(board.square[file - 1][row + 2]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file - 1][row + 2]) == 5) {
+					captures.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 2)));
+				} else if (Math.abs(board.square[file - 1][row + 2]) == 4) {
+					captureR.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 2)));
+				} else if (Math.abs(board.square[file - 1][row + 2]) == 3) {
+					captureB.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 2)));
+				} else if (Math.abs(board.square[file - 1][row + 2]) == 2) {
+					captureN.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 2)));
+				} else if (Math.abs(board.square[file - 1][row + 2]) == 1) {
+					captureP.add((2 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 2)));
+				}
 			} else if ((toMove && board.square[file - 1][row + 2] == 0) 
 					|| ((!toMove) && board.square[file - 1][row + 2] == 0)) {
 				
@@ -215,7 +322,22 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file - 2][row - 1] < 0) 
 					|| ((!toMove) && board.square[file - 2][row - 1] > 0)) {
 				
-				captures.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row - 1)));
+				if (Math.abs(board.square[file - 2][row - 1]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file - 2][row - 1]) == 5) {
+					captures.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file - 2][row - 1]) == 4) {
+					captureR.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file - 2][row - 1]) == 3) {
+					captureB.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file - 2][row - 1]) == 2) {
+					captureN.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file - 2][row - 1]) == 1) {
+					captureP.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row - 1)));
+				}
 			} else if ((toMove && board.square[file - 2][row - 1] == 0) 
 					|| ((!toMove) && board.square[file - 2][row - 1] == 0)) {
 				
@@ -227,7 +349,22 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file - 2][row + 1] < 0) 
 					|| ((!toMove) && board.square[file - 2][row + 1] > 0)) {
 				
-				captures.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row + 1)));
+				if (Math.abs(board.square[file - 2][row + 1]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file - 2][row + 1]) == 5) {
+					captures.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file - 2][row + 1]) == 4) {
+					captureR.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file - 2][row + 1]) == 3) {
+					captureB.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file - 2][row + 1]) == 2) {
+					captureN.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file - 2][row + 1]) == 1) {
+					captureP.add((2 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + (row + 1)));
+				}
 			} else if ((toMove && board.square[file - 2][row + 1] == 0) 
 					|| ((!toMove) && board.square[file - 2][row + 1] == 0)) {
 				
@@ -239,7 +376,22 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file + 2][row - 1] < 0) 
 					|| ((!toMove) && board.square[file + 2][row - 1] > 0)) {
 				
-				captures.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row - 1)));
+				if (Math.abs(board.square[file + 2][row - 1]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file + 2][row - 1]) == 5) {
+					captures.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file + 2][row - 1]) == 4) {
+					captureR.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file + 2][row - 1]) == 3) {
+					captureB.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file + 2][row - 1]) == 2) {
+					captureN.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file + 2][row - 1]) == 1) {
+					captureP.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row - 1)));
+				}
 			} else if ((toMove && board.square[file + 2][row - 1] == 0) 
 					|| ((!toMove) && board.square[file + 2][row - 1] == 0)) {
 				
@@ -250,7 +402,22 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file + 2][row + 1] < 0) 
 					|| ((!toMove) && board.square[file + 2][row + 1] > 0)) {
 				
-				captures.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row + 1)));
+				if (Math.abs(board.square[file + 2][row + 1]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file + 2][row + 1]) == 5) {
+					captures.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file + 2][row + 1]) == 4) {
+					captureR.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file + 2][row + 1]) == 3) {
+					captureB.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file + 2][row + 1]) == 2) {
+					captureN.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file + 2][row + 1]) == 1) {
+					captureP.add((2 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + (row + 1)));
+				}
 			} else if ((toMove && board.square[file + 2][row + 1] == 0) 
 					|| ((!toMove) && board.square[file + 2][row + 1] == 0)) {
 				
@@ -261,7 +428,22 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file + 1][row - 2] < 0) 
 					|| ((!toMove) && board.square[file + 1][row - 2] > 0)) {
 				
-				captures.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 2)));
+				if (Math.abs(board.square[file + 1][row - 2]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file + 1][row - 2]) == 5) {
+					captures.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 2)));
+				} else if (Math.abs(board.square[file + 1][row - 2]) == 4) {
+					captureR.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 2)));
+				} else if (Math.abs(board.square[file + 1][row - 2]) == 3) {
+					captureB.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 2)));
+				} else if (Math.abs(board.square[file + 1][row - 2]) == 2) {
+					captureN.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 2)));
+				} else if (Math.abs(board.square[file + 1][row - 2]) == 1) {
+					captureP.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 2)));
+				}
 			} else if ((toMove && board.square[file + 1][row - 2] == 0) 
 					|| ((!toMove) && board.square[file + 1][row - 2] == 0)) {
 				
@@ -272,7 +454,22 @@ public final class MoveGenerator {
 			if ((toMove && board.square[file + 1][row + 2] < 0) 
 					|| ((!toMove) && board.square[file + 1][row + 2] > 0)) {
 				
-				captures.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 2)));
+				if (Math.abs(board.square[file + 1][row + 2]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file + 1][row + 2]) == 5) {
+					captures.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 2)));
+				} else if (Math.abs(board.square[file + 1][row + 2]) == 4) {
+					captureR.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 2)));
+				} else if (Math.abs(board.square[file + 1][row + 2]) == 3) {
+					captureB.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 2)));
+				} else if (Math.abs(board.square[file + 1][row + 2]) == 2) {
+					captureN.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 2)));
+				} else if (Math.abs(board.square[file + 1][row + 2]) == 1) {
+					captureP.add((2 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 2)));
+				}
 			} else if ((toMove && board.square[file + 1][row + 2] == 0) 
 					|| ((!toMove) && board.square[file + 1][row + 2] == 0)) {
 				
@@ -289,14 +486,34 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
+	 * @param nonCaptures2 
+	 * @param captureP 
+	 * @param captureN 
+	 * @param captureB 
 	 */
 	private static void rookMove(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> nonCaptures) {
+			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB,
+			ArrayList<Integer> captureN, ArrayList<Integer> captureP, ArrayList<Integer> nonCaptures) {
 		byte thisPiece = (byte) Math.abs(board.getSquare(file, row));
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), row, board, toMove);
 			if (squareValue == 0) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + row));
+				if (Math.abs(board.square[file + i][row]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file + i][row]) == 5) {
+					captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + row));
+				} else if (Math.abs(board.square[file + i][row]) == 4) {
+					captureR.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + row));
+				} else if (Math.abs(board.square[file + i][row]) == 3) {
+					captureB.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + row));
+				} else if (Math.abs(board.square[file + i][row]) == 2) {
+					captureN.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + row));
+				} else if (Math.abs(board.square[file + i][row]) == 1) {
+					captureP.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + row));
+				}
 				break;
 			} else if (squareValue == 1) {
 				nonCaptures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + row));
@@ -308,7 +525,22 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), row, board, toMove);
 			if (squareValue == 0) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + row));
+				if (Math.abs(board.square[file - i][row]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file - i][row]) == 5) {
+					captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + row));
+				} else if (Math.abs(board.square[file - i][row]) == 4) {
+					captureR.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + row));
+				} else if (Math.abs(board.square[file - i][row]) == 3) {
+					captureB.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + row));
+				} else if (Math.abs(board.square[file - i][row]) == 2) {
+					captureN.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + row));
+				} else if (Math.abs(board.square[file - i][row]) == 1) {
+					captureP.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + row));
+				}
 				break;
 			} else if (squareValue == 1) {
 				nonCaptures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + row));
@@ -320,7 +552,22 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row + i)));
+				if (Math.abs(board.square[file][row + i]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file][row + i]) == 5) {
+					captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file][row + i]) == 4) {
+					captureR.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file][row + i]) == 3) {
+					captureB.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file][row + i]) == 2) {
+					captureN.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file][row + i]) == 1) {
+					captureP.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row + i)));
+				}
 				break;
 			} else if (squareValue == 1) {
 				nonCaptures.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row + i)));
@@ -332,7 +579,22 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row - i)));
+				if (Math.abs(board.square[file][row - i]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file][row - i]) == 5) {
+					captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file][row - i]) == 4) {
+					captureR.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file][row - i]) == 3) {
+					captureB.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file][row - i]) == 2) {
+					captureN.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file][row - i]) == 1) {
+					captureP.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row - i)));
+				}
 				break;
 			} else if (squareValue == 1) {
 				nonCaptures.add((thisPiece * 4096 + file * 512 + row * 64 + (file) * 8 + (row - i)));
@@ -350,14 +612,34 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
+	 * @param nonCaptures2 
+	 * @param captureP 
+	 * @param captureN 
+	 * @param captureB 
 	 */
 	private static void bishopMove(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> nonCaptures) {
+			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB,
+			ArrayList<Integer> captureN, ArrayList<Integer> captureP, ArrayList<Integer> nonCaptures) {
 		byte thisPiece = (byte) Math.abs(board.getSquare(file, row));
 		for (byte i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row + i)));
+				if (Math.abs(board.square[file + i][row + i]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file + i][row + i]) == 5) {
+					captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file + i][row + i]) == 4) {
+					captureR.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file + i][row + i]) == 3) {
+					captureB.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file + i][row + i]) == 2) {
+					captureN.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file + i][row + i]) == 1) {
+					captureP.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row + i)));
+				}
 				break;
 			} else if (squareValue == 1) {
 				nonCaptures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row + i)));
@@ -369,7 +651,22 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row - i)));
+				if (Math.abs(board.square[file - i][row - i]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file - i][row - i]) == 5) {
+					captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file - i][row - i]) == 4) {
+					captureR.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file - i][row - i]) == 3) {
+					captureB.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file - i][row - i]) == 2) {
+					captureN.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file - i][row - i]) == 1) {
+					captureP.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row - i)));
+				}
 				break;
 			} else if (squareValue == 1) {
 				nonCaptures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row - i)));
@@ -381,10 +678,25 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i)));
+				if (Math.abs(board.square[file + i][row - i]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file + i][row - i]) == 5) {
+					captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file + i][row - i]) == 4) {
+					captureR.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file + i][row - i]) == 3) {
+					captureB.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file + i][row - i]) == 2) {
+					captureN.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i)));
+				} else if (Math.abs(board.square[file + i][row - i]) == 1) {
+					captureP.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i)));
+				}
 				break;
 			} else if (squareValue == 1) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i)));
+				nonCaptures.add((thisPiece * 4096 + file * 512 + row * 64 + (file + i) * 8 + (row - i)));
 			} else {
 				break;
 			}
@@ -393,7 +705,22 @@ public final class MoveGenerator {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row + i)));
+				if (Math.abs(board.square[file - i][row + i]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file - i][row + i]) == 5) {
+					captures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file - i][row + i]) == 4) {
+					captureR.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file - i][row + i]) == 3) {
+					captureB.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file - i][row + i]) == 2) {
+					captureN.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row + i)));
+				} else if (Math.abs(board.square[file - i][row + i]) == 1) {
+					captureP.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row + i)));
+				}
 				break;
 			} else if (squareValue == 1) {
 				nonCaptures.add((thisPiece * 4096 + file * 512 + row * 64 + (file - i) * 8 + (row + i)));
@@ -409,12 +736,32 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
+	 * @param nonCaptures2 
+	 * @param captureP 
+	 * @param captureN 
+	 * @param captureB 
 	 */
 	private static void kingMove(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> nonCaptures) {
+			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB,
+			ArrayList<Integer> captureN, ArrayList<Integer> captureP, ArrayList<Integer> nonCaptures) {
 		if (file > 0) {
 			if ((toMove && board.getSquare(file - 1, row) < 0) || (!toMove && board.getSquare(file - 1, row) > 0)) {
-				captures.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + row));
+				if (Math.abs(board.square[file - 1][row]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file - 1][row]) == 5) {
+					captures.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + row));
+				} else if (Math.abs(board.square[file - 1][row]) == 4) {
+					captureR.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + row));
+				} else if (Math.abs(board.square[file - 1][row]) == 3) {
+					captureB.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + row));
+				} else if (Math.abs(board.square[file - 1][row]) == 2) {
+					captureN.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + row));
+				} else if (Math.abs(board.square[file - 1][row]) == 1) {
+					captureP.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + row));
+				}
 			} else if ((toMove && board.getSquare(file - 1, row) == 0) 
 					|| (!toMove && board.getSquare(file - 1, row) == 0)) {
 				
@@ -424,7 +771,22 @@ public final class MoveGenerator {
 				if ((toMove && board.getSquare(file - 1, row - 1) < 0) 
 						|| (!toMove && board.getSquare(file - 1, row - 1) > 0)) {
 					
-					captures.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+					if (Math.abs(board.square[file - 1][row - 1]) == 6) {
+						//captures.clear();
+						captures.add(-1);
+						captures.set(0, -1);
+						return;
+					} else if (Math.abs(board.square[file - 1][row - 1]) == 5) {
+						captures.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+					} else if (Math.abs(board.square[file - 1][row - 1]) == 4) {
+						captureR.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+					} else if (Math.abs(board.square[file - 1][row - 1]) == 3) {
+						captureB.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+					} else if (Math.abs(board.square[file - 1][row - 1]) == 2) {
+						captureN.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+					} else if (Math.abs(board.square[file - 1][row - 1]) == 1) {
+						captureP.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+					}
 				} else if ((toMove && board.getSquare(file - 1, row - 1) == 0) 
 						|| (!toMove && board.getSquare(file - 1, row - 1) == 0)) {
 					
@@ -435,7 +797,22 @@ public final class MoveGenerator {
 				if ((toMove && board.getSquare(file - 1, row + 1) < 0) 
 						|| (!toMove && board.getSquare(file - 1, row + 1) > 0)) {
 					
-					captures.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+					if (Math.abs(board.square[file - 1][row + 1]) == 6) {
+						//captures.clear();
+						captures.add(-1);
+						captures.set(0, -1);
+						return;
+					} else if (Math.abs(board.square[file - 1][row + 1]) == 5) {
+						captures.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+					} else if (Math.abs(board.square[file - 1][row + 1]) == 4) {
+						captureR.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+					} else if (Math.abs(board.square[file - 1][row + 1]) == 3) {
+						captureB.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+					} else if (Math.abs(board.square[file - 1][row + 1]) == 2) {
+						captureN.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+					} else if (Math.abs(board.square[file - 1][row + 1]) == 1) {
+						captureP.add((6 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+					}
 				} else if ((toMove && board.getSquare(file - 1, row + 1) == 0) 
 						|| (!toMove && board.getSquare(file - 1, row + 1) == 0)) {
 					
@@ -446,7 +823,22 @@ public final class MoveGenerator {
 		
 		if (file < 7) {
 			if ((toMove && board.getSquare(file + 1, row) < 0) || (!toMove && board.getSquare(file + 1, row) > 0)) {
-				captures.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + row));
+				if (Math.abs(board.square[file + 1][row]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file + 1][row]) == 5) {
+					captures.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + row));
+				} else if (Math.abs(board.square[file + 1][row]) == 4) {
+					captureR.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + row));
+				} else if (Math.abs(board.square[file + 1][row]) == 3) {
+					captureB.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + row));
+				} else if (Math.abs(board.square[file + 1][row]) == 2) {
+					captureN.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + row));
+				} else if (Math.abs(board.square[file + 1][row]) == 1) {
+					captureP.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + row));
+				}
 			} else if ((toMove && board.getSquare(file + 1, row) == 0) 
 					|| (!toMove && board.getSquare(file + 1, row) == 0)) {
 				
@@ -456,7 +848,22 @@ public final class MoveGenerator {
 				if ((toMove && board.getSquare(file + 1, row - 1) < 0) 
 						|| (!toMove && board.getSquare(file + 1, row - 1) > 0)) {
 					
-					captures.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+					if (Math.abs(board.square[file + 1][row - 1]) == 6) {
+						//captures.clear();
+						captures.add(-1);
+						captures.set(0, -1);
+						return;
+					} else if (Math.abs(board.square[file + 1][row - 1]) == 5) {
+						captures.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+					} else if (Math.abs(board.square[file + 1][row - 1]) == 4) {
+						captureR.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+					} else if (Math.abs(board.square[file + 1][row - 1]) == 3) {
+						captureB.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+					} else if (Math.abs(board.square[file + 1][row - 1]) == 2) {
+						captureN.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+					} else if (Math.abs(board.square[file + 1][row - 1]) == 1) {
+						captureP.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+					}
 				} else if ((toMove && board.getSquare(file + 1, row - 1) == 0) 
 						|| (!toMove && board.getSquare(file + 1, row - 1) == 0)) {
 					
@@ -467,7 +874,22 @@ public final class MoveGenerator {
 				if ((toMove && board.getSquare(file + 1, row + 1) < 0) 
 						|| (!toMove && board.getSquare(file + 1, row + 1) > 0)) {
 					
-					captures.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+					if (Math.abs(board.square[file + 1][row + 1]) == 6) {
+						//captures.clear();
+						captures.add(-1);
+						captures.set(0, -1);
+						return;
+					} else if (Math.abs(board.square[file + 1][row + 1]) == 5) {
+						captures.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+					} else if (Math.abs(board.square[file + 1][row + 1]) == 4) {
+						captureR.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+					} else if (Math.abs(board.square[file + 1][row + 1]) == 3) {
+						captureB.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+					} else if (Math.abs(board.square[file + 1][row + 1]) == 2) {
+						captureN.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+					} else if (Math.abs(board.square[file + 1][row + 1]) == 1) {
+						captureP.add((6 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+					}
 				} else if ((toMove && board.getSquare(file + 1, row + 1) == 0) 
 						|| (!toMove && board.getSquare(file + 1, row + 1) == 0)) {
 					
@@ -478,7 +900,22 @@ public final class MoveGenerator {
 		
 		if (row > 0) {
 			if ((toMove && board.getSquare(file, row - 1) < 0) || (!toMove && board.getSquare(file, row - 1) > 0)) {
-				captures.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1)));
+				if (Math.abs(board.square[file][row - 1]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file][row - 1]) == 5) {
+					captures.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file][row - 1]) == 4) {
+					captureR.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file][row - 1]) == 3) {
+					captureB.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file][row - 1]) == 2) {
+					captureN.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1)));
+				} else if (Math.abs(board.square[file][row - 1]) == 1) {
+					captureP.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1)));
+				}
 			} else if ((toMove && board.getSquare(file, row - 1) == 0) 
 					|| (!toMove && board.getSquare(file, row - 1) == 0)) {
 				
@@ -487,7 +924,22 @@ public final class MoveGenerator {
 		}
 		if (row < 7) {
 			if ((toMove && board.getSquare(file, row + 1) < 0) || (!toMove && board.getSquare(file, row + 1) > 0)) {
-				captures.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1)));
+				if (Math.abs(board.square[file][row + 1]) == 6) {
+					//captures.clear();
+					captures.add(-1);
+					captures.set(0, -1);
+					return;
+				} else if (Math.abs(board.square[file][row + 1]) == 5) {
+					captures.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file][row + 1]) == 4) {
+					captureR.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file][row + 1]) == 3) {
+					captureB.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file][row + 1]) == 2) {
+					captureN.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1)));
+				} else if (Math.abs(board.square[file][row + 1]) == 1) {
+					captureP.add((6 * 4096 + file * 512 + row * 64 + (file) * 8 + (row + 1)));
+				}
 			} else if ((toMove && board.getSquare(file, row + 1) == 0) 
 					|| (!toMove && board.getSquare(file, row + 1) == 0)) {
 				
@@ -518,7 +970,6 @@ public final class MoveGenerator {
 		}
 	}
 	
-	// TODO: finish this rewrite
 	private static void pawnCapture(byte file, byte row, Board board, boolean toMove, ArrayList<Integer> captures,
 			ArrayList<Integer> captureR, ArrayList<Integer> captureB,
 			ArrayList<Integer> captureN, ArrayList<Integer> captureP) {
@@ -537,7 +988,7 @@ public final class MoveGenerator {
 				} else if (board.getSquare(file - 1, row + 1) == -2) {
 					captureN.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
 				} else if (board.getSquare(file - 1, row + 1) == -1) {
-					captures.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
 				}
 			}
 			if (file < 7 && board.getSquare(file + 1, row + 1) < 0) {
@@ -554,7 +1005,7 @@ public final class MoveGenerator {
 				} else if (board.getSquare(file + 1, row + 1) == -2) {
 					captureN.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
 				} else if (board.getSquare(file + 1, row + 1) == -1) {
-					captures.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
 				}
 			}
 		} else if (!toMove) {
@@ -572,7 +1023,7 @@ public final class MoveGenerator {
 				} else if (board.getSquare(file - 1, row - 1) == 2) {
 					captureN.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
 				} else if (board.getSquare(file - 1, row - 1) == 1) {
-					captures.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
 				}
 			}
 			if (file < 7 && board.getSquare(file + 1, row - 1) > 0) {
@@ -589,7 +1040,7 @@ public final class MoveGenerator {
 				} else if (board.getSquare(file + 1, row - 1) == 2) {
 					captureN.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
 				} else if (board.getSquare(file + 1, row - 1) == 1) {
-					captures.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
 				}
 			}
 		}
