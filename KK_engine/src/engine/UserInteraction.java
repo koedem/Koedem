@@ -36,7 +36,11 @@ public final class UserInteraction {
 						break;
 					}
 					test.changeToMove();
+					test.printBoard();
+					@SuppressWarnings("unused")
+					Node node = new Node(test, 0, 0, 0, test.getToMove());
 					Evaluation.setNodeCount(0);
+					Evaluation.setAbortedNodes(0);
 					int[] move = null;
 					int depthCap = 15;
 					long time = System.currentTimeMillis();
@@ -51,7 +55,7 @@ public final class UserInteraction {
 								+ Transformation.nodeCountOutput(Evaluation.getNodeCount()) + ")" + ". Time used: "
 								+ Transformation.timeUsedOutput((System.currentTimeMillis() - time)));
 						
-						if (System.currentTimeMillis() - time > 1000) {
+						if (System.currentTimeMillis() - time > 2000) {
 							break;
 						}
 					}
@@ -61,7 +65,7 @@ public final class UserInteraction {
 						continue;
 					}
 					test.makeMove(move[0]);
-					test.changeToMove();
+					node = new Node(test, 0, 0, 0, test.getToMove());
 					test.printBoard();
 					for (int i = 0; i < move.length - 1; i++) {
 						System.out.print(Transformation.numberToMove(move[i]) + " ");
@@ -140,6 +144,8 @@ public final class UserInteraction {
 			} else if (command.equals("newgame")) {
 				test = new Board();
 				test.printBoard();
+			} else if (command.equals("Hashtable")) {
+			  test.getHashTable();
 			}
 		}
 		sc.close();

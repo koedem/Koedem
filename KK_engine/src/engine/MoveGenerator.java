@@ -9,6 +9,8 @@ import java.util.ArrayList;
  */
 public final class MoveGenerator {
 
+	private static boolean eP = false;
+	
 	/**
 	 * 
 	 * @param board : the board on which we generate moves
@@ -202,6 +204,17 @@ public final class MoveGenerator {
 					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
 				}
 			}
+			if (eP) {
+				if ((file * 8 + row) - 7 == board.enPassant) {
+					if (row == 4) {
+						captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+					}
+				} else if ((file * 8 + row) + 9 == board.enPassant) {
+					if (row == 4) {
+						captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
+					}
+				}
+			}
 		} else if (!toMove) {
 			if (board.getSquare(file, row - 1) == 0) {
 				nonCaptures.add((1 * 4096 + file * 512 + row * 64 + (file) * 8 + (row - 1)));
@@ -245,8 +258,18 @@ public final class MoveGenerator {
 					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
 				}
 			}
+			if (eP) {
+				if ((file * 8 + row) + 7 == board.enPassant) {
+					if (row == 3) {
+						captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+					}
+				} else if ((file * 8 + row) - 9 == board.enPassant) {
+					if (row == 3) {
+						captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
+					}
+				}
+			}
 		}
-		
 	}
 
 	/**
@@ -950,21 +973,41 @@ public final class MoveGenerator {
 		if (toMove && file == 4 && row == 0) {
 			if ((board.getCastlingRights() & 0x18) == 0x18) {
 				if (board.square[5][0] == 0 && board.square[6][0] == 0) {
-					nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + row);
+					board.square[5][0] = 6;
+					ArrayList<Integer> testLegality = collectCaptures(board, !toMove);
+					if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + row);
+					}
+					board.square[5][0] = 0;
 				}
 			} else if (((board.getCastlingRights() & 0x30) == 0x30)) {
 				if (board.square[3][0] == 0 && board.square[2][0] == 0 && board.square[1][0] == 0) {
-					nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + row);
+					board.square[3][0] = 6;
+					ArrayList<Integer> testLegality = collectCaptures(board, !toMove);
+					if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + row);
+					}
+					board.square[3][0] = 0;
 				}
 			}
 		} else if ((!toMove) && file == 4 && row == 7) {
 			if ((board.getCastlingRights() & 0x3) == 0x3) {
 				if (board.square[5][7] == 0 && board.square[6][7] == 0) {
-					nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + row);
+					board.square[5][7] = -6;
+					ArrayList<Integer> testLegality = collectCaptures(board, !toMove);
+					if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file + 2) * 8 + row);
+					}
+					board.square[5][7] = 0;
 				}
 			} else if (((board.getCastlingRights() & 0x6) == 0x6)) {
 				if (board.square[3][7] == 0 && board.square[2][7] == 0 && board.square[1][7] == 0) {
-					nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + row);
+					board.square[3][7] = -6;
+					ArrayList<Integer> testLegality = collectCaptures(board, !toMove);
+					if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						nonCaptures.add(6 * 4096 + file * 512 + row * 64 + (file - 2) * 8 + row);
+					}
+					board.square[3][7] = 0;
 				}
 			}
 		}

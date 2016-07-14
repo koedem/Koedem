@@ -21,6 +21,7 @@ public final class Evaluation {
 	 * @param toMove : who to move it is
 	 * @return evaluation based on material
 	 */
+	@SuppressWarnings("rawtypes")
 	public static int evaluation(Board board, boolean toMove, int lowBound) {
 		int eval = board.getMaterialCount();
 		if (toMove && eval + 100 < lowBound) {

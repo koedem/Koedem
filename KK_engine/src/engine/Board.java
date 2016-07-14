@@ -20,6 +20,7 @@ public class Board {
 	private byte castlingRights = 0; // 00abcdef a = Ra1, b = Ke1, c = Rh1, d =
 										// ra8, e = ke8, f = rh8
 										// 1 means the piece hasn't moved yet.
+	protected byte enPassant = -1;
 	private short materialCount = 0;
 	private int piecesLeft = 32;
 	
@@ -29,7 +30,7 @@ public class Board {
 	 * Constructor, create new Board and setup the chess start position
 	 */
 	public Board() {
-		setFENPosition("fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq"); // fen
+		setFENPosition("fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); // fen
 																					// of
 																					// start
 																					// position
@@ -46,81 +47,81 @@ public class Board {
 	public void setFENPosition(String fen) {
 		materialCount = 0;
 		String position = fen.substring(4);
+		String[] positions = position.split(" ");
 		byte file = 0;
 		byte row = 7;
-		for (int i = 0; i < position.length(); i++) {
-			if (position.charAt(i) == 'k') {
+		for (int i = 0; i < positions[0].length(); i++) {
+			if (positions[0].charAt(i) == 'k') {
 				this.square[file][row] = -6;
 				materialCount -= 10000;
 				file++;
-			} else if (position.charAt(i) == 'q') {
+			} else if (positions[0].charAt(i) == 'q') {
 				this.square[file][row] = -5;
 				materialCount -= 900;
 				file++;
-			} else if (position.charAt(i) == 'r') {
+			} else if (positions[0].charAt(i) == 'r') {
 				this.square[file][row] = -4;
 				materialCount -= 500;
 				file++;
-			} else if (position.charAt(i) == 'b') {
+			} else if (positions[0].charAt(i) == 'b') {
 				this.square[file][row] = -3;
 				materialCount -= 300;
 				file++;
-			} else if (position.charAt(i) == 'n') {
+			} else if (positions[0].charAt(i) == 'n') {
 				this.square[file][row] = -2;
 				materialCount -= 300;
 				file++;
-			} else if (position.charAt(i) == 'p') {
+			} else if (positions[0].charAt(i) == 'p') {
 				this.square[file][row] = -1;
 				materialCount -= 100;
 				file++;
-			} else if (position.charAt(i) == 'P') {
+			} else if (positions[0].charAt(i) == 'P') {
 				this.square[file][row] = 1;
 				materialCount += 100;
 				file++;
-			} else if (position.charAt(i) == 'N') {
+			} else if (positions[0].charAt(i) == 'N') {
 				this.square[file][row] = 2;
 				materialCount += 300;
 				file++;
-			} else if (position.charAt(i) == 'B') {
+			} else if (positions[0].charAt(i) == 'B') {
 				this.square[file][row] = 3;
 				materialCount += 300;
 				file++;
-			} else if (position.charAt(i) == 'R') {
+			} else if (positions[0].charAt(i) == 'R') {
 				this.square[file][row] = 4;
 				materialCount += 500;
 				file++;
-			} else if (position.charAt(i) == 'Q') {
+			} else if (positions[0].charAt(i) == 'Q') {
 				this.square[file][row] = 5;
 				materialCount += 900;
 				file++;
-			} else if (position.charAt(i) == 'K') {
+			} else if (positions[0].charAt(i) == 'K') {
 				this.square[file][row] = 6;
 				materialCount += 10000;
 				file++;
-			} else if (position.charAt(i) == '/') {
+			} else if (positions[0].charAt(i) == '/') {
 				row--;
 				file = 0;
-			} else if (position.charAt(i) == ' ') {
-				if (position.charAt(i + 1) == 'w') {
-					this.toMove = true;
-				} else if (position.charAt(i + 1) == 'b') {
-					this.toMove = false;
-				} else {
-					throw new IllegalArgumentException();
-				}
-				if (position.charAt(i + 2) == ' ') {
-					setCastlingRights(position.substring(i + 3));
-				} else {
-					throw new IllegalArgumentException();
-				}
-				break;
-			} else {
+			}
+			else {
 				int emptySquares = Character.getNumericValue(position.charAt(i));
 				for (int j = 0; j < emptySquares; j++) {
 					this.square[file][row] = 0;
 					file++;
 				}
 			}
+		}
+		if (positions[1].equals("w")) {
+			this.toMove = true;
+		} else if (positions[1].equals("b")) {
+			this.toMove = false;
+		} else {
+			throw new IllegalArgumentException();
+		}
+		setCastlingRights(positions[2]);
+		if (!(positions[3].equals("-"))) {
+			enPassant = (byte) (Character.getNumericValue(positions[3].charAt(1))
+					+ (Character.getNumericValue(positions[3].charAt(0)) - 10) * 8 - 1);
 		}
 	}
 
@@ -155,7 +156,8 @@ public class Board {
 			System.out.println();
 		}
 		System.out.println();
-		System.out.println(Transformation.numberToCastling(castlingRights) + "\n");
+		System.out.println(Transformation.numberToCastling(castlingRights) + " " 
+				+ Transformation.numberToSquare(enPassant) + "\n");
 		
 	}
 
@@ -246,8 +248,20 @@ public class Board {
 					}
 				}
 			}
+			if (Math.abs(square[startSquare / 8][startSquare % 8]) == 1 && endSquare == enPassant) {
+				System.out.println("en passant successful.");
+				if (toMove) {
+					square[enPassant / 8][(enPassant % 8) - 1] = 0;
+				} else {
+					square[enPassant / 8][(enPassant % 8) + 1] = 0;
+				}
+			}
 			square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8];
 			square[startSquare / 8][startSquare % 8] = 0;
+			enPassant = -1;
+			if (Math.abs(square[endSquare / 8][endSquare % 8]) == 1 && Math.abs(startSquare - endSquare) == 2) {
+				enPassant = (byte) ((startSquare + endSquare) / 2);
+			}
 			if (startSquare == 0 || endSquare == 0) {
 				removeCastlingRights((byte) 0x30);
 			} else if (startSquare == 7 || endSquare == 7) {
@@ -344,7 +358,6 @@ public class Board {
 		if (moveWithoutPiece / 64 == 63 || moveWithoutPiece % 64 == 63) {
 			removeCastlingRights((byte) 0x3);
 		}
-		
 		if (moveWithoutPiece / 64 == 32 && square[4][0] == 6) {
 			if (moveWithoutPiece % 64 == 48) {
 				square[6][0] = 6;
@@ -374,6 +387,17 @@ public class Board {
 				return;
 			}
 		}
+		if (Math.abs(square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8]) == 1
+				&& (moveWithoutPiece % 64) == enPassant) {
+			//System.out.println("en passant successful.");
+			if (toMove) { //TODO: ??? Something goes badly wrong here
+				square[enPassant / 8][(enPassant % 8) - 1] = 0;
+				materialCount += 100;
+			} else {
+				square[enPassant / 8][(enPassant % 8) + 1] = 0;
+				materialCount -= 100;
+			}
+		}
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece
 				% 8] = square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8];
 		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = 0;
@@ -384,6 +408,12 @@ public class Board {
 			square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = -5;
 			materialCount -= 800;
 		}
+		enPassant = -1;
+		if (Math.abs(square[(moveWithoutPiece % 64) / 8][moveWithoutPiece % 8]) == 1 
+				&& Math.abs(moveWithoutPiece / 64 - moveWithoutPiece % 64) == 2) {
+			enPassant = (byte) ((moveWithoutPiece / 64 + moveWithoutPiece % 64) / 2);
+		}
+		changeToMove();
 	}
 
 	/**
@@ -490,6 +520,16 @@ public class Board {
 				materialCount += 800;
 			}
 		}
+		if ((move / 4096 == 1) && (moveWithoutPiece % 64) == enPassant) {
+			if ((moveWithoutPiece % 8) == 5) { // white captured en passant.
+				square[(moveWithoutPiece / 8) % 8][(moveWithoutPiece % 8) - 1] = -1;
+				materialCount -= 100;
+			} else {
+				square[(moveWithoutPiece / 8) % 8][(moveWithoutPiece % 8) + 1] = 1;
+				materialCount += 100;
+			}
+		}
+		changeToMove();
 	}
 
 	/**

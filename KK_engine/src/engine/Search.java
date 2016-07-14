@@ -69,6 +69,7 @@ public final class Search {
 			}
 			byte capturedPiece = board.getSquare((move / 8) % 8, move % 8);
 			byte castlingRights = board.getCastlingRights();
+			byte enPassant = board.enPassant;
 			board.makeMove(move);
 			int[] innerPV = new int[depth + 1];
 			if (depthLeft > 1) {
@@ -99,6 +100,7 @@ public final class Search {
 					alpha = principleVariation[depth];
 				}
 			}
+			board.enPassant = enPassant;
 			board.unmakeMove(move, capturedPiece);
 			board.addCastlingRights(castlingRights);
 			if (principleVariation[depth] >= beta) {
