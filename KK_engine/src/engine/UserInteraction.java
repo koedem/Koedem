@@ -35,9 +35,7 @@ public final class UserInteraction {
 						System.out.println("You captured my King. Congratulations you won the game!");
 						break;
 					}
-					test.changeToMove();
 					test.printBoard();
-					@SuppressWarnings("unused")
 					Node node = new Node(test, 0, 0, 0, test.getToMove());
 					Evaluation.setNodeCount(0);
 					Evaluation.setAbortedNodes(0);
@@ -103,7 +101,7 @@ public final class UserInteraction {
 				long time = System.currentTimeMillis();
 				Evaluation.setNodeCount(0);
 				Evaluation.setAbortedNodes(0);
-				for (int i = 1; i < 15; i++) {
+				for (int i = 1; i < 50; i++) {
 					int[] move = Search.negaMax(test, test.getToMove(), i, i, -30000, 30000);
 					if (Math.abs(move[move.length - 1]) < 9000) {
 						for (int j = 0; j < move.length - 1; j++) {
@@ -146,6 +144,10 @@ public final class UserInteraction {
 				test.printBoard();
 			} else if (command.equals("Hashtable")) {
 			  test.getHashTable();
+			} else if (command.equals("materialOnly on")) {
+				Evaluation.materialOnly = true;
+			} else if (command.equals("materialOnly off")) {
+				Evaluation.materialOnly = false;
 			}
 		}
 		sc.close();

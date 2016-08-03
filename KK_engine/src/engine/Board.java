@@ -11,19 +11,45 @@ import java.util.Scanner;
  */
 public class Board {
 
-	protected byte[][] square = new byte[8][8]; // Pawn = 1, Knight = 2, Bishop
-												// = 3, Rook = 4, Queen = 5,
-												// King = 6;
-	// White pieces get positive values, black pieces negative ones, empty
-	// squares a 0.
+	/**
+	 * Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6. 
+	 * White pieces get positive values, black pieces negative ones, empty squares a 0.
+	 * Format as fileRow, each reduced by one. Example: d6 becomes 3, 5.
+	 */
+	protected byte[][] square = new byte[8][8];
+	
+	/**
+	 * True = white to move, false = black to move.
+	 */
 	private boolean toMove = true;
-	private byte castlingRights = 0; // 00abcdef a = Ra1, b = Ke1, c = Rh1, d =
-										// ra8, e = ke8, f = rh8
-										// 1 means the piece hasn't moved yet.
+	
+	/**
+	 * Consists of following bits: 00abcdef, where a marks the state of the Ra1, b = Ke1, c = Rh1,
+	 * d = ra8, e = ke8, f = rh8. 1 means the piece hasn't moved yet.
+	 */
+	private byte castlingRights = 0;
+	
+	/**
+	 * Square on which a en passant capture would be legal. Default -1 ( = a0).
+	 * Format: fileRow, 26 = 3 * 8 + 2 = d3.
+	 */
 	protected byte enPassant = -1;
+	
+	/**
+	 * Based on standard values, Pawn = 100 CentiPawns, Knight = Bishop = 300 CP, Rook = 500 CP, Queen = 900 CP.
+	 * At every point in search the material count should accurately show the material in the current search position.
+	 */
 	private short materialCount = 0;
+	
+	/**
+	 * From 2 (King vs. King) to 32. TODO: Make accurate through make/unmakeMove.
+	 * Can be imprecise.
+	 */
 	private int piecesLeft = 32;
 	
+	/**
+	 * We store every position that actually occurred in the game.
+	 */
 	private Hashtable<List<Byte>, Node> hashTable = new Hashtable<List<Byte>, Node>();
 
 	/**
@@ -120,8 +146,8 @@ public class Board {
 		}
 		setCastlingRights(positions[2]);
 		if (!(positions[3].equals("-"))) {
-			enPassant = (byte) (Character.getNumericValue(positions[3].charAt(1))
-					+ (Character.getNumericValue(positions[3].charAt(0)) - 10) * 8 - 1);
+			enPassant = (byte) (Character.getNumericValue(positions[3].charAt(1) - 1) // a6 becomes 5
+					+ (Character.getNumericValue(positions[3].charAt(0)) - 10) * 8); // + 0 * 8
 		}
 	}
 
@@ -184,6 +210,7 @@ public class Board {
 	public boolean makeMove(String move, Scanner sc) {
 		boolean gameEnd = false;
 		if (move.substring(0, 5).equals("move ") && move.charAt(7) == '-') {
+			changeToMove();
 			int startSquare = Transformation.squareToNumber(move.substring(5, 7));
 			int endSquare = Transformation.squareToNumber(move.substring(8, 10));
 			if (Math.abs(square[endSquare / 8][endSquare % 8]) == 6) {
@@ -252,16 +279,20 @@ public class Board {
 				System.out.println("en passant successful.");
 				if (toMove) {
 					square[enPassant / 8][(enPassant % 8) - 1] = 0;
+					materialCount += 100;
 				} else {
 					square[enPassant / 8][(enPassant % 8) + 1] = 0;
+					materialCount -= 100;
 				}
 			}
 			square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8];
 			square[startSquare / 8][startSquare % 8] = 0;
+			
 			enPassant = -1;
 			if (Math.abs(square[endSquare / 8][endSquare % 8]) == 1 && Math.abs(startSquare - endSquare) == 2) {
 				enPassant = (byte) ((startSquare + endSquare) / 2);
 			}
+			
 			if (startSquare == 0 || endSquare == 0) {
 				removeCastlingRights((byte) 0x30);
 			} else if (startSquare == 7 || endSquare == 7) {
@@ -364,12 +395,14 @@ public class Board {
 				square[4][0] = 0;
 				square[5][0] = 4; // rook move in castling
 				square[7][0] = 0;
+				changeToMove();
 				return;
 			} else if (moveWithoutPiece % 64 == 16) {
 				square[2][0] = 6;
 				square[4][0] = 0;
 				square[3][0] = 4; // rook move in castling
 				square[0][0] = 0;
+				changeToMove();
 				return;
 			}
 		} else if (moveWithoutPiece / 64 == 39 && square[4][7] == -6) {
@@ -378,19 +411,21 @@ public class Board {
 				square[4][7] = 0;
 				square[5][7] = -4; // rook move in castling
 				square[7][7] = 0;
+				changeToMove();
 				return;
 			} else if (moveWithoutPiece % 64 == 23) {
 				square[2][7] = -6;
 				square[4][7] = 0;
 				square[3][7] = -4; // rook move in castling
 				square[0][7] = 0;
+				changeToMove();
 				return;
 			}
 		}
 		if (Math.abs(square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8]) == 1
 				&& (moveWithoutPiece % 64) == enPassant) {
 			//System.out.println("en passant successful.");
-			if (toMove) { //TODO: ??? Something goes badly wrong here
+			if (toMove) {
 				square[enPassant / 8][(enPassant % 8) - 1] = 0;
 				materialCount += 100;
 			} else {
@@ -401,17 +436,19 @@ public class Board {
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece
 				% 8] = square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8];
 		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = 0;
+		
+		enPassant = -1;
+		if (Math.abs(square[(moveWithoutPiece % 64) / 8][moveWithoutPiece % 8]) == 1 
+				&& Math.abs(moveWithoutPiece / 64 - moveWithoutPiece % 64) == 2) {
+			enPassant = (byte) ((moveWithoutPiece / 64 + moveWithoutPiece % 64) / 2);
+		}
+		
 		if (square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] == 1 && (moveWithoutPiece % 8) == 7) {
 			square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = 5;
 			materialCount += 800;
 		} else if (square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] == -1 && (moveWithoutPiece % 8) == 0) {
 			square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = -5;
 			materialCount -= 800;
-		}
-		enPassant = -1;
-		if (Math.abs(square[(moveWithoutPiece % 64) / 8][moveWithoutPiece % 8]) == 1 
-				&& Math.abs(moveWithoutPiece / 64 - moveWithoutPiece % 64) == 2) {
-			enPassant = (byte) ((moveWithoutPiece / 64 + moveWithoutPiece % 64) / 2);
 		}
 		changeToMove();
 	}
@@ -455,6 +492,7 @@ public class Board {
 			square[2][0] = 0;
 			square[3][0] = 0; // Rook move get undone.
 			square[0][0] = 4;
+			changeToMove();
 			return;
 		}
 		if (move == 26672) { // White castle king side.
@@ -462,6 +500,7 @@ public class Board {
 			square[6][0] = 0;
 			square[5][0] = 0; 
 			square[7][0] = 4;
+			changeToMove();
 			return;
 		}
 		if (move == 27095) { // Black castle queen side.
@@ -469,6 +508,7 @@ public class Board {
 			square[2][7] = 0;
 			square[3][7] = 0; 
 			square[0][7] = -4;
+			changeToMove();
 			return;
 		}
 		if (move == 27127) { // Black castle king side.
@@ -476,6 +516,7 @@ public class Board {
 			square[6][7] = 0;
 			square[5][7] = 0; 
 			square[7][7] = -4;
+			changeToMove();
 			return;
 		}
 		

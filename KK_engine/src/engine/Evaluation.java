@@ -9,6 +9,8 @@ import java.util.ArrayList;
  */
 public final class Evaluation {
 	
+	protected static boolean materialOnly = false;
+	
 	/**
 	 * Used to count the nodes we calculate in a Search.
 	 */
@@ -21,8 +23,14 @@ public final class Evaluation {
 	 * @param toMove : who to move it is
 	 * @return evaluation based on material
 	 */
-	@SuppressWarnings("rawtypes")
 	public static int evaluation(Board board, boolean toMove, int lowBound) {
+		if (materialOnly) {
+			if (toMove) {
+				return board.getMaterialCount();
+			} else {
+				return -board.getMaterialCount();
+			}
+		}
 		int eval = board.getMaterialCount();
 		if (toMove && eval + 100 < lowBound) {
 			abortedNodes++;

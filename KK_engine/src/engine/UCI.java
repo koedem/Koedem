@@ -13,7 +13,6 @@ public final class UCI {
 	static Board board = new Board();
 	
 	public static void uciCommunication() {
-		@SuppressWarnings("resource")
 		Scanner input = new Scanner(System.in);
 		String command = input.nextLine();
 		

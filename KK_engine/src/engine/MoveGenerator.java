@@ -8,8 +8,6 @@ import java.util.ArrayList;
  *
  */
 public final class MoveGenerator {
-
-	private static boolean eP = false;
 	
 	/**
 	 * 
@@ -170,7 +168,6 @@ public final class MoveGenerator {
 			}
 			if (file > 0 && board.getSquare(file - 1, row + 1) < 0) {
 				if (board.getSquare(file - 1, row + 1) == -6) {
-					//captures.clear();
 					captures.add(-1);
 					captures.set(0, -1);
 					return;
@@ -188,7 +185,6 @@ public final class MoveGenerator {
 			}
 			if (file < 7 && board.getSquare(file + 1, row + 1) < 0) {
 				if (board.getSquare(file + 1, row + 1) == -6) {
-					//captures.clear();
 					captures.add(-1);
 					captures.set(0, -1);
 					return;
@@ -204,15 +200,13 @@ public final class MoveGenerator {
 					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
 				}
 			}
-			if (eP) {
-				if ((file * 8 + row) - 7 == board.enPassant) {
-					if (row == 4) {
-						captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
-					}
-				} else if ((file * 8 + row) + 9 == board.enPassant) {
-					if (row == 4) {
-						captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
-					}
+			if ((file * 8 + row) - 7 == board.enPassant) {
+				if (row == 4) {
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row + 1)));
+				}
+			} else if ((file * 8 + row) + 9 == board.enPassant) {
+				if (row == 4) {
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row + 1)));
 				}
 			}
 		} else if (!toMove) {
@@ -258,15 +252,13 @@ public final class MoveGenerator {
 					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
 				}
 			}
-			if (eP) {
-				if ((file * 8 + row) + 7 == board.enPassant) {
-					if (row == 3) {
-						captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
-					}
-				} else if ((file * 8 + row) - 9 == board.enPassant) {
-					if (row == 3) {
-						captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
-					}
+			if ((file * 8 + row) + 7 == board.enPassant) {
+				if (row == 3) {
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file + 1) * 8 + (row - 1)));
+				}
+			} else if ((file * 8 + row) - 9 == board.enPassant) {
+				if (row == 3) {
+					captureP.add((1 * 4096 + file * 512 + row * 64 + (file - 1) * 8 + (row - 1)));
 				}
 			}
 		}
