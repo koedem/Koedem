@@ -67,6 +67,14 @@ public final class Search {
 			} else if (depthLeft == 7) {
 				int a = 0;
 			}
+			int material = board.getMaterialCount();
+			int pawnAdvancement = board.getPawnAdvancement();
+			int knightAdvancement = board.getKnightAdvancement();
+			int bishopAdvancement = board.getBishopAdvancement();
+			int rookAdvancement = board.getRookAdvancement();
+			int queenAdvancement = board.getQueenAdvancement();
+			int kingAdvancement = board.getKingAdvancement();
+			
 			byte capturedPiece = board.getSquare((move / 8) % 8, move % 8);
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.enPassant;
@@ -103,6 +111,14 @@ public final class Search {
 			board.enPassant = enPassant;
 			board.unmakeMove(move, capturedPiece);
 			board.addCastlingRights(castlingRights);
+			
+			if (material != board.getMaterialCount() || pawnAdvancement != board.getPawnAdvancement() 
+					|| knightAdvancement != board.getKnightAdvancement() 
+					|| bishopAdvancement != board.getBishopAdvancement() || rookAdvancement != board.getRookAdvancement()
+					|| queenAdvancement != board.getQueenAdvancement() || kingAdvancement != board.getKingAdvancement()) {
+				System.out.println("Error");
+			}
+			
 			if (principleVariation[depth] >= beta) {
 				return principleVariation;
 			}
