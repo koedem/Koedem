@@ -1,7 +1,5 @@
 package engine;
 
-import java.util.ArrayList;
-
 /**
  * 
  * @author Anon
@@ -9,26 +7,22 @@ import java.util.ArrayList;
  */
 public final class Evaluation {
 	
-	protected static boolean materialOnly = false;
+	private static boolean materialOnly = false;
 	
+	@SuppressWarnings("unused")
 	private final static int PAWNACTIVITYFULL = 0;
+	@SuppressWarnings("unused")
 	private final static int PAWNACTIVITYEMPTY = 0;
-	private final static int KNIGHTACTIVITYFULL = 3;
-	private final static int KNIGHTACTIVITYEMPTY = 3;
-	private final static int BISHOPACTIVITYFULL = 3;
-	private final static int BISHOPACTIVITYEMPTY = 3;
-	private final static int ROOKACTIVITYFULL = 0;
-	private final static int ROOKACTIVITYEMPTY = 4;
-	private final static int QUEENACTIVITYFULL = 0;
-	private final static int QUEENACTIVITYEMPTY = 2;
-	private final static int KINGACTIVITYFULL = -3;
-	private final static int KINGACTIVITYEMPTY = 1;
-	
-	/**
-	 * Used to count the nodes we calculate in a Search.
-	 */
-	private static long nodeCount = 0;
-	private static long abortedNodes = 0;
+	private static final int KNIGHTACTIVITYFULL = 3;
+	private static final int KNIGHTACTIVITYEMPTY = 3;
+	private static final int BISHOPACTIVITYFULL = 3;
+	private static final int BISHOPACTIVITYEMPTY = 3;
+	private static final int ROOKACTIVITYFULL = 0;
+	private static final int ROOKACTIVITYEMPTY = 4;
+	private static final int QUEENACTIVITYFULL = 0;
+	private static final int QUEENACTIVITYEMPTY = 2;
+	private static final int KINGACTIVITYFULL = -3;
+	private static final int KINGACTIVITYEMPTY = 1;
 
 	/**
 	 * 
@@ -38,7 +32,7 @@ public final class Evaluation {
 	 * @return evaluation based on material
 	 */
 	public static int evaluation(Board board, boolean toMove, int lowBound) {
-		if (materialOnly) {
+		if (isMaterialOnly()) {
 			if (toMove) {
 				return board.getMaterialCount();
 			} else {
@@ -46,63 +40,26 @@ public final class Evaluation {
 			}
 		}
 		int eval = board.getMaterialCount();
+		eval += advancementEval(board);
+		eval += pieceSquareTables(board);
+		
 		if (toMove && eval + 100 < lowBound) {
-			abortedNodes++;
+			board.abortedNodes++;
 			return eval;
 		} else if (!toMove && -eval + 100 < lowBound) {
-			abortedNodes++;
+			board.abortedNodes++;
 			return -eval;
-		}
-		int pieceCounter = 0;
-		int advancement = 0;
-		for (byte i = 0; i < 8; i++) {
-			for (byte j = 0; j < 8; j++) {
-				if (board.square[i][j] != 0) {
-					advancement += 2 * j - 7;
-					pieceCounter++;
-				}
-			}
-		}
-
-		if (pieceCounter != board.getPiecesLeft()) {
-			System.out.println("Piece count error.");
-		}
-		if (advancement != board.getPawnAdvancement() + board.getKnightAdvancement() + board.getBishopAdvancement()
-				+ board.getRookAdvancement() + board.getQueenAdvancement() + board.getKingAdvancement()) {
-			System.out.println("Advancement error.");
 		}
 		
 		int[] whiteSize = MoveGenerator.activityEval(board, true);
 		int[] blackSize = MoveGenerator.activityEval(board, false);
-		int whiteActivity = 0;
-		int blackActivity = 0;
-		for (int piece = 0; piece < whiteSize.length; piece++) {
-			whiteActivity += whiteSize[piece];
-			blackActivity += blackSize[piece];
-		}
 		
-		ArrayList<Integer> whiteMove = MoveGenerator.collectMoves(board, true);
-		ArrayList<Integer> blackMove = MoveGenerator.collectMoves(board, false);
+		eval += activityEval(board, whiteSize, blackSize);
 		
-		if (whiteMove.size() != whiteActivity || blackMove.size() != blackActivity) {
-			System.out.println("Activity Error.");
-		}
-		
-		eval += activityEval(board, whiteSize, blackSize); // x3 weight of activity
-		eval += advancementEval(board);
-		eval += pieceSquareTables(board);
-		/*if (board.getPiecesLeft() > 20) {
-			if (board.square[3][0] != 5) {
-				eval -= (board.getPiecesLeft() - 20) * 10;
-			}
-			if (board.square[3][7] != -5) {
-				eval += (board.getPiecesLeft() - 20) * 10;
-			}
-		}*/
 		if (!toMove) {
 			eval = (short) -eval;
 		}
-		nodeCount++;
+		board.nodes++;
 		return eval;
 	}
 	
@@ -137,7 +94,8 @@ public final class Evaluation {
 		advancementEval += (int) (board.getRookAdvancement() * (32.0 - piecesLeft) / 32.0);
 														// x1 on empty board, x0 on full board
 		if (piecesLeft > 16) {
-			advancementEval += board.getKingAdvancement() * 5 * (16 - piecesLeft); // full board x-80
+			advancementEval += board.getKingAdvancement() * Math.abs(board.getKingAdvancement()) * (16 - piecesLeft); 
+												// full board ^2*(-16); Math.abs to not lose the sign of original number
 		} else {
 			advancementEval += (int) (board.getKingAdvancement() * ((16.0 - piecesLeft) / 8.0)); // empty board x2
 		}
@@ -164,9 +122,43 @@ public final class Evaluation {
 					|| board.square[3][1] == 6 || board.square[4][1] == 6 || board.square[5][1] == 6) {
 				pieceSquares -= (board.getPiecesLeft() - 20) * 2;
 			}
+			
 			if (board.square[3][7] == -6 || board.square[4][7] == -6 || board.square[5][7] == -6
 					|| board.square[3][6] == -6 || board.square[4][6] == -6 || board.square[5][6] == -6) {
 				pieceSquares += (board.getPiecesLeft() - 20) * 2;
+			}
+			
+			
+			if (board.square[6][0] == 6 || board.square[7][0] == 6 || board.square[6][1] == 6 
+					|| board.square[7][1] == 6) {
+				if (board.square[5][1] == 1 && board.square[6][1] == 1 
+						&& (board.square[7][1] == 1 || board.square[7][2] == 1)) {
+					pieceSquares += (board.getPiecesLeft() - 20);
+				} else if (board.square[5][1] == 1 && board.square[6][1] == 3 
+						&& board.square[6][2] == 1 && board.square[7][1] == 1) {
+					pieceSquares += (board.getPiecesLeft() - 20) * 2;
+				} else if (board.square[6][1] == 0 && board.square[6][2] == 0 && board.square[7][1] == 1) {
+					pieceSquares -= (board.getPiecesLeft() - 20) * 3;
+				} else if (board.square[6][1] == 0 && board.square[6][2] == 0 && board.square[7][1] == 0 
+						&& board.square[7][2] == 0) {
+					pieceSquares -= (board.getPiecesLeft() - 20) * 5;
+				}
+			}
+			
+			if (board.square[6][7] == -6 || board.square[7][7] == -6 || board.square[6][6] == -6
+					|| board.square[7][6] == -6) {
+				if (board.square[5][6] == -1 && board.square[6][6] == -1 
+						&& (board.square[7][6] == -1 || board.square[7][5] == -1)) {
+					pieceSquares -= (board.getPiecesLeft() - 20);
+				} else if (board.square[5][6] == -1 && board.square[6][6] == -3 
+						&& board.square[6][5] == -1 && board.square[7][6] == -1) {
+					pieceSquares -= (board.getPiecesLeft() - 20) * 2;
+				} else if (board.square[6][6] == 0 && board.square[6][5] == 0 && board.square[7][6] == -1) {
+					pieceSquares += (board.getPiecesLeft() - 20) * 3;
+				} else if (board.square[6][6] == 0 && board.square[6][5] == 0 && board.square[7][6] == 0 
+						&& board.square[7][5] == 0) {
+					pieceSquares += (board.getPiecesLeft() - 20) * 5;
+				}
 			}
 		}
 		
@@ -182,38 +174,14 @@ public final class Evaluation {
 		return pieceSquares;
 	}
 	
-	/**
-	 * 
-	 * @param newNodeCount 
-	 */
-	public static void setNodeCount(long newNodeCount) {
-		nodeCount = newNodeCount;
-	}
-	
-	/**
-	 * 
-	 * @return nodeCount
-	 */
-	public static long getNodeCount() {
-		return nodeCount;
-	}
-	
-	/**
-	 * 
-	 * @param newNodeCount 
-	 */
-	public static void setAbortedNodes(long newNodeCount) {
-		abortedNodes = newNodeCount;
-	}
-	
-	/**
-	 * 
-	 * @return nodeCount
-	 */
-	public static long getAbortedNodes() {
-		return abortedNodes;
-	}
-	
 	private Evaluation() {
+	}
+
+	public static boolean isMaterialOnly() {
+		return materialOnly;
+	}
+
+	public static void setMaterialOnly(boolean materialOnly) {
+		Evaluation.materialOnly = materialOnly;
 	}
 }

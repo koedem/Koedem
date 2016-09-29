@@ -2,16 +2,23 @@ package engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Scanner;
+
+import engineIO.Logging;
+import engineIO.Transformation;
 
 /**
  * 
  * @author Anon
  *
+ * @noinspection ALL
  */
 public class Board {
 
+	public long nodes = 0;
+	public long abortedNodes = 0;
+	public long qNodes = 0;
+	
 	/**
 	 * Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6. 
 	 * White pieces get positive values, black pieces negative ones, empty squares a 0.
@@ -34,7 +41,7 @@ public class Board {
 	 * Square on which a en passant capture would be legal. Default -1 ( = a0).
 	 * Format: fileRow, 26 = 3 * 8 + 2 = d3.
 	 */
-	protected byte enPassant = -1;
+	private byte enPassant = -1;
 	
 	private int moveNumber = 1;
 	
@@ -57,26 +64,53 @@ public class Board {
 	private int knightAdvancement = 0;
 	private int pawnAdvancement = 0;
 	
-	private final int PAWNVALUE = 100;
-	private final int KNIGHTVALUE = 300;
-	private final int BISHOPVALUE = 300;
-	private final int ROOKVALUE = 500;
-	private final int QUEENVALUE = 900;
-	private final int KINGVALUE = 10000;
+	private static final int PAWNVALUE = 100;
+	private static final int KNIGHTVALUE = 325;
+	private static final int BISHOPVALUE = 335;
+	private static final int ROOKVALUE = 500;
+	private static final int QUEENVALUE = 975;
+	private static final int KINGVALUE = 10000;
 	
 	/**
 	 * We store every position that actually occurred in the game.
 	 */
-	private Hashtable<List<Byte>, Node> hashTable = new Hashtable<List<Byte>, Node>();
+	private Hashtable<String, Node> hashTable = new Hashtable<String, Node>();
 
+	private ArrayList<Integer> rootMoves = new ArrayList<Integer>();
+	
 	/**
 	 * Constructor, create new Board and setup the chess start position
 	 */
 	public Board() {
-		setFENPosition("fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); // fen
+		setFENPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); // fen
 																					// of
 																					// start
 																					// position
+	}
+	
+	public Board cloneBoard() {
+		Board clone = new Board();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				clone.square[i][j] = square[i][j];
+			}
+		}
+		clone.setToMove(toMove);
+		clone.setCastlingRights(castlingRights);
+		clone.setEnPassant(enPassant);
+		clone.setMoveNumber(moveNumber);
+		clone.setMaterialCount(materialCount);
+		clone.setPiecesLeft(piecesLeft);
+		
+		clone.setKingAdvancement(kingAdvancement);
+		clone.setQueenAdvancement(queenAdvancement);
+		clone.setRookAdvancement(rookAdvancement);
+		clone.setBishopAdvancement(bishopAdvancement);
+		clone.setKnightAdvancement(knightAdvancement);
+		clone.setPawnAdvancement(pawnAdvancement);
+		
+		clone.setHashTable(hashTable);
+		return clone;
 	}
 
 	/**
@@ -88,15 +122,17 @@ public class Board {
 	 *            : Position that the method sets.
 	 */
 	public void setFENPosition(String fen) {
+		hashTable.clear();
 		materialCount = 0;
 		piecesLeft = 0;
+		enPassant = -1;
 		pawnAdvancement = 0;
 		knightAdvancement = 0;
 		bishopAdvancement = 0;
 		rookAdvancement = 0;
 		queenAdvancement = 0;
 		kingAdvancement = 0;
-		String position = fen.substring(4);
+		String position = fen;
 		String[] positions = position.split(" ");
 		byte file = 0;
 		byte row = 7;
@@ -193,8 +229,8 @@ public class Board {
 		}
 		setCastlingRights(positions[2]);
 		if (!(positions[3].equals("-"))) {
-			enPassant = (byte) (Character.getNumericValue(positions[3].charAt(1) - 1) // a6 becomes 5
-					+ (Character.getNumericValue(positions[3].charAt(0)) - 10) * 8); // + 0 * 8
+			setEnPassant((byte) (Character.getNumericValue(positions[3].charAt(1) - 1) // a6 becomes 5
+					+ (Character.getNumericValue(positions[3].charAt(0)) - 10) * 8)); // + 0 * 8
 		}
 		setMoveNumber(Integer.parseInt(positions[positions.length - 1]));
 	}
@@ -219,18 +255,18 @@ public class Board {
 	 * print file by file from lowest to highest.
 	 */
 	public void printBoard() {
-		System.out.println();
+		Logging.printLine("");
 		for (int i = 7; i >= 0; i--) {
-
+			String row = "";
 			for (int j = 0; j < 8; j++) {
-				System.out.print(Transformation.numberToPiece(square[j][i]) + " ");
+				row += Transformation.numberToPiece(square[j][i]) + " ";
 			}
 
-			System.out.println();
+			Logging.printLine(row);
 		}
-		System.out.println();
-		System.out.println(Transformation.numberToCastling(castlingRights) + " " 
-				+ Transformation.numberToSquare(enPassant) + "\n");
+		Logging.printLine("");
+		Logging.printLine(Transformation.numberToCastling(castlingRights) + " " 
+				+ Transformation.numberToSquare(getEnPassant()) + "\n");
 		
 	}
 
@@ -246,6 +282,12 @@ public class Board {
 		return square[file][row];
 	}
 
+	public void makeMove(String move) {
+		int startSquare = Transformation.squareToNumber(move.substring(0, 2));
+		int endSquare = Transformation.squareToNumber(move.substring(2, 4));
+		makeMove(startSquare * 64 + endSquare);
+	}
+	
 	/**
 	 * Execute the move on the board. Check whether a king was captured in which
 	 * case the game is over.
@@ -257,7 +299,8 @@ public class Board {
 	public boolean makeMove(String move, Scanner sc) {
 		boolean legal = false;
 		if (move.substring(0, 5).equals("move ") && move.charAt(7) == '-') {
-			ArrayList<Integer> legalMoves = MoveGenerator.collectMoves(this, toMove);
+			int[] movesSize = new int[6]; // unused
+			ArrayList<Integer> legalMoves = MoveGenerator.collectMoves(this, toMove, movesSize);
 			int startSquare = Transformation.squareToNumber(move.substring(5, 7));
 			int endSquare = Transformation.squareToNumber(move.substring(8, 10));
 			for (int legalMove : legalMoves) {
@@ -277,13 +320,13 @@ public class Board {
 					square[4][0] = 0;
 					square[5][0] = 4; // rook move in castling
 					square[7][0] = 0;
-					return legal;
+					return true;
 				} else if (endSquare == 16) {
 					square[2][0] = 6;
 					square[4][0] = 0;
 					square[3][0] = 4; // rook move in castling
 					square[0][0] = 0;
-					return legal;
+					return true;
 				}
 			} else if (startSquare == 39 && square[4][7] == -6) {
 				removeCastlingRights((byte) 0x7);
@@ -292,13 +335,13 @@ public class Board {
 					square[4][7] = 0;
 					square[5][7] = -4; // rook move in castling
 					square[7][7] = 0;
-					return legal;
+					return true;
 				} else if (endSquare == 23) {
 					square[2][7] = -6;
 					square[4][7] = 0;
 					square[3][7] = -4; // rook move in castling
 					square[0][7] = 0;
-					return legal;
+					return true;
 				}
 			}
 			int capturedPiece = square[endSquare / 8][endSquare % 8];
@@ -306,58 +349,57 @@ public class Board {
 			    piecesLeft--;
 				if (capturedPiece > 0) {
 					if (capturedPiece == 1) {
-						materialCount -= 100;
+						materialCount -= PAWNVALUE;
 						pawnAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == 2) {
-						materialCount -= 300;
+						materialCount -= KNIGHTVALUE;
 						knightAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == 3) {
-						materialCount -= 300;
+						materialCount -= BISHOPVALUE;
 						bishopAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == 4) {
-						materialCount -= 500;
+						materialCount -= ROOKVALUE;
 						rookAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == 5) {
-						materialCount -= 900;
+						materialCount -= QUEENVALUE;
 						queenAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == 6) {
-						materialCount -= 10000;
+						materialCount -= KINGVALUE;
 						kingAdvancement -= 2 * (endSquare % 8) - 7;
 					}
 				} else {
 					if (capturedPiece == -1) {
-						materialCount += 100;
+						materialCount += PAWNVALUE;
 						pawnAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == -2) {
-						materialCount += 300;
+						materialCount += KNIGHTVALUE;
 						knightAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == -3) {
-						materialCount += 300;
+						materialCount += BISHOPVALUE;
 						bishopAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == -4) {
-						materialCount += 500;
+						materialCount += ROOKVALUE;
 						rookAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == -5) {
-						materialCount += 900;
+						materialCount += QUEENVALUE;
 						queenAdvancement -= 2 * (endSquare % 8) - 7;
 					} else if (capturedPiece == -6) {
-						materialCount += 10000;
+						materialCount += KINGVALUE;
 						kingAdvancement -= 2 * (endSquare % 8) - 7;
 					}
 				}
 			}
-			if (Math.abs(square[startSquare / 8][startSquare % 8]) == 1 && endSquare == enPassant) {
-				System.out.println("en passant successful.");
+			if (Math.abs(square[startSquare / 8][startSquare % 8]) == 1 && endSquare == getEnPassant()) {
 				if (toMove) {
-					square[enPassant / 8][(enPassant % 8) - 1] = 0;
-					materialCount += 100;
+					square[getEnPassant() / 8][(getEnPassant() % 8) - 1] = 0;
+					materialCount += PAWNVALUE;
 					piecesLeft--;
-					pawnAdvancement -= 2 * ((enPassant % 8) - 1) - 7;
+					pawnAdvancement -= 2 * ((getEnPassant() % 8) - 1) - 7;
 				} else {
-					square[enPassant / 8][(enPassant % 8) + 1] = 0;
-					materialCount -= 100;
+					square[getEnPassant() / 8][(getEnPassant() % 8) + 1] = 0;
+					materialCount -= PAWNVALUE;
 					piecesLeft--;
-					pawnAdvancement -= 2 * ((enPassant % 8) + 1) - 7;
+					pawnAdvancement -= 2 * ((getEnPassant() % 8) + 1) - 7;
 				}
 			}
 			square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8];
@@ -377,26 +419,27 @@ public class Board {
 				kingAdvancement += 2 * ((endSquare % 8) - (startSquare % 8));
 			}
 			
-			enPassant = -1;
+			setEnPassant((byte) -1);
 			if (Math.abs(square[endSquare / 8][endSquare % 8]) == 1 && Math.abs(startSquare - endSquare) == 2) {
-				enPassant = (byte) ((startSquare + endSquare) / 2);
+				setEnPassant((byte) ((startSquare + endSquare) / 2));
 			}
 			
 			if (startSquare == 0 || endSquare == 0) {
-				removeCastlingRights((byte) 0x30);
+				removeCastlingRights((byte) 0x20);
 			} else if (startSquare == 7 || endSquare == 7) {
-				removeCastlingRights((byte) 0x6);
+				removeCastlingRights((byte) 0x4);
 			} else if (startSquare == 56 || endSquare == 56) {
-				removeCastlingRights((byte) 0x18);
+				removeCastlingRights((byte) 0x8);
 			} else if (startSquare == 63 || endSquare == 63) {
-				removeCastlingRights((byte) 0x3);
+				removeCastlingRights((byte) 0x1);
 			}
 			
 			if (square[endSquare / 8][endSquare % 8] == 1 && (endSquare % 8) == 7) {
 				pawnAdvancement -= 2 * (endSquare % 8) - 7;
 				
-				System.out.println("What piece do you want to promote in? [Q/R/B/N]");
+				Logging.printLine("What piece do you want to promote in? [Q/R/B/N]");
 				String pieceString = sc.nextLine();
+				Logging.addToLogFile(">> " + pieceString);
 				byte pieceByte = Transformation.stringToPiece(pieceString);
 				square[endSquare / 8][endSquare % 8] = pieceByte;
 				if (pieceByte == 2) {
@@ -415,8 +458,9 @@ public class Board {
 			} else if (square[endSquare / 8][endSquare % 8] == -1 && (endSquare % 8) == 0) {
 				pawnAdvancement -= 2 * (endSquare % 8) - 7;
 				
-				System.out.println("What piece do you want to promote in? [q/r/b/n]");
+				Logging.printLine("What piece do you want to promote in? [q/r/b/n]");
 				String pieceString = sc.nextLine();
+				Logging.addToLogFile(">> " + pieceString);
 				byte pieceByte = Transformation.stringToPiece(pieceString);
 				square[endSquare / 8][endSquare % 8] = pieceByte;
 				if (pieceByte == -2) {
@@ -434,7 +478,7 @@ public class Board {
 				}
 			}
 		} else {
-			System.out.println("Illegal Move. Try again.");
+			Logging.printLine("Illegal Move. Try again.");
 		}
 		if (legal) {
 			moveNumber++;
@@ -503,16 +547,16 @@ public class Board {
 		}
 		if (moveWithoutPiece / 64 == 0 || moveWithoutPiece % 64 == 0) { // If Ra1 moves or captures we can't castle
 																		// queenside anymore.
-			removeCastlingRights((byte) 0x30);
+			removeCastlingRights((byte) 0x20);
 		}
 		if (moveWithoutPiece / 64 == 7 || moveWithoutPiece % 64 == 7) {
-			removeCastlingRights((byte) 0x6);
+			removeCastlingRights((byte) 0x4);
 		}
 		if (moveWithoutPiece / 64 == 56 || moveWithoutPiece % 64 == 56) {
-			removeCastlingRights((byte) 0x18);
+			removeCastlingRights((byte) 0x8);
 		}
 		if (moveWithoutPiece / 64 == 63 || moveWithoutPiece % 64 == 63) {
-			removeCastlingRights((byte) 0x3);
+			removeCastlingRights((byte) 0x1);
 		}
 		if (moveWithoutPiece / 64 == 32 && square[4][0] == 6) {
 			if (moveWithoutPiece % 64 == 48) {
@@ -548,16 +592,16 @@ public class Board {
 			}
 		}
 		if (Math.abs(square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8]) == 1
-				&& (moveWithoutPiece % 64) == enPassant) {
+				&& (moveWithoutPiece % 64) == getEnPassant()) {
 			piecesLeft--;
 			if (toMove) {
-				square[enPassant / 8][(enPassant % 8) - 1] = 0;
-				materialCount += 100;
-				pawnAdvancement -= 2 * ((enPassant % 8) - 1) - 7;
+				square[getEnPassant() / 8][(getEnPassant() % 8) - 1] = 0;
+				materialCount += PAWNVALUE;
+				pawnAdvancement -= 2 * ((getEnPassant() % 8) - 1) - 7;
 			} else {
-				square[enPassant / 8][(enPassant % 8) + 1] = 0;
-				materialCount -= 100;
-				pawnAdvancement -= 2 * ((enPassant % 8) + 1) - 7;
+				square[getEnPassant() / 8][(getEnPassant() % 8) + 1] = 0;
+				materialCount -= PAWNVALUE;
+				pawnAdvancement -= 2 * ((getEnPassant() % 8) + 1) - 7;
 			}
 		}
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece
@@ -578,10 +622,10 @@ public class Board {
 			kingAdvancement += 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
 		}
 		
-		enPassant = -1;
+		setEnPassant((byte) -1);
 		if (Math.abs(square[(moveWithoutPiece % 64) / 8][moveWithoutPiece % 8]) == 1 
 				&& Math.abs(moveWithoutPiece / 64 - moveWithoutPiece % 64) == 2) {
-			enPassant = (byte) ((moveWithoutPiece / 64 + moveWithoutPiece % 64) / 2);
+			setEnPassant((byte) ((moveWithoutPiece / 64 + moveWithoutPiece % 64) / 2));
 		}
 		
 		if (square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] == 1 && (moveWithoutPiece % 8) == 7) {
@@ -748,16 +792,16 @@ public class Board {
 				= square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
 		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = capturedPiece;
 		
-		if ((move / 4096 == 1) && (moveWithoutPiece % 64) == enPassant) {
+		if ((move / 4096 == 1) && (moveWithoutPiece % 64) == getEnPassant()) {
 			piecesLeft++;
 			if ((moveWithoutPiece % 8) == 5) { // white captured en passant.
 				square[(moveWithoutPiece / 8) % 8][(moveWithoutPiece % 8) - 1] = -1;
 				materialCount -= PAWNVALUE;
-				pawnAdvancement += 2 * ((enPassant % 8) - 1) - 7;
+				pawnAdvancement += 2 * ((getEnPassant() % 8) - 1) - 7;
 			} else {
 				square[(moveWithoutPiece / 8) % 8][(moveWithoutPiece % 8) + 1] = 1;
 				materialCount += PAWNVALUE;
-				pawnAdvancement += 2 * ((enPassant % 8) + 1) - 7;
+				pawnAdvancement += 2 * ((getEnPassant() % 8) + 1) - 7;
 			}
 		}
 		changeToMove();
@@ -767,7 +811,7 @@ public class Board {
 	 * 
 	 * @return The material count in centi pawns.
 	 */
-	public int getMaterialCount() {
+	public short getMaterialCount() {
 		return materialCount;
 	}
 	
@@ -779,6 +823,10 @@ public class Board {
 	 */
 	public byte getCastlingRights() {
 		return castlingRights;
+	}
+	
+	public void setCastlingRights(byte castlingRights) {
+		this.castlingRights = castlingRights;
 	}
 	
 	/**
@@ -819,10 +867,8 @@ public class Board {
 		hashTable.put(node.squares, node);
 	}
 	
-	public void getHashTable() {
-		for (Node value : hashTable.values()) {
-			value.print();
-		}
+	public Hashtable<String, Node> getHashTable() {
+		return hashTable;
 	}
 
 	public int getQueenAdvancement() {
@@ -879,5 +925,44 @@ public class Board {
 
 	public void setMoveNumber(int moveNumber) {
 		this.moveNumber = moveNumber;
+	}
+	
+	public String getSquareString() {
+		String squareString = "";
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				squareString += square[i][j];
+			}
+		}
+		if (toMove) {
+		    squareString += (byte) 0;
+		} else {
+		    squareString += (byte) 1;
+		}
+		return squareString;
+	}
+
+	public byte getEnPassant() {
+		return enPassant;
+	}
+
+	public void setEnPassant(byte enPassant) {
+		this.enPassant = enPassant;
+	}
+
+	public void setMaterialCount(short materialCount) {
+		this.materialCount = materialCount;
+	}
+
+	public void setHashTable(Hashtable<String, Node> hashTable) {
+		this.hashTable = hashTable;
+	}
+
+	public ArrayList<Integer> getRootMoves() {
+		return rootMoves;
+	}
+
+	public void setRootMoves(ArrayList<Integer> rootMoves) {
+		this.rootMoves = rootMoves;
 	}
 }

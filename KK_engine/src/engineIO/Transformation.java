@@ -1,4 +1,4 @@
-package engine;
+package engineIO;
 
 /**
  * 
@@ -64,7 +64,7 @@ public final class Transformation {
 	 * @return square in String form
 	 */
 	public static String numberToSquare(int square) {
-		String squareText = "";
+		String squareText;
 		
 		switch(square / 8) {
 			case 0: squareText = "a"; break;
@@ -89,8 +89,7 @@ public final class Transformation {
 	 * @return Move as String (readable to human)
 	 */
 	public static String numberToMove(int move) {
-		String moveText = "";
-		moveText = numberToPiece(move / 4096);
+		String moveText = numberToPiece(move / 4096);
 		if (moveText.equals("P")) {
 			moveText = "";
 		}
@@ -159,7 +158,7 @@ public final class Transformation {
 	
 	public static String nodeCountOutput(long nodeCount) {
 		long count = nodeCount;
-		String output = "";
+		String output;
 		if (nodeCount > 100000) {
 			output = "kN";
 			if (nodeCount > 100000000) {
