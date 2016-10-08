@@ -16,11 +16,11 @@ public class Logging {
 	
 	public static void setup() {
 		if (logging) {
-			try {
+			/*try {
 				System.out.println("Logfile at " + logFile.getCanonicalPath());
 			} catch (IOException e1) {
 				e1.printStackTrace();
-			}
+			}*/
 			try {
 				writer = new BufferedWriter(new FileWriter(logFile));
 			} catch (IOException e) {

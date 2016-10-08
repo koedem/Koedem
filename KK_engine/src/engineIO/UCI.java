@@ -29,6 +29,8 @@ public final class UCI {
 	private static int baseTime = 100;
 	private static int incTime = 2;
 	private static int minLeft = 20;
+	private static int kingSafety = 10;
+	private static int dynamism = 10;
 
 	private static boolean threadFinished = false;
 
@@ -45,6 +47,7 @@ public final class UCI {
 	public static void uciCommunication() {
 		Logging.setup();
 		String command = "";
+		Logging.printLine(engineName + " by Tom Marvolo.");
 		while (!command.equals("quit")) {
 			command = sc.nextLine();
 			Logging.addToLogFile(">> " + command);
@@ -138,6 +141,18 @@ public final class UCI {
 			} catch (NumberFormatException e) {
 				Logging.printLine("Illegal value for option 'MinLeft'.");
 			}
+		} else if (parameters[2].equals("KingSafety")) {
+			try {
+				kingSafety = Integer.parseInt(parameters[4]);
+			} catch (NumberFormatException e) {
+				Logging.printLine("Illegal value for option 'KingSafety'.");
+			}
+		} else if (parameters[2].equals("Dynamism")) {
+			try {
+				dynamism = Integer.parseInt(parameters[4]);
+			} catch (NumberFormatException e) {
+				Logging.printLine("Illegal value for option 'Dynamism'.");
+			}
 		}
 	}
 
@@ -148,6 +163,8 @@ public final class UCI {
 		Logging.printLine("option name BaseTime type spin default 100 min 1 max 10000");
 		Logging.printLine("option name IncTime type spin default 5000 min 1 max 10000");
 		Logging.printLine("option name MinTime type spin default 500 min 1 max 10000");
+		Logging.printLine("option name KingSafety type spin default 10 min 1 max 1000");
+		Logging.printLine("option name Dynamism type spin default 10 min 1 max 1000");
 		
 		Logging.printLine("uciok");
 	}
@@ -161,13 +178,13 @@ public final class UCI {
 		String parameters[] = command.split(" ");
 		for (int i = 0; i < parameters.length; i++) {
 			if (parameters[i].equals("startpos")) {
-				board.setFENPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+				board = new Board();
 			} else if (parameters[i].equals("fen")) {
 				String fen = "";
 				for (int j = 0; j < 6; j++) {
 					fen += parameters[i + 1 + j] + " ";
 				}
-				board.setFENPosition(fen);
+				board = new Board(fen);
 				i += 6;
 			} else if (parameters[i].equals("moves")) {
 				board.getHashTable().clear();
@@ -351,5 +368,21 @@ public final class UCI {
 	}
 	
 	private UCI() {
+	}
+
+	public static int getKingSafety() {
+		return kingSafety;
+	}
+
+	public static void setKingSafety(int kingSafety) {
+		UCI.kingSafety = kingSafety;
+	}
+
+	public static int getDynamism() {
+		return dynamism;
+	}
+
+	public static void setDynamism(int dynamism) {
+		UCI.dynamism = dynamism;
 	}
 }
