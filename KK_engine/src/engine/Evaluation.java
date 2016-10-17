@@ -1,6 +1,7 @@
 package engine;
 
 import engineIO.UCI;
+import test.Assertions;
 
 /**
  * 
@@ -34,6 +35,10 @@ public final class Evaluation {
 	 * @return evaluation based on material
 	 */
 	public static int evaluation(Board board, boolean toMove, int lowBound) {
+
+		assert Assertions.advancement(board);
+		assert Assertions.materialCount(board);
+		
 		if (isMaterialOnly()) {
 			if (toMove) {
 				return board.getMaterialCount();
@@ -92,17 +97,17 @@ public final class Evaluation {
 	private static int advancementEval(Board board) {
 		int advancementEval = 0;
 		int piecesLeft = board.getPiecesLeft();
-		advancementEval += (int) (board.getPawnAdvancement() * ((32.0 - piecesLeft) / 16.0));
+		advancementEval += (int) (board.getPieceAdvancement(1) * ((32.0 - piecesLeft) / 16.0));
 														// x2 on empty board, x1 on full board
-		advancementEval += board.getKnightAdvancement() * 1; // always x1
-		advancementEval += (int) (board.getRookAdvancement() * (32.0 - piecesLeft) / 32.0);
+		advancementEval += board.getPieceAdvancement(2) * 1; // always x1
+		advancementEval += (int) (board.getPieceAdvancement(4) * (32.0 - piecesLeft) / 32.0);
 														// x1 on empty board, x0 on full board
 		if (board.getDangerToWhiteKing() + board.getDangerToBlackKing() > 32) {
-			advancementEval += board.getKingAdvancement() * Math.abs(board.getKingAdvancement()) 
+			advancementEval += board.getPieceAdvancement(6) * Math.abs(board.getPieceAdvancement(6)) 
 					* (32 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())); 
 												// full board ^2*(-16); Math.abs to not lose the sign of original number
 		} else {
-			advancementEval += (int) (board.getKingAdvancement() * 
+			advancementEval += (int) (board.getPieceAdvancement(6) * 
 					((32.0 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())) / 8.0)); // empty board x2
 		}
 		return advancementEval;

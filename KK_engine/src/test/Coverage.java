@@ -1,23 +1,43 @@
 package test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
-import org.junit.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import org.junit.Ignore;
+import org.junit.Test;
 
 import engine.Board;
-import engine.MoveGenerator;
-import engine.Search;
+import engine.MultiThreadSearch;
 import engineIO.Logging;
+import engineIO.UCI;
 
 public class Coverage {
+	
+	private static ExecutorService executor = Executors.newFixedThreadPool(5);
 
 	@Test
-	public void coverage() {
+	public void coverage() throws InterruptedException, ExecutionException {
 		Logging.setup();
 		Board test = new Board();
-		int[] movesSize = new int[6];
-		test.setRootMoves(MoveGenerator.collectMoves(test, test.getToMove(), movesSize));
-		int[] pv = Search.rootMax(test, test.getToMove(), 7, 10000000);
+		MultiThreadSearch thread =  new MultiThreadSearch(test, 9, 1, true, 2000000000);
+		UCI.setThreadFinished(false);
+		Future<int[]> future = executor.submit(thread);
+		
+		int[] pv = null;
+		
+		pv = future.get();
+		
 		assertTrue(pv != null);
 	}
+	
+	@Ignore
+	@Test
+	public void uci() {
+		UCI.uciCommunication();
+	}
+	
 }

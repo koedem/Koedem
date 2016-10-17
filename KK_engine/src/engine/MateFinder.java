@@ -39,7 +39,7 @@ public class MateFinder {
 				bestMove = moveIndex;
 			}
 			board.setEnPassant(enPassant);
-			board.unmakeMove(moves.get(moveIndex), capturedPiece);
+			board.unmakeMove(moves.get(moveIndex), capturedPiece, castlingRights);
 			board.addCastlingRights(castlingRights);
 			if (innerPV[depth] < -9000) {
 				moves.remove(moveIndex);
@@ -105,7 +105,7 @@ public class MateFinder {
 				principleVariation[depth - depthLeft] = move;
 			}
 			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece);
+			board.unmakeMove(move, capturedPiece, castlingRights);
 			board.addCastlingRights(castlingRights);
 			
 			if (depthLeft % 2 == 1 && principleVariation[depth] >= 0) {

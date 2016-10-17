@@ -89,13 +89,15 @@ public final class Transformation {
 	 * @return Move as String (readable to human)
 	 */
 	public static String numberToMove(int move) {
-		String moveText = numberToPiece(move / 4096);
-		if (moveText.equals("P")) {
-			moveText = "";
+		String moveText;
+		if (move < (1 << 13)) {
+			moveText = numberToSquare((move / 64) % 64);
+			moveText += numberToSquare(move % 64);
+		} else {
+			moveText = numberToSquare((move / 512) % 64);
+			moveText += numberToSquare((move / 8) % 64);
+			moveText += numberToPiece(move % 8).toLowerCase();
 		}
-		moveText += numberToSquare((move / 64) % 64);
-		moveText += "-";
-		moveText += numberToSquare(move % 64);
 		return moveText;
 	}
 	
@@ -104,7 +106,7 @@ public final class Transformation {
 	 * @param piece Should be a char containing a the first letter of a piece.
 	 * @return The numerical value of the piece.
 	 */
-	public static byte stringToPiece(String piece) {
+	public static byte stringToPiece(char piece) {
 		if ("P".equals(piece)) {
 			return 1;
 		} else if ("N".equals(piece)) {

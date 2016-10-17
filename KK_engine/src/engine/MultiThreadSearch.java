@@ -47,8 +47,7 @@ public class MultiThreadSearch implements Callable<int[]> {
 		}
 		UCI.printEngineOutput("", move, board, board.getToMove(), time);
 
-		Logging.printLine("bestmove " + Transformation.numberToSquare((move[0] / 64) % 64) 
-				+ Transformation.numberToSquare(move[0] % 64));
+		Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
 		return move;
 	}
 }

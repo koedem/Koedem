@@ -5,3 +5,10 @@
 .settings
 .recommenders/
 bin/
+
+#logs
+2016*
+
+#other programs
+../FastInvSqrt/
+..StringParser/

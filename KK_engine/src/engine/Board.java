@@ -2,8 +2,6 @@ package engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Scanner;
-
 import engineIO.Logging;
 import engineIO.Transformation;
 
@@ -15,10 +13,12 @@ import engineIO.Transformation;
  */
 public class Board {
 	
-	private static int QUEENDANGER = 12;
-	private static int ROOKDANGER = 5;
-	private static int BISHOPDANGER = 3;
-	private static int KNIGHTDANGER = 3;	
+	private static final int QUEENDANGER = 12;
+	private static final int ROOKDANGER = 5;
+	private static final int BISHOPDANGER = 3;
+	private static final int KNIGHTDANGER = 3;
+	
+	private static final int[] PIECEDANGER = { 0, 0, KNIGHTDANGER, BISHOPDANGER, ROOKDANGER, QUEENDANGER, 0 };
 
 	public long nodes = 0;
 	public long abortedNodes = 0;
@@ -64,19 +64,17 @@ public class Board {
 	private int dangerToWhiteKing = 0;
 	private int dangerToBlackKing = 0;
 	
-	private int kingAdvancement = 0;
-	private int queenAdvancement = 0;
-	private int rookAdvancement = 0;
-	private int bishopAdvancement = 0;
-	private int knightAdvancement = 0;
-	private int pawnAdvancement = 0;
+	private int[] pieceAdvancement = { 0, 0, 0, 0, 0, 0, 0 }; // empty square, pawn, knight, bishop, rook, queen, king
 	
-	private static final int PAWNVALUE = 100;
-	private static final int KNIGHTVALUE = 325;
-	private static final int BISHOPVALUE = 335;
-	private static final int ROOKVALUE = 500;
-	private static final int QUEENVALUE = 975;
-	private static final int KINGVALUE = 10000;
+	public static final int PAWNVALUE = 100;
+	public static final int KNIGHTVALUE = 325;
+	public static final int BISHOPVALUE = 335;
+	public static final int ROOKVALUE = 500;
+	public static final int QUEENVALUE = 975;
+	public static final int KINGVALUE = 10000;
+	
+	public static final int[] PIECEVALUE = { 0, PAWNVALUE, KNIGHTVALUE, BISHOPVALUE,
+			ROOKVALUE, QUEENVALUE, KINGVALUE };
 	
 	/**
 	 * We store every position that actually occurred in the game.
@@ -112,13 +110,12 @@ public class Board {
 		clone.setMoveNumber(moveNumber);
 		clone.setMaterialCount(materialCount);
 		clone.setPiecesLeft(piecesLeft);
+		clone.setDangerToWhiteKing(dangerToWhiteKing);
+		clone.setDangerToBlackKing(dangerToBlackKing);
 		
-		clone.setKingAdvancement(kingAdvancement);
-		clone.setQueenAdvancement(queenAdvancement);
-		clone.setRookAdvancement(rookAdvancement);
-		clone.setBishopAdvancement(bishopAdvancement);
-		clone.setKnightAdvancement(knightAdvancement);
-		clone.setPawnAdvancement(pawnAdvancement);
+		for (int piece = 1; piece <= 6; piece++) {
+			clone.setPieceAdvancement(piece, pieceAdvancement[piece]);
+		}
 		
 		clone.setHashTable(hashTable);
 		return clone;
@@ -140,81 +137,81 @@ public class Board {
 				this.square[file][row] = -6;
 				materialCount -= KINGVALUE;
 				piecesLeft++;
-				kingAdvancement += 2 * row - 7;
+				pieceAdvancement[6] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'q') {
 				this.square[file][row] = -5;
 				materialCount -= QUEENVALUE;
 				dangerToWhiteKing += QUEENDANGER;
 				piecesLeft++;
-				queenAdvancement += 2 * row - 7;
+				pieceAdvancement[5] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'r') {
 				this.square[file][row] = -4;
 				materialCount -= ROOKVALUE;
 				dangerToWhiteKing += ROOKDANGER;
 				piecesLeft++;
-				rookAdvancement += 2 * row - 7;
+				pieceAdvancement[4] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'b') {
 				this.square[file][row] = -3;
 				materialCount -= BISHOPVALUE;
 				dangerToWhiteKing += BISHOPDANGER;
 				piecesLeft++;
-				bishopAdvancement += 2 * row - 7;
+				pieceAdvancement[3] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'n') {
 				this.square[file][row] = -2;
 				materialCount -= KNIGHTVALUE;
 				dangerToWhiteKing += KNIGHTDANGER;
 				piecesLeft++;
-				knightAdvancement += 2 * row - 7;
+				pieceAdvancement[2] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'p') {
 				this.square[file][row] = -1;
 				materialCount -= PAWNVALUE;
 				piecesLeft++;
-				pawnAdvancement += 2 * row - 7;
+				pieceAdvancement[1] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'P') {
 				this.square[file][row] = 1;
 				materialCount += PAWNVALUE;
 				piecesLeft++;
-				pawnAdvancement += 2 * row - 7;
+				pieceAdvancement[1] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'N') {
 				this.square[file][row] = 2;
 				materialCount += KNIGHTVALUE;
 				setDangerToBlackKing(getDangerToBlackKing() + KNIGHTDANGER);
 				piecesLeft++;
-				knightAdvancement += 2 * row - 7;
+				pieceAdvancement[2] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'B') {
 				this.square[file][row] = 3;
 				materialCount += BISHOPVALUE;
 				setDangerToBlackKing(getDangerToBlackKing() + BISHOPDANGER);
 				piecesLeft++;
-				bishopAdvancement += 2 * row - 7;
+				pieceAdvancement[3] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'R') {
 				this.square[file][row] = 4;
 				materialCount += ROOKVALUE;
 				setDangerToBlackKing(getDangerToBlackKing() + ROOKDANGER);
 				piecesLeft++;
-				rookAdvancement += 2 * row - 7;
+				pieceAdvancement[4] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'Q') {
 				this.square[file][row] = 5;
 				materialCount += QUEENVALUE;
 				setDangerToBlackKing(getDangerToBlackKing() + QUEENDANGER);
 				piecesLeft++;
-				queenAdvancement += 2 * row - 7;
+				pieceAdvancement[5] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == 'K') {
 				this.square[file][row] = 6;
 				materialCount += KINGVALUE;
 				piecesLeft++;
-				kingAdvancement += 2 * row - 7;
+				pieceAdvancement[6] += 2 * row - 7;
 				file++;
 			} else if (positions[0].charAt(i) == '/') {
 				row--;
@@ -289,178 +286,170 @@ public class Board {
 		return square[file][row];
 	}
 
+	/**
+	 * This method takes a move in UCI communication style and executes that move on the board.
+	 * Examples: e2e4 = Pawn e2 to e4; e1g1 = short castle; e7e8q = Pawn e7 to e8 promotes into queen
+	 * 
+	 * @param move The move to play.
+	 */
 	public void makeMove(String move) {
 		int startSquare = Transformation.squareToNumber(move.substring(0, 2));
 		int endSquare = Transformation.squareToNumber(move.substring(2, 4));
-		makeMove(startSquare * 64 + endSquare);
+		if (move.length() == 4) {
+			makeMove((1 << 12) + (startSquare << 6) + endSquare);
+		} else if (move.length() == 5) {
+			makeMove((1 << 15) + (startSquare << 9) + (endSquare << 3) 
+					+ Math.abs(Transformation.stringToPiece(move.charAt(5))));
+		}
 	}
 	
 	/**
-	 * This method takes a move encoded as int and plays that move.
+	 * This method takes a move encoded as int and executes that move on the board.
+	 * Syntax for non pawn promotions: 0...01ssseee, for pawn promotions: 0...01ssseeeppp
+	 * s = bits of the start square, e = bits of the end square,
+	 * p = promotion piece according to Transformation.stringToPiece
 	 * 
-	 * @param move
-	 *            : the move we play
+	 * @param move The move to play.
 	 */
 	public void makeMove(int move) {
-		int moveWithoutPiece = move % 4096;
-		int capturedPiece = square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
+		int endSquare = 0; // will get changed to "true" endSquare
+		if (move < (1 << 13)) {
+			endSquare = move % 64;
+		} else {
+			endSquare = (move / 8) % 64;
+		}
+		
+		int capturedPiece = square[endSquare / 8][endSquare % 8];
+		
 		if (capturedPiece != 0) {
 			piecesLeft--;
 			if (capturedPiece > 0) {
-				if (capturedPiece == 1) {
-					materialCount -= PAWNVALUE;
-					pawnAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == 2) {
-					materialCount -= KNIGHTVALUE;
-					setDangerToBlackKing(getDangerToBlackKing() - KNIGHTDANGER);
-					knightAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == 3) {
-					materialCount -= BISHOPVALUE;
-					setDangerToBlackKing(getDangerToBlackKing() - BISHOPDANGER);
-					bishopAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == 4) {
-					materialCount -= ROOKVALUE;
-					setDangerToBlackKing(getDangerToBlackKing() - ROOKDANGER);
-					rookAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == 5) {
-					materialCount -= QUEENVALUE;
-					setDangerToBlackKing(getDangerToBlackKing() - QUEENDANGER);
-					queenAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == 6) {
-					materialCount -= KINGVALUE;
-					kingAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				}
+				materialCount -= PIECEVALUE[capturedPiece];
+				dangerToBlackKing -= PIECEDANGER[capturedPiece];
+				pieceAdvancement[capturedPiece] -= 2 * (endSquare % 8) - 7;
 			} else {
-				if (capturedPiece == -1) {
+				materialCount += PIECEVALUE[Math.abs(capturedPiece)];
+				dangerToWhiteKing -= PIECEDANGER[Math.abs(capturedPiece)];
+				pieceAdvancement[Math.abs(capturedPiece)] -= 2 * (endSquare % 8) - 7;
+			}
+		}
+		
+		if (move < (1 << 13) && move > (1 << 12)) {
+			int startSquare = (move / 64) % 64;
+			endSquare = move % 64;
+			
+			if (startSquare == 32) { // if we move with the King (or e1 isn't even the king) we can't castle anymore
+				removeCastlingRights((byte) 0x38);
+			}
+			
+			if (startSquare == 39) {
+				removeCastlingRights((byte) 0x7);
+			}
+			
+			if (startSquare == 0 || endSquare == 0) { // If Ra1 moves or gets captured we can't castle
+																			// queenside anymore.
+				removeCastlingRights((byte) 0x20);
+			}
+			
+			if (startSquare == 7 || endSquare == 7) {
+				removeCastlingRights((byte) 0x4);
+			}
+			
+			if (startSquare == 56 || endSquare == 56) {
+				removeCastlingRights((byte) 0x8);
+			}
+			
+			if (startSquare == 63 || endSquare == 63) {
+				removeCastlingRights((byte) 0x1);
+			}
+			
+			if (startSquare == 32 && square[4][0] == 6) {
+				if (endSquare == 48) {
+					square[6][0] = 6;
+					square[4][0] = 0;
+					square[5][0] = 4; // rook move in castling
+					square[7][0] = 0;
+					changeToMove();
+					return;
+				} else if (endSquare == 16) {
+					square[2][0] = 6;
+					square[4][0] = 0;
+					square[3][0] = 4; // rook move in castling
+					square[0][0] = 0;
+					changeToMove();
+					return;
+				}
+			} else if (startSquare == 39 && square[4][7] == -6) {
+				if (endSquare == 55) {
+					square[6][7] = -6;
+					square[4][7] = 0;
+					square[5][7] = -4; // rook move in castling
+					square[7][7] = 0;
+					changeToMove();
+					return;
+				} else if (endSquare == 23) {
+					square[2][7] = -6;
+					square[4][7] = 0;
+					square[3][7] = -4; // rook move in castling
+					square[0][7] = 0;
+					changeToMove();
+					return;
+				}
+			}
+			
+			if (Math.abs(square[startSquare / 8][startSquare % 8]) == 1
+					&& endSquare == enPassant) {
+				piecesLeft--;
+				if (toMove) {
+					square[enPassant / 8][(enPassant % 8) - 1] = 0; // capture the pawn that is on the square before ep
 					materialCount += PAWNVALUE;
-					pawnAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == -2) {
-					materialCount += KNIGHTVALUE;
-					dangerToWhiteKing -= KNIGHTDANGER;
-					knightAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == -3) {
-					materialCount += BISHOPVALUE;
-					dangerToWhiteKing -= BISHOPDANGER;
-					bishopAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == -4) {
-					materialCount += ROOKVALUE;
-					dangerToWhiteKing -= ROOKDANGER;
-					rookAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == -5) {
-					materialCount += QUEENVALUE;
-					dangerToWhiteKing -= QUEENDANGER;
-					queenAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-				} else if (capturedPiece == -6) {
-					materialCount += KINGVALUE;
-					kingAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
+					pieceAdvancement[1] -= 2 * ((enPassant % 8) - 1) - 7;
+				} else {
+					square[enPassant / 8][(enPassant % 8) + 1] = 0;
+					materialCount -= PAWNVALUE;
+					pieceAdvancement[1] -= 2 * ((enPassant % 8) + 1) - 7;
 				}
 			}
-		}
-		if (moveWithoutPiece / 64 == 32) {
-			removeCastlingRights((byte) 0x38);
-		}
-		if (moveWithoutPiece / 64 == 39) {
-			removeCastlingRights((byte) 0x7);
-		}
-		if (moveWithoutPiece / 64 == 0 || moveWithoutPiece % 64 == 0) { // If Ra1 moves or captures we can't castle
-																		// queenside anymore.
-			removeCastlingRights((byte) 0x20);
-		}
-		if (moveWithoutPiece / 64 == 7 || moveWithoutPiece % 64 == 7) {
-			removeCastlingRights((byte) 0x4);
-		}
-		if (moveWithoutPiece / 64 == 56 || moveWithoutPiece % 64 == 56) {
-			removeCastlingRights((byte) 0x8);
-		}
-		if (moveWithoutPiece / 64 == 63 || moveWithoutPiece % 64 == 63) {
-			removeCastlingRights((byte) 0x1);
-		}
-		if (moveWithoutPiece / 64 == 32 && square[4][0] == 6) {
-			if (moveWithoutPiece % 64 == 48) {
-				square[6][0] = 6;
-				square[4][0] = 0;
-				square[5][0] = 4; // rook move in castling
-				square[7][0] = 0;
-				changeToMove();
-				return;
-			} else if (moveWithoutPiece % 64 == 16) {
-				square[2][0] = 6;
-				square[4][0] = 0;
-				square[3][0] = 4; // rook move in castling
-				square[0][0] = 0;
-				changeToMove();
-				return;
-			}
-		} else if (moveWithoutPiece / 64 == 39 && square[4][7] == -6) {
-			if (moveWithoutPiece % 64 == 55) {
-				square[6][7] = -6;
-				square[4][7] = 0;
-				square[5][7] = -4; // rook move in castling
-				square[7][7] = 0;
-				changeToMove();
-				return;
-			} else if (moveWithoutPiece % 64 == 23) {
-				square[2][7] = -6;
-				square[4][7] = 0;
-				square[3][7] = -4; // rook move in castling
-				square[0][7] = 0;
-				changeToMove();
-				return;
-			}
-		}
-		if (Math.abs(square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8]) == 1
-				&& (moveWithoutPiece % 64) == getEnPassant()) {
-			piecesLeft--;
-			if (toMove) {
-				square[getEnPassant() / 8][(getEnPassant() % 8) - 1] = 0;
-				materialCount += PAWNVALUE;
-				pawnAdvancement -= 2 * ((getEnPassant() % 8) - 1) - 7;
-			} else {
-				square[getEnPassant() / 8][(getEnPassant() % 8) + 1] = 0;
-				materialCount -= PAWNVALUE;
-				pawnAdvancement -= 2 * ((getEnPassant() % 8) + 1) - 7;
-			}
-		}
-		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece
-				% 8] = square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8];
-		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8] = 0;
-		
-		if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 1) {
-			pawnAdvancement += 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 2) {
-			knightAdvancement += 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 3) {
-			bishopAdvancement += 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 4) {
-			rookAdvancement += 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 5) {
-			queenAdvancement += 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 6) {
-			kingAdvancement += 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		}
-		
-		setEnPassant((byte) -1);
-		if (Math.abs(square[(moveWithoutPiece % 64) / 8][moveWithoutPiece % 8]) == 1 
-				&& Math.abs(moveWithoutPiece / 64 - moveWithoutPiece % 64) == 2) {
-			setEnPassant((byte) ((moveWithoutPiece / 64 + moveWithoutPiece % 64) / 2));
-		}
-		
-		if (square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] == 1 && (moveWithoutPiece % 8) == 7) {
-			pawnAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
 			
-			square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = 5;
-			materialCount += QUEENVALUE - PAWNVALUE;
-			setDangerToBlackKing(getDangerToBlackKing() + QUEENDANGER);
-			queenAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-		} else if (square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] == -1 && (moveWithoutPiece % 8) == 0) {
-			pawnAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
+			square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8]; // the actual moving
+			square[startSquare / 8][startSquare % 8] = 0; // start square becomes empty
 			
-			square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = -5;
-			materialCount -= QUEENVALUE - PAWNVALUE;
-			dangerToWhiteKing += QUEENDANGER;
-			queenAdvancement += 2 * (moveWithoutPiece % 8) - 7;
+			pieceAdvancement[Math.abs(square[endSquare / 8][endSquare % 8])] 
+					+= 2 * ((endSquare % 8) - (startSquare % 8));
+																	// add the advancement change caused by the move
+			
+			setEnPassant((byte) -1); // remove old en passant values
+			
+			if (Math.abs(square[endSquare / 8][endSquare % 8]) == 1 && Math.abs(startSquare - endSquare) == 2) {
+																				// if a pawn moves two squares far
+				setEnPassant((byte) ((startSquare + endSquare) / 2));  			// we update the en passant to be 
+																				// in the middle of start/end square
+			}
+			
+			changeToMove();
+		} else if (move < (1 << 16) && move > (1 << 15)) {
+			int startSquare = (move - (1 << 15)) / (1 << 9);
+			endSquare = (move % (1 << 9)) / (1 << 3);
+			
+			byte promotion = (byte) (move % (1 << 3));
+			
+			square[startSquare / 8][startSquare % 8] = 0;
+			pieceAdvancement[1] -= 2 * (startSquare % 8) - 7;
+			
+			pieceAdvancement[promotion] += 2 * (endSquare % 8) - 7;
+			
+			if (endSquare % 8 == 7) {
+				square[endSquare / 8][endSquare % 8] = promotion;
+				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
+				dangerToBlackKing += PIECEDANGER[promotion];
+			} else if (endSquare % 8 == 0) {
+				square[endSquare / 8][endSquare % 8] = (byte) -promotion;
+				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
+				dangerToWhiteKing += PIECEDANGER[promotion];
+			}
+		} else {
+			assert false;
 		}
-		changeToMove();
 	}
 
 	/**
@@ -488,152 +477,125 @@ public class Board {
 	}
 
 	/**
-	 * This method undoes the given move.
+	 * This method undoes the given integer format move.
+	 * Syntax for non pawn promotions: 0...01ssseee, for pawn promotions: 0...01ssseeeppp
+	 * s = bits of the start square, e = bits of the end square,
+	 * p = promotion piece according to Transformation.stringToPiece
 	 * 
-	 * @param move
-	 *            : move which we want to undo
-	 * @param capturedPiece
-	 *            : piece that got captured in the original move. We put that
-	 *            piece back on the board (can also be 0 = empty square)
+	 * @param move Move which gets undone.
+	 * @param capturedPiece Piece that got captured in the original move. It gets put back on the board
+	 * 		(can also be 0 = empty square).
+	 * @param oldCastlingRights The castling rights from before the move was executed on the board.
 	 */
-	public void unmakeMove(int move, byte capturedPiece) {
-		if (move == 26640) { // White castle queen side.
-			square[4][0] = 6; // King move gets undone.
-			square[2][0] = 0;
-			square[3][0] = 0; // Rook move get undone.
-			square[0][0] = 4;
-			changeToMove();
-			return;
-		}
-		if (move == 26672) { // White castle king side.
-			square[4][0] = 6; 
-			square[6][0] = 0;
-			square[5][0] = 0; 
-			square[7][0] = 4;
-			changeToMove();
-			return;
-		}
-		if (move == 27095) { // Black castle queen side.
-			square[4][7] = -6;
-			square[2][7] = 0;
-			square[3][7] = 0; 
-			square[0][7] = -4;
-			changeToMove();
-			return;
-		}
-		if (move == 27127) { // Black castle king side.
-			square[4][7] = -6; 
-			square[6][7] = 0;
-			square[5][7] = 0; 
-			square[7][7] = -4;
-			changeToMove();
-			return;
-		}
-		
-		int moveWithoutPiece = move % 4096;
+	public void unmakeMove(int move, byte capturedPiece, byte oldCastlingRights) {
 		int piece = capturedPiece;
+		int endSquare = 0; // will get changed to correct endSquare
+		
+		if (oldCastlingRights != castlingRights && (move == 6160 || move == 6192 || move == 6615 || move == 6647)) {
+			if (move == (1 << 12) + (32 << 6) + 16) { // White castle queen side.
+				assert square[4][0] == 0 && square[3][0] == 4 && square[2][0] == 6 
+						&& square[1][0] == 0 && square[0][0] == 0;
+				square[4][0] = 6; // King move gets undone.
+				square[2][0] = 0;
+				square[3][0] = 0; // Rook move get undone.
+				square[0][0] = 4;
+			} else if (move == (1 << 12) + (32 << 6) + 48) { // White castle king side.
+				assert square[4][0] == 0 && square[5][0] == 4 && square[6][0] == 6 && square[7][0] == 0;
+				square[4][0] = 6; 
+				square[6][0] = 0;
+				square[5][0] = 0; 
+				square[7][0] = 4;
+			} else if (move == (1 << 12) + (39 << 6) + 23) { // Black castle queen side.
+				assert square[4][7] == 0 && square[3][7] == -4 && square[2][7] == -6 
+						&& square[1][7] == 0 && square[0][7] == 0;
+				square[4][7] = -6;
+				square[2][7] = 0;
+				square[3][7] = 0; 
+				square[0][7] = -4;
+			} else if (move == (1 << 12) + (39 << 6) + 55) { // Black castle king side.
+				assert square[4][7] == 0 && square[5][7] == -4 && square[6][7] == -6 && square[7][7] == 0;
+				square[4][7] = -6; 
+				square[6][7] = 0;
+				square[5][7] = 0; 
+				square[7][7] = -4;
+			} else {
+				assert false;
+			}
+			changeToMove();
+			return;
+		} else if (move < (1 << 13) && move > (1 << 12)) {
+			int startSquare = (move / 64) % 64;
+			endSquare = move % 64;
+			
+			pieceAdvancement[Math.abs(square[endSquare / 8][endSquare % 8])] 
+					-= 2 * ((endSquare % 8) - (startSquare % 8)); // subtract/undo the advancement change the move made
+			
+			square[startSquare / 8][startSquare % 8] = square[endSquare / 8][endSquare % 8]; // actual moving
+			square[endSquare / 8][endSquare % 8] = capturedPiece; // put captured piece back on its square
+			
+			if (Math.abs(square[startSquare / 8][startSquare % 8]) == 1 && endSquare == enPassant) {
+				
+											// a pawn moving and ending on the en passant square ALWAYS means capture
+				piecesLeft++;
+				if (endSquare % 8 == 5) { // white captured en passant.
+					assert endSquare - startSquare == -7 || endSquare - startSquare == 9;
+					assert square[endSquare / 8][(endSquare % 8) - 1] == 0; // should be empty
+					square[endSquare / 8][(endSquare % 8) - 1] = -1; // pawn added back on; -1 because of en passant
+					materialCount -= PAWNVALUE;
+					pieceAdvancement[1] += 2 * ((enPassant % 8) - 1) - 7;
+				} else if (endSquare % 8 == 2) {
+					assert endSquare - startSquare == 7 || endSquare - startSquare == -9;
+					assert square[endSquare / 8][(endSquare % 8) + 1] == 0;
+					square[endSquare / 8][(endSquare % 8) + 1] = 1;
+					materialCount += PAWNVALUE;
+					pieceAdvancement[1] += 2 * ((enPassant % 8) + 1) - 7;
+				} else {
+					assert false;
+				}
+			}
+			changeToMove();
+		} else if (move < (1 << 16) && move > (1 << 15)) {
+			int startSquare = (move - (1 << 15)) / (1 << 9);
+			endSquare = (move % (1 << 9)) / (1 << 3);
+			byte promotion = (byte) (move % (1 << 3));
+			
+			assert square[startSquare / 8][startSquare % 8] == 0;
+			pieceAdvancement[1] += 2 * (startSquare % 8) - 7;
+
+			pieceAdvancement[promotion] -= 2 * (endSquare % 8) - 7;
+			
+			if (endSquare % 8 == 7) {
+				square[startSquare / 8][startSquare % 8] = 1;
+				
+				square[endSquare / 8][endSquare % 8] = capturedPiece;
+				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
+				dangerToBlackKing -= PIECEDANGER[promotion];
+			} else if (endSquare % 8 == 0) {
+				square[startSquare / 8][startSquare % 8] = -1;
+				
+				square[endSquare / 8][endSquare % 8] = capturedPiece;
+				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
+				dangerToWhiteKing -= PIECEDANGER[promotion];
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
 		if (piece != 0) {
 			piecesLeft++;
 			if (piece > 0) {
-				if (piece == 1) {
-					materialCount += PAWNVALUE;
-					pawnAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == 2) {
-					materialCount += KNIGHTVALUE;
-					setDangerToBlackKing(getDangerToBlackKing() + KNIGHTDANGER);
-					knightAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == 3) {
-					materialCount += BISHOPVALUE;
-					setDangerToBlackKing(getDangerToBlackKing() + BISHOPDANGER);
-					bishopAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == 4) {
-					materialCount += ROOKVALUE;
-					setDangerToBlackKing(getDangerToBlackKing() + ROOKDANGER);
-					rookAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == 5) {
-					materialCount += QUEENVALUE;
-					setDangerToBlackKing(getDangerToBlackKing() + QUEENDANGER);
-					queenAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == 6) {
-					materialCount += KINGVALUE;
-					kingAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				}
+				materialCount += PIECEVALUE[piece]; // piece gets back on the board, so added to materialCount
+				dangerToBlackKing += PIECEDANGER[piece]; // and to danger-numbers
+				pieceAdvancement[piece] += 2 * (endSquare % 8) - 7; // and add back its advancement
+																// move % 8 is equivalent to endSquare % 8
 			} else {
-				if (piece == -1) {
-					materialCount -= PAWNVALUE;
-					pawnAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == -2) {
-					materialCount -= KNIGHTVALUE;
-					dangerToWhiteKing += KNIGHTDANGER;
-					knightAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == -3) {
-					materialCount -= BISHOPVALUE;
-					dangerToWhiteKing += BISHOPDANGER;
-					bishopAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == -4) {
-					materialCount -= ROOKVALUE;
-					dangerToWhiteKing += ROOKDANGER;
-					rookAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == -5) {
-					materialCount -= QUEENVALUE;
-					dangerToWhiteKing += QUEENDANGER;
-					queenAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				} else if (piece == -6) {
-					materialCount -= KINGVALUE;
-					kingAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				}
+				materialCount -= PIECEVALUE[Math.abs(piece)];
+				dangerToWhiteKing += PIECEDANGER[Math.abs(piece)];
+				pieceAdvancement[Math.abs(piece)] += 2 * (endSquare % 8) - 7;
 			}
 		}
 		
-		if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) != move / 4096) {
-			if ((moveWithoutPiece / 64) % 8 == 6) {
-				pawnAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				
-				square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = 1;
-				materialCount -= QUEENVALUE - PAWNVALUE;
-				setDangerToBlackKing(getDangerToBlackKing() - QUEENDANGER);
-				queenAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-			} else if (((moveWithoutPiece / 64) % 8 == 1)) {
-				pawnAdvancement += 2 * (moveWithoutPiece % 8) - 7;
-				
-				square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = -1;
-				materialCount += QUEENVALUE - PAWNVALUE;
-				dangerToWhiteKing -= QUEENDANGER;
-				queenAdvancement -= 2 * (moveWithoutPiece % 8) - 7;
-			}
-		}
-
-		if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 1) {
-			pawnAdvancement -= 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 2) {
-			knightAdvancement -= 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 3) {
-			bishopAdvancement -= 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 4) {
-			rookAdvancement -= 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 5) {
-			queenAdvancement -= 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		} else if (Math.abs(square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8]) == 6) {
-			kingAdvancement -= 2 * ((moveWithoutPiece % 8) - (moveWithoutPiece / 64) % 8);
-		}
-		
-		square[moveWithoutPiece / 512][(moveWithoutPiece / 64) % 8]
-				= square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8];
-		square[(moveWithoutPiece / 8) % 8][moveWithoutPiece % 8] = capturedPiece;
-		
-		if ((move / 4096 == 1) && (moveWithoutPiece % 64) == getEnPassant()) {
-			piecesLeft++;
-			if ((moveWithoutPiece % 8) == 5) { // white captured en passant.
-				square[(moveWithoutPiece / 8) % 8][(moveWithoutPiece % 8) - 1] = -1;
-				materialCount -= PAWNVALUE;
-				pawnAdvancement += 2 * ((getEnPassant() % 8) - 1) - 7;
-			} else {
-				square[(moveWithoutPiece / 8) % 8][(moveWithoutPiece % 8) + 1] = 1;
-				materialCount += PAWNVALUE;
-				pawnAdvancement += 2 * ((getEnPassant() % 8) + 1) - 7;
-			}
-		}
-		changeToMove();
 	}
 
 	/**
@@ -700,52 +662,12 @@ public class Board {
 		return hashTable;
 	}
 
-	public int getQueenAdvancement() {
-		return queenAdvancement;
+	public int getPieceAdvancement(int index) {
+		return pieceAdvancement[index];
 	}
-
-	public void setQueenAdvancement(int queenAdvancement) {
-		this.queenAdvancement = queenAdvancement;
-	}
-
-	public int getKingAdvancement() {
-		return kingAdvancement;
-	}
-
-	public void setKingAdvancement(int kingAdvancement) {
-		this.kingAdvancement = kingAdvancement;
-	}
-
-	public int getBishopAdvancement() {
-		return bishopAdvancement;
-	}
-
-	public void setBishopAdvancement(int bishopAdvancement) {
-		this.bishopAdvancement = bishopAdvancement;
-	}
-
-	public int getRookAdvancement() {
-		return rookAdvancement;
-	}
-
-	public void setRookAdvancement(int rookAdvancement) {
-		this.rookAdvancement = rookAdvancement;
-	}
-
-	public int getKnightAdvancement() {
-		return knightAdvancement;
-	}
-
-	public void setKnightAdvancement(int knightAdvancement) {
-		this.knightAdvancement = knightAdvancement;
-	}
-
-	public int getPawnAdvancement() {
-		return pawnAdvancement;
-	}
-
-	public void setPawnAdvancement(int pawnAdvancement) {
-		this.pawnAdvancement = pawnAdvancement;
+	
+	public void setPieceAdvancement(int index, int advancement) {
+		pieceAdvancement[index] = advancement;
 	}
 
 	public int getMoveNumber() {

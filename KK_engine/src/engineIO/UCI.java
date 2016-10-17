@@ -35,7 +35,7 @@ public final class UCI {
 	private static boolean threadFinished = false;
 
 	private static ExecutorService executor = Executors.newFixedThreadPool(5);
-	static String engineName = "KK_engine";
+	static String engineName = "Koedem";
 	static Board board = new Board();
 	private static Scanner sc = new Scanner(System.in);
 	
@@ -163,8 +163,8 @@ public final class UCI {
 		Logging.printLine("option name BaseTime type spin default 100 min 1 max 10000");
 		Logging.printLine("option name IncTime type spin default 5000 min 1 max 10000");
 		Logging.printLine("option name MinTime type spin default 500 min 1 max 10000");
-		Logging.printLine("option name KingSafety type spin default 10 min 1 max 1000");
-		Logging.printLine("option name Dynamism type spin default 10 min 1 max 1000");
+		Logging.printLine("option name KingSafety type spin default 10 min 1 max 100");
+		Logging.printLine("option name Dynamism type spin default 10 min 1 max 100");
 		
 		Logging.printLine("uciok");
 	}
@@ -335,9 +335,13 @@ public final class UCI {
 	
 	public static void printEngineOutput(String praefix, int[] move, Board board, boolean toMove, long time) {
 		if (UCI.uci) {
+			String pv = "";
+			for (int i = 0; i < move.length - 1; i++) {
+				pv += Transformation.numberToMove(move[i]) + " ";
+			}
 			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes " 
 					+ board.nodes + " time " + (System.currentTimeMillis() - time) + " pv " 
-					+ Transformation.numberToSquare((move[0] / 64) % 64) + Transformation.numberToSquare(move[0] % 64));
+					+ pv);
 		} else {
 			String pv = praefix;
 			for (int j = 0; j < move.length - 1; j++) {
