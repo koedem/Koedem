@@ -1755,7 +1755,7 @@ public final class MoveGenerator {
 	}
 	
 	public static ArrayList<Integer> collectAllPNMoves(Board board, boolean toMove) {
-		int movesSize[] = new int[6];
+		int[] movesSize = new int[6];
 		ArrayList<Integer> moves = collectMoves(board, toMove, movesSize);
 		if (moves.get(0) == -1) {
 			return moves;
@@ -1784,7 +1784,7 @@ public final class MoveGenerator {
 	}
 	
 	public static ArrayList<Integer> collectPNSearchMoves(Board board, boolean toMove) {
-		int movesSize[] = new int[6];
+		int[] movesSize = new int[6];
 		ArrayList<Integer> moves = collectMoves(board, toMove, movesSize);
 		if (moves.get(0) == -1) {
 			return moves;
@@ -1822,7 +1822,7 @@ public final class MoveGenerator {
 	}
 	
 	public static ArrayList<Integer> collectCheckMoves(Board board, boolean toMove) {
-		int movesSize[] = new int[6];
+		int[] movesSize = new int[6];
 		ArrayList<Integer> moves = collectMoves(board, toMove, movesSize);
 		ArrayList<Integer> checks = new ArrayList<Integer>();
 		if (moves.get(0) == -1) {

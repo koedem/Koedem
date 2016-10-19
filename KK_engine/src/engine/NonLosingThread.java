@@ -31,7 +31,7 @@ public class NonLosingThread implements Callable<int[]> {
 		long time = System.currentTimeMillis();
 		board.nodes = 0;
 		board.abortedNodes = 0;
-		board.qNodes = 0;
+		board.setqNodes(0);
 		int[] move = null;
 		for (int i = 3; i < depth; i += 2) {
 			if (logging) {

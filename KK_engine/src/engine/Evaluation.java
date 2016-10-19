@@ -13,9 +13,9 @@ public final class Evaluation {
 	private static boolean materialOnly = false;
 	
 	@SuppressWarnings("unused")
-	private final static int PAWNACTIVITYFULL = 0;
+	private static final int PAWNACTIVITYFULL = 0;
 	@SuppressWarnings("unused")
-	private final static int PAWNACTIVITYEMPTY = 0;
+	private static final int PAWNACTIVITYEMPTY = 0;
 	private static final int KNIGHTACTIVITYFULL = 3;
 	private static final int KNIGHTACTIVITYEMPTY = 3;
 	private static final int BISHOPACTIVITYFULL = 3;
@@ -107,8 +107,8 @@ public final class Evaluation {
 					* (32 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())); 
 												// full board ^2*(-16); Math.abs to not lose the sign of original number
 		} else {
-			advancementEval += (int) (board.getPieceAdvancement(6) * 
-					((32.0 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())) / 8.0)); // empty board x2
+			advancementEval += (int) (board.getPieceAdvancement(6) 
+					* ((32.0 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())) / 8.0)); // empty board x2
 		}
 		return advancementEval;
 	}
@@ -163,7 +163,7 @@ public final class Evaluation {
 						&& board.square[7][5] != -1) {
 					pieceSquares += (board.getDangerToBlackKing() - 15) * 6;
 				}
-				if (board.square[6][6] == 3) {
+				if (board.square[6][6] == -3) {
 					pieceSquares -= (board.getDangerToBlackKing() - 15);
 				}
 			}

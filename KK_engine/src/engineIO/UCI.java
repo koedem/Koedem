@@ -175,7 +175,7 @@ public final class UCI {
 	
 	public static void inputPosition(String input) {
 		String command = input.substring(9);
-		String parameters[] = command.split(" ");
+		String[] parameters = command.split(" ");
 		for (int i = 0; i < parameters.length; i++) {
 			if (parameters[i].equals("startpos")) {
 				board = new Board();
@@ -366,7 +366,7 @@ public final class UCI {
 			Logging.printLine(pv + move[move.length - 1]);
 			Logging.printLine(praefix + "Node count: " + Transformation.nodeCountOutput(((board.nodes
 					+ board.abortedNodes))) + "(" + Transformation.nodeCountOutput(board.nodes)
-					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.qNodes) + ". Time used: "
+					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.getqNodes()) + ". Time used: "
 					+ Transformation.timeUsedOutput((System.currentTimeMillis() - time)));
 		}
 	}

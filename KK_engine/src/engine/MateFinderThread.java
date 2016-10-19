@@ -31,18 +31,20 @@ public class MateFinderThread implements Callable<int[]> {
 		long time = System.currentTimeMillis();
 		board.nodes = 0;
 		board.abortedNodes = 0;
-		board.qNodes = 0;
+		board.setqNodes(0);
 		int[] move = null;
 		for (int i = 2; i < depth; i += 2) {
 			if (logging) {
 				Logging.printLine("");
-				Logging.printLine(threadName + "Starting depth " + i + ". Time: " + Transformation.timeUsedOutput(System.currentTimeMillis() - time));
+				Logging.printLine(threadName + "Starting depth " + i + ". Time: " 
+						+ Transformation.timeUsedOutput(System.currentTimeMillis() - time));
 			}
 			
 			move = MateFinder.mateFinder(board, board.getToMove(), i, i, aggressive);
 			
 			if (logging) {
-				Logging.printLine(threadName + "Finished depth " + i  + ". Nodes: " + Transformation.nodeCountOutput(board.nodes));
+				Logging.printLine(threadName + "Finished depth " + i  + ". Nodes: " 
+						+ Transformation.nodeCountOutput(board.nodes));
 			}
 			
 			if (move[move.length - 1] > 0) {

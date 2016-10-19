@@ -2,8 +2,8 @@ package engine;
 
 import java.util.ArrayList;
 import engineIO.Logging;
+import engineIO.Transformation;
 import engineIO.UCI;
-import test.Assertions;
 
 /**
  * 
@@ -22,6 +22,10 @@ public final class Search {
 		ArrayList<Integer> moves = board.getRootMoves();
 		int bestMove = 0;
 		for (int moveIndex = 0; moveIndex < moves.size(); moveIndex++) {
+			if (System.currentTimeMillis() - time > 1000) {
+				Logging.printLine("info depth " + depth + " currmove " 
+						+ Transformation.numberToMove(moves.get(moveIndex)) + " currmovenumber " + (moveIndex + 1));
+			}
 			byte capturedPiece;
 			if (moves.get(moveIndex) < (1 << 13)) {
 				capturedPiece = board.getSquare((moves.get(moveIndex) / 8) % 8, moves.get(moveIndex) % 8);
@@ -45,7 +49,6 @@ public final class Search {
 					
 					board.setEnPassant(enPassant);
 					board.unmakeMove(moves.get(moveIndex), capturedPiece, castlingRights);
-					board.addCastlingRights(castlingRights);
 					return principleVariation;
 				} else if (innerPV[depth] < -9000) {
 					innerPV[depth]++;
@@ -69,7 +72,8 @@ public final class Search {
 				
 				if (depth != 1) {
 					if (moveIndex == 0) {
-						UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time); // move on board not yet undone
+						UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time); 
+															// move on board not yet undone, thus !toMove
 					} else {
 						UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
 					}
@@ -77,7 +81,6 @@ public final class Search {
 			}
 			board.setEnPassant(enPassant);
 			board.unmakeMove(moves.get(moveIndex), capturedPiece, castlingRights);
-			board.addCastlingRights(castlingRights);
 		}
 		if (principleVariation[depth] == -9999) {
 			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
@@ -158,7 +161,6 @@ public final class Search {
 					
 					board.setEnPassant(enPassant);
 					board.unmakeMove(move, capturedPiece, castlingRights);
-					board.addCastlingRights(castlingRights);
 					return principleVariation;
 				} else if (innerPV[depth] < -9000) {
 					innerPV[depth]++;
@@ -181,7 +183,6 @@ public final class Search {
 			}
 			board.setEnPassant(enPassant);
 			board.unmakeMove(move, capturedPiece, castlingRights);
-			board.addCastlingRights(castlingRights);
 			
 			if (principleVariation[depth] >= beta) {
 				return principleVariation;
@@ -245,7 +246,7 @@ public final class Search {
 			byte enPassant = board.getEnPassant();
 			board.makeMove(capture);
 			ArrayList<Integer> innerPV = qSearch(board, !toMove, -beta, -alpha);
-			board.qNodes++;
+			board.incrementQNodes();
 			if (innerPV.get(0) == -10000) {
 				principleVariation = new ArrayList<Integer>(1);
 				principleVariation.add(0, 10000);

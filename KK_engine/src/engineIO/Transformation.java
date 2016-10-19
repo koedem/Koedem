@@ -107,29 +107,29 @@ public final class Transformation {
 	 * @return The numerical value of the piece.
 	 */
 	public static byte stringToPiece(char piece) {
-		if ("P".equals(piece)) {
+		if (piece == 'P') {
 			return 1;
-		} else if ("N".equals(piece)) {
+		} else if (piece == 'N') {
 			return 2;
-		} else if ("B".equals(piece)) {
+		} else if (piece == 'B') {
 			return 3;
-		} else if ("R".equals(piece)) {
+		} else if (piece == 'R') {
 			return 4;
-		} else if ("Q".equals(piece)) {
+		} else if (piece == 'Q') {
 			return 5;
-		} else if ("K".equals(piece)) {
+		} else if (piece == 'K') {
 			return 6;
-		} else if ("p".equals(piece)) {
+		} else if (piece == 'p') {
 			return -1;
-		} else if ("n".equals(piece)) {
+		} else if (piece == 'n') {
 			return -2;
-		} else if ("b".equals(piece)) {
+		} else if (piece == 'b') {
 			return -3;
-		} else if ("r".equals(piece)) {
+		} else if (piece == 'r') {
 			return -4;
-		} else if ("q".equals(piece)) {
+		} else if (piece == 'q') {
 			return -5;
-		} else if ("k".equals(piece)) {
+		} else if (piece == 'k') {
 			return -6;
 		} else {
 			return 0;

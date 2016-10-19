@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import engineIO.UCI;
 
-public class MateFinder {
+public final class MateFinder {
 
 	public static int[] rootMateFinder(Board board, boolean toMove, int depth, long time, boolean aggressive) {
 		int alpha = -30000;
@@ -138,5 +138,8 @@ public class MateFinder {
 			inCheck = true;
 		}
 		return inCheck;
+	}
+	
+	private MateFinder() {
 	}
 }

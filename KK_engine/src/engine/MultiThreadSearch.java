@@ -25,7 +25,7 @@ public class MultiThreadSearch implements Callable<int[]> {
 		long time = System.currentTimeMillis();
 		board.nodes = 0;
 		board.abortedNodes = 0;
-		board.qNodes = 0;
+		board.setqNodes(0);
 		int[] move = null;
 		int[] movesSize = new int[6]; // unused
 		board.setRootMoves(MoveGenerator.collectMoves(board, board.getToMove(), movesSize));

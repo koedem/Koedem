@@ -5,12 +5,6 @@ import java.util.Hashtable;
 import engineIO.Logging;
 import engineIO.Transformation;
 
-/**
- * 
- * @author Anon
- *
- * @noinspection ALL
- */
 public class Board {
 	
 	private static final int QUEENDANGER = 12;
@@ -22,7 +16,7 @@ public class Board {
 
 	public long nodes = 0;
 	public long abortedNodes = 0;
-	public long qNodes = 0;
+	private long qNodes = 0;
 	
 	/**
 	 * Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6. 
@@ -51,7 +45,7 @@ public class Board {
 	private int moveNumber = 1;
 	
 	/**
-	 * Based on standard values, *roughly* Pawn = 100 CentiPawns, Knight = Bishop = 300 CP, Rook = 500 CP, Queen = 900 CP.
+	 * Based on Kaufmann values, Pawn = 100 CentiPawns, Knight = 325, Bishop = 335 CP, Rook = 500 CP, Queen = 975 CP.
 	 * At every point in search the material count should accurately show the material in the current search position.
 	 */
 	private short materialCount = 0;
@@ -66,13 +60,40 @@ public class Board {
 	
 	private int[] pieceAdvancement = { 0, 0, 0, 0, 0, 0, 0 }; // empty square, pawn, knight, bishop, rook, queen, king
 	
+	/**
+	 * Material value of a pawn in centi pawns according to Larry Kaufmann (Komodo team).
+	 */
 	public static final int PAWNVALUE = 100;
+	
+	/**
+	 * Material value of a knight in centi pawns according to Larry Kaufmann (Komodo team).
+	 */
 	public static final int KNIGHTVALUE = 325;
+	
+	/**
+	 * Material value of a bishop in centi pawns according to Larry Kaufmann (Komodo team).
+	 */
 	public static final int BISHOPVALUE = 335;
+	
+	/**
+	 * Material value of a rook in centi pawns according to Larry Kaufmann (Komodo team).
+	 */
 	public static final int ROOKVALUE = 500;
+	
+	/**
+	 * Material value of a queen in centi pawns according to Larry Kaufmann (Komodo team).
+	 */
 	public static final int QUEENVALUE = 975;
+	
+	/**
+	 * Material value of a king, big enough to outvalue every other eval term. Should not play a role in Search.
+	 */
 	public static final int KINGVALUE = 10000;
 	
+	/**
+	 * Material values of the pieces where PIECEVALUE[piece] equals the material value of the corresponding piece
+	 * in board representation (1 = Pawn, ..., 6 = King)
+	 */
 	public static final int[] PIECEVALUE = { 0, PAWNVALUE, KNIGHTVALUE, BISHOPVALUE,
 			ROOKVALUE, QUEENVALUE, KINGVALUE };
 	
@@ -299,7 +320,7 @@ public class Board {
 			makeMove((1 << 12) + (startSquare << 6) + endSquare);
 		} else if (move.length() == 5) {
 			makeMove((1 << 15) + (startSquare << 9) + (endSquare << 3) 
-					+ Math.abs(Transformation.stringToPiece(move.charAt(5))));
+					+ Math.abs(Transformation.stringToPiece(move.charAt(4))));
 		}
 	}
 	
@@ -426,7 +447,6 @@ public class Board {
 																				// in the middle of start/end square
 			}
 			
-			changeToMove();
 		} else if (move < (1 << 16) && move > (1 << 15)) {
 			int startSquare = (move - (1 << 15)) / (1 << 9);
 			endSquare = (move % (1 << 9)) / (1 << 3);
@@ -450,6 +470,7 @@ public class Board {
 		} else {
 			assert false;
 		}
+		changeToMove();
 	}
 
 	/**
@@ -521,8 +542,6 @@ public class Board {
 			} else {
 				assert false;
 			}
-			changeToMove();
-			return;
 		} else if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
 			endSquare = move % 64;
@@ -553,7 +572,6 @@ public class Board {
 					assert false;
 				}
 			}
-			changeToMove();
 		} else if (move < (1 << 16) && move > (1 << 15)) {
 			int startSquare = (move - (1 << 15)) / (1 << 9);
 			endSquare = (move % (1 << 9)) / (1 << 3);
@@ -582,6 +600,9 @@ public class Board {
 		} else {
 			assert false;
 		}
+		changeToMove();
+		castlingRights = oldCastlingRights;
+		
 		if (piece != 0) {
 			piecesLeft++;
 			if (piece > 0) {
@@ -731,5 +752,20 @@ public class Board {
 
 	public void setDangerToBlackKing(int dangerToBlackKing) {
 		this.dangerToBlackKing = dangerToBlackKing;
+	}
+	
+	/**
+	 * Adds 1 to the private qNodes variable.
+	 */
+	public void incrementQNodes() {
+		setqNodes(getqNodes() + 1);
+	}
+
+	public long getqNodes() {
+		return qNodes;
+	}
+
+	public void setqNodes(long qNodes) {
+		this.qNodes = qNodes;
 	}
 }
