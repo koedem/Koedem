@@ -19,7 +19,7 @@ public class Coverage {
 	
 	private static ExecutorService executor = Executors.newFixedThreadPool(5);
 
-	@Test
+    @Test
 	public void coverage() throws InterruptedException, ExecutionException {
 		Logging.setup();
 		Board test = new Board();

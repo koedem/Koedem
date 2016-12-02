@@ -609,7 +609,6 @@ public class Board {
 				materialCount += PIECEVALUE[piece]; // piece gets back on the board, so added to materialCount
 				dangerToBlackKing += PIECEDANGER[piece]; // and to danger-numbers
 				pieceAdvancement[piece] += 2 * (endSquare % 8) - 7; // and add back its advancement
-																// move % 8 is equivalent to endSquare % 8
 			} else {
 				materialCount -= PIECEVALUE[Math.abs(piece)];
 				dangerToWhiteKing += PIECEDANGER[Math.abs(piece)];

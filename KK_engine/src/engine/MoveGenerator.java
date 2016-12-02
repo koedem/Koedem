@@ -359,7 +359,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[1]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file - 1, row - 2))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 2));
@@ -376,7 +375,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[1]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file - 1, row + 2))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 2));
@@ -393,7 +391,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[1]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file - 2, row - 1))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row - 1));
@@ -410,7 +407,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[1]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file - 2, row + 1))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row + 1));
@@ -427,7 +423,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[1]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file + 2, row - 1))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row - 1));
@@ -444,7 +439,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[1]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file + 2, row + 1))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row + 1));
@@ -461,7 +455,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[1]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file + 1, row - 2))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 2));
@@ -478,7 +471,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[1]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file + 1, row + 2))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2));
@@ -510,7 +502,6 @@ public final class MoveGenerator {
 					} else {
 						movesSize[3]++;
 					}
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file + i, row))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + row);
@@ -544,7 +535,6 @@ public final class MoveGenerator {
 					} else {
 						movesSize[3]++;
 					}
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file - i, row))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + row);
@@ -578,7 +568,6 @@ public final class MoveGenerator {
 					} else {
 						movesSize[3]++;
 					}
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file, row + i))]
 							.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + i));
@@ -612,7 +601,6 @@ public final class MoveGenerator {
 					} else {
 						movesSize[3]++;
 					}
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file, row - i))]
 							.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - i));
@@ -662,7 +650,6 @@ public final class MoveGenerator {
 					} else {
 						movesSize[2]++;
 					}
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file + i, row + i))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row + i));
@@ -696,7 +683,6 @@ public final class MoveGenerator {
 					} else {
 						movesSize[2]++;
 					}
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file - i, row - i))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row - i));
@@ -730,7 +716,6 @@ public final class MoveGenerator {
 					} else {
 						movesSize[2]++;
 					}
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file + i, row - i))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row - i));
@@ -764,7 +749,6 @@ public final class MoveGenerator {
 					} else {
 						movesSize[2]++;
 					}
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file - i, row + i))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row + i));
@@ -807,7 +791,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[5]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file - 1, row))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + row);
@@ -823,7 +806,6 @@ public final class MoveGenerator {
 						movesByPriority[0].add(-1);
 						movesByPriority[0].set(0, -1);
 						movesSize[5]++;
-						return;
 					} else {
 						movesByPriority[5 - Math.abs(board.getSquare(file - 1, row - 1))]
 								.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
@@ -840,7 +822,6 @@ public final class MoveGenerator {
 						movesByPriority[0].add(-1);
 						movesByPriority[0].set(0, -1);
 						movesSize[5]++;
-						return;
 					} else {
 						movesByPriority[5 - Math.abs(board.getSquare(file - 1, row + 1))]
 								.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
@@ -856,7 +837,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[5]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file + 1, row))]
 							.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + row);
@@ -872,7 +852,6 @@ public final class MoveGenerator {
 						movesByPriority[0].add(-1);
 						movesByPriority[0].set(0, -1);
 						movesSize[5]++;
-						return;
 					} else {
 						movesByPriority[5 - Math.abs(board.getSquare(file + 1, row - 1))]
 								.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
@@ -889,7 +868,6 @@ public final class MoveGenerator {
 						movesByPriority[0].add(-1);
 						movesByPriority[0].set(0, -1);
 						movesSize[5]++;
-						return;
 					} else {
 						movesByPriority[5 - Math.abs(board.getSquare(file + 1, row + 1))]
 								.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
@@ -905,7 +883,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[5]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file, row - 1))]
 							.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - 1));
@@ -920,7 +897,6 @@ public final class MoveGenerator {
 					movesByPriority[0].add(-1);
 					movesByPriority[0].set(0, -1);
 					movesSize[5]++;
-					return;
 				} else {
 					movesByPriority[5 - Math.abs(board.getSquare(file, row + 1))]
 							.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1));
