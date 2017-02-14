@@ -104,7 +104,7 @@ public final class Evaluation {
 														// x1 on empty board, x0 on full board
 		if (board.getDangerToWhiteKing() + board.getDangerToBlackKing() > 32) {
 			advancementEval += board.getPieceAdvancement(6) * Math.abs(board.getPieceAdvancement(6)) 
-					* (32 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())); 
+					* (32 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())); // TODO: change, danger is higher than piecesLeft
 												// full board ^2*(-16); Math.abs to not lose the sign of original number
 		} else {
 			advancementEval += (int) (board.getPieceAdvancement(6) 

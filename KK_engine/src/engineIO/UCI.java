@@ -298,7 +298,7 @@ public final class UCI {
 							}
 						}
 					}
-				} else if(future[0].isDone() && future[1].isDone() && future[2].isDone() && future[3].isDone()) {
+				} else if (future[0].isDone() && future[1].isDone() && future[2].isDone() && future[3].isDone()) {
 					if (logging) {
 						Logging.printLine("No forced mate for either side.");
 					}
@@ -316,7 +316,7 @@ public final class UCI {
 			correctMove = move[1];
 		} else if (move[2] != null) {
 			correctMove = move[2];
-		} else if (move[3] != null){
+		} else if (move[3] != null) {
 			correctMove = move[3];
 		} else {
 			return;

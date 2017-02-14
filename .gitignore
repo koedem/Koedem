@@ -1,0 +1,26 @@
+# Eclipse
+.metadata
+.classpath
+.project
+.settings
+.recommenders/
+bin/
+
+#logs
+2016*
+
+#other programs
+FastInvSqrt/**
+StringParser/**
+Zombie-Schach/**
+
+#IntelliJ
+KK_engine/.idea/**
+
+
+#Zeug
+KK_engine.ini
+KK_engine.pgn
+KK_engine/KK_engine.iml
+KK_engine/Ködem-0.2.2.jar
+KK_engine/classes/**
