@@ -277,7 +277,7 @@ public final class UCI {
 		MateFinderThread aggressiveMateFinder = new MateFinderThread(board, 30, true, logging);
 		long time = System.currentTimeMillis();
 		threadFinished = false;
-		Future<int[]> future[] = new Future[4];
+		Future<int[]>[] future = new Future[4];
 		future[0] = executor.submit(mateFinder);
 		future[1] = executor.submit(nonLosingMoves);
 		future[2] = executor.submit(aggressiveMateFinder);

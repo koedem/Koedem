@@ -150,7 +150,6 @@ public final class MoveGenerator {
 	
 	/**
 	 * Generate pawn moves by checking if they can move and/or capture.
-	 * TODO: Write pawn promotion.
 	 * 
 	 * @param file : position of the pawn on the board
 	 * @param row : " "

@@ -262,7 +262,7 @@ public final class Search {
 					alpha = principleVariation.get(0);
 				}
 			}
-			board.setEnPassant(enPassant); // TODO en passant??
+			board.setEnPassant(enPassant);
 			board.unmakeMove(capture, capturedPiece, castlingRights);
 			if (principleVariation.get(0) >= beta) {
 				return principleVariation;
