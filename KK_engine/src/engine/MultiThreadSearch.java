@@ -44,6 +44,7 @@ public class MultiThreadSearch implements Callable<int[]> {
 			if (System.currentTimeMillis() - time > timeLimit) {
 				break;
 			}
+			board.bestmove = Transformation.numberToMove(move[0]);
 		}
 		UCI.printEngineOutput("", move, board, board.getToMove(), time);
 

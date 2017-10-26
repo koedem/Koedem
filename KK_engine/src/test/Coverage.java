@@ -2,23 +2,27 @@ package test;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import engine.Board;
 import engine.MultiThreadSearch;
 import engineIO.Logging;
 import engineIO.UCI;
 
+
 public class Coverage {
 	
 	private static ExecutorService executor = Executors.newFixedThreadPool(5);
 
+	/*@Ignore
     @Test
 	public void coverage() throws InterruptedException, ExecutionException {
 		Logging.setup();
@@ -44,12 +48,18 @@ public class Coverage {
 		pv = future4.get();
 		
 		assertTrue(pv != null);
-	}
-	
-	@Ignore
+	}*/
+
 	@Test
 	public void uci() {
-		UCI.uciCommunication();
+        ByteArrayInputStream in = new ByteArrayInputStream(("go depth 10").getBytes());
+        System.setIn(in);
+	    String args[] = null;
+	    //try {
+            engineIO.UCI.main(args);
+        /*} catch (NoSuchElementException e) {
+	        e.printStackTrace();
+        }*/
 	}
 	
 }

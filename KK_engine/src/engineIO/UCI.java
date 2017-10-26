@@ -95,12 +95,12 @@ public final class UCI {
 				ArrayList<Integer> reversePV = Search.qSearch(board, board.getToMove(), -30000, 30000);
 				Logging.printLine(Integer.toString(reversePV.get(0)));
 				reversePV.remove(0);
-				String pv = "";
+				StringBuilder pv = new StringBuilder();
 				for (Integer capture : reversePV) {
-					pv += Transformation.numberToMove(capture) + " ";
+					pv.append(Transformation.numberToMove(capture)).append(" ");
 				}
-				pv += "Node count: " + board.nodes;
-				Logging.printLine(pv);
+				pv.append("Node count: ").append(board.nodes);
+				Logging.printLine(pv.toString());
 				board.nodes = 0;
 			} else if (command.equals("evaluate")) {
 				Logging.printLine(Integer.toString(Evaluation.evaluation(board, board.getToMove(), -30000)));
@@ -112,47 +112,55 @@ public final class UCI {
 				Evaluation.setMaterialOnly(true);
 			} else if (command.equals("materialOnly off")) {
 				Evaluation.setMaterialOnly(false);
+			} else if (command.equals("print bitboard")) {
+				board.bitboard.printBitBoard();
 			}
 		}
 		Logging.close();
 	}
-	
-	private static void inputUCINewGame() {
+
+    private static void inputUCINewGame() {
 		board = new Board();
 	}
 
 	private static void inputSetOption(String command) {
 		String[] parameters = command.split(" ");
-		if (parameters[2].equals("BaseTime")) {
-			try {
-				baseTime = 10000 / Integer.parseInt(parameters[4]);
-			} catch (NumberFormatException e) {
-				Logging.printLine("Illegal value for option 'BaseTime'.");
-			}
-		} else if (parameters[2].equals("IncTime")) {
-			try {
-				incTime = 10000 / Integer.parseInt(parameters[4]);
-			} catch (NumberFormatException e) {
-				Logging.printLine("Illegal value for option 'IncTime'.");
-			}
-		} else if (parameters[2].equals("MinLeft")) {
-			try {
-				minLeft = 10000 / Integer.parseInt(parameters[4]);
-			} catch (NumberFormatException e) {
-				Logging.printLine("Illegal value for option 'MinLeft'.");
-			}
-		} else if (parameters[2].equals("KingSafety")) {
-			try {
-				kingSafety = Integer.parseInt(parameters[4]);
-			} catch (NumberFormatException e) {
-				Logging.printLine("Illegal value for option 'KingSafety'.");
-			}
-		} else if (parameters[2].equals("Dynamism")) {
-			try {
-				dynamism = Integer.parseInt(parameters[4]);
-			} catch (NumberFormatException e) {
-				Logging.printLine("Illegal value for option 'Dynamism'.");
-			}
+		switch (parameters[2]) {
+			case "BaseTime":
+				try {
+					baseTime = 10000 / Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'BaseTime'.");
+				}
+				break;
+			case "IncTime":
+				try {
+					incTime = 10000 / Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'IncTime'.");
+				}
+				break;
+			case "MinLeft":
+				try {
+					minLeft = 10000 / Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'MinLeft'.");
+				}
+				break;
+			case "KingSafety":
+				try {
+					kingSafety = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'KingSafety'.");
+				}
+				break;
+			case "Dynamism":
+				try {
+					dynamism = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
 		}
 	}
 
@@ -177,22 +185,26 @@ public final class UCI {
 		String command = input.substring(9);
 		String[] parameters = command.split(" ");
 		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i].equals("startpos")) {
-				board = new Board();
-			} else if (parameters[i].equals("fen")) {
-				String fen = "";
-				for (int j = 0; j < 6; j++) {
-					fen += parameters[i + 1 + j] + " ";
-				}
-				board = new Board(fen);
-				i += 6;
-			} else if (parameters[i].equals("moves")) {
-				board.getHashTable().clear();
-				i++;
-				for (int j = 0; j < (parameters.length - i); j++) {
-					Node node = new Node(board, 0, 0, 0, board.getToMove());
-					board.makeMove(parameters[i + j]);
-				}
+			switch (parameters[i]) {
+				case "startpos":
+					board = new Board();
+					break;
+				case "fen":
+					StringBuilder fen = new StringBuilder();
+					for (int j = 0; j < 6; j++) {
+						fen.append(parameters[i + 1 + j]).append(" ");
+					}
+					board = new Board(fen.toString());
+					i += 6;
+					break;
+				case "moves":
+					board.getHashTable().clear();
+					i++;
+					for (int j = 0; j < (parameters.length - i); j++) {
+						Node node = new Node(board, 0, 0, 0, board.getToMove());
+						board.makeMove(parameters[i + j]);
+					}
+					break;
 			}
 		}
 	}
@@ -252,8 +264,7 @@ public final class UCI {
 				} catch (Exception e) {
 					int[] movesSize = new int[6];
 					ArrayList<Integer> moves = MoveGenerator.collectMoves(board, board.getToMove(), movesSize);
-					Logging.printLine("bestmove " + Transformation.numberToSquare((moves.get(0) / 64) % 64) 
-							+ Transformation.numberToSquare(moves.get(0) % 64));
+					Logging.printLine("bestmove " + board.bestmove);
 				}
 				break;
 			} else {
@@ -335,35 +346,35 @@ public final class UCI {
 	
 	public static void printEngineOutput(String praefix, int[] move, Board board, boolean toMove, long time) {
 		if (UCI.uci) {
-			String pv = "";
+			StringBuilder pv = new StringBuilder();
 			for (int i = 0; i < move.length - 1; i++) {
-				pv += Transformation.numberToMove(move[i]) + " ";
+				pv.append(Transformation.numberToMove(move[i])).append(" ");
 			}
 			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes " 
 					+ board.nodes + " time " + (System.currentTimeMillis() - time) + " pv " 
 					+ pv);
 		} else {
-			String pv = praefix;
+			StringBuilder pv = new StringBuilder(praefix);
 			for (int j = 0; j < move.length - 1; j++) {
 				if (move[j] == -1) {
 					break;
 				}
 				if (toMove) {
 					if (j % 2 == 0) {
-						pv += (board.getMoveNumber() + j / 2) + ".";
+						pv.append(board.getMoveNumber() + j / 2).append(".");
 					}
-					pv += Transformation.numberToMove(move[j]) + " ";
+					pv.append(Transformation.numberToMove(move[j])).append(" ");
 				} else {
 					if (j == 0) {
-						pv += board.getMoveNumber() + "...";
+						pv.append(board.getMoveNumber()).append("...");
 					}
 					if (j % 2 == 1) {
-						pv += (board.getMoveNumber() + j / 2 + 1) + ".";
+						pv.append(board.getMoveNumber() + j / 2 + 1).append(".");
 					}
-					pv += Transformation.numberToMove(move[j]) + " ";
+					pv.append(Transformation.numberToMove(move[j])).append(" ");
 				}
 			}
-			Logging.printLine(pv + move[move.length - 1]);
+			Logging.printLine(pv.toString() + move[move.length - 1]);
 			Logging.printLine(praefix + "Node count: " + Transformation.nodeCountOutput(((board.nodes
 					+ board.abortedNodes))) + "(" + Transformation.nodeCountOutput(board.nodes)
 					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.getqNodes()) + ". Time used: "

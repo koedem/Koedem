@@ -3,7 +3,9 @@ package engine;
 import engineIO.Logging;
 import engineIO.Transformation;
 
-public class Node {
+import java.io.Serializable;
+
+public class Node implements Serializable {
 
 	protected int evaluation;
 	protected int depth;
@@ -32,11 +34,11 @@ public class Node {
 	
 	public void print() {
 		for (int i = 7; i >= 0; i--) {
-			String row = "";
+			StringBuilder row = new StringBuilder();
 			for (int j = 0; j < 8; j++) {
-				row += Transformation.numberToPiece(squares.charAt(j * 8 + i)) + " ";
+				row.append(Transformation.numberToPiece(squares.charAt(j * 8 + i))).append(" ");
 			}
-			Logging.printLine(row);
+			Logging.printLine(row.toString());
 		}
 		Logging.printLine("");
 		Logging.printLine("Eval: " + evaluation + " at depth " + depth + ". Best move from here is: "

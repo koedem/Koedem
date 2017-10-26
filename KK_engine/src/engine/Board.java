@@ -1,18 +1,22 @@
 package engine;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import engineIO.Logging;
 import engineIO.Transformation;
 
-public class Board {
-	
+public class Board implements Serializable {
+
 	private static final int QUEENDANGER = 12;
 	private static final int ROOKDANGER = 5;
 	private static final int BISHOPDANGER = 3;
 	private static final int KNIGHTDANGER = 3;
 	
 	private static final int[] PIECEDANGER = { 0, 0, KNIGHTDANGER, BISHOPDANGER, ROOKDANGER, QUEENDANGER, 0 };
+
+	public BitBoard bitboard;
+	public AttackBoard attackBoard;
 
 	public long nodes = 0;
 	public long abortedNodes = 0;
@@ -100,14 +104,18 @@ public class Board {
 	/**
 	 * We store every position that actually occurred in the game.
 	 */
-	private Hashtable<String, Node> hashTable = new Hashtable<String, Node>();
+	private Hashtable<String, Node> hashTable = new Hashtable<>();
 
-	private ArrayList<Integer> rootMoves = new ArrayList<Integer>();
+	private ArrayList<Integer> rootMoves = new ArrayList<>();
+
+	public static String bestmove = "";
 	
 	/**
 	 * Constructor, create new Board and setup the chess start position
 	 */
 	public Board() {
+	    bitboard = new BitBoard(this);
+	    attackBoard = bitboard.attackBoard;
 		setFENPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); // fen
 																					// of
 																					// start
@@ -115,30 +123,35 @@ public class Board {
 	}
 	
 	public Board(String fen) {
+		bitboard = new BitBoard(this);
+		attackBoard = bitboard.attackBoard;
 		setFENPosition(fen);
 	}
 	
 	public Board cloneBoard() {
 		Board clone = new Board();
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {
-				clone.square[i][j] = square[i][j];
-			}
-		}
-		clone.setToMove(toMove);
-		clone.setCastlingRights(castlingRights);
-		clone.setEnPassant(enPassant);
-		clone.setMoveNumber(moveNumber);
-		clone.setMaterialCount(materialCount);
-		clone.setPiecesLeft(piecesLeft);
-		clone.setDangerToWhiteKing(dangerToWhiteKing);
-		clone.setDangerToBlackKing(dangerToBlackKing);
-		
-		for (int piece = 1; piece <= 6; piece++) {
-			clone.setPieceAdvancement(piece, pieceAdvancement[piece]);
-		}
-		
-		clone.setHashTable(hashTable);
+        ObjectOutputStream out = null;
+        String path = ".\\temp" + System.nanoTime() + ".ser";
+        try {
+            FileOutputStream file = new FileOutputStream(path);
+            out = new ObjectOutputStream(file);
+            out.writeObject(this);
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        ObjectInputStream in = null;
+        try {
+            FileInputStream file = new FileInputStream(path);
+            in = new ObjectInputStream(file);
+            clone = (Board) in.readObject();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
 		return clone;
 	}
 	
@@ -154,103 +167,40 @@ public class Board {
 		byte file = 0;
 		byte row = 7;
 		for (int i = 0; i < positions[0].length(); i++) {
-			if (positions[0].charAt(i) == 'k') {
-				this.square[file][row] = -6;
-				materialCount -= KINGVALUE;
-				piecesLeft++;
-				pieceAdvancement[6] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'q') {
-				this.square[file][row] = -5;
-				materialCount -= QUEENVALUE;
-				dangerToWhiteKing += QUEENDANGER;
-				piecesLeft++;
-				pieceAdvancement[5] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'r') {
-				this.square[file][row] = -4;
-				materialCount -= ROOKVALUE;
-				dangerToWhiteKing += ROOKDANGER;
-				piecesLeft++;
-				pieceAdvancement[4] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'b') {
-				this.square[file][row] = -3;
-				materialCount -= BISHOPVALUE;
-				dangerToWhiteKing += BISHOPDANGER;
-				piecesLeft++;
-				pieceAdvancement[3] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'n') {
-				this.square[file][row] = -2;
-				materialCount -= KNIGHTVALUE;
-				dangerToWhiteKing += KNIGHTDANGER;
-				piecesLeft++;
-				pieceAdvancement[2] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'p') {
-				this.square[file][row] = -1;
-				materialCount -= PAWNVALUE;
-				piecesLeft++;
-				pieceAdvancement[1] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'P') {
-				this.square[file][row] = 1;
-				materialCount += PAWNVALUE;
-				piecesLeft++;
-				pieceAdvancement[1] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'N') {
-				this.square[file][row] = 2;
-				materialCount += KNIGHTVALUE;
-				setDangerToBlackKing(getDangerToBlackKing() + KNIGHTDANGER);
-				piecesLeft++;
-				pieceAdvancement[2] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'B') {
-				this.square[file][row] = 3;
-				materialCount += BISHOPVALUE;
-				setDangerToBlackKing(getDangerToBlackKing() + BISHOPDANGER);
-				piecesLeft++;
-				pieceAdvancement[3] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'R') {
-				this.square[file][row] = 4;
-				materialCount += ROOKVALUE;
-				setDangerToBlackKing(getDangerToBlackKing() + ROOKDANGER);
-				piecesLeft++;
-				pieceAdvancement[4] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'Q') {
-				this.square[file][row] = 5;
-				materialCount += QUEENVALUE;
-				setDangerToBlackKing(getDangerToBlackKing() + QUEENDANGER);
-				piecesLeft++;
-				pieceAdvancement[5] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == 'K') {
-				this.square[file][row] = 6;
-				materialCount += KINGVALUE;
-				piecesLeft++;
-				pieceAdvancement[6] += 2 * row - 7;
-				file++;
-			} else if (positions[0].charAt(i) == '/') {
-				row--;
-				file = 0;
-			} else {
-				int emptySquares = Character.getNumericValue(position.charAt(i));
-				for (int j = 0; j < emptySquares; j++) {
-					this.square[file][row] = 0;
-					file++;
-				}
-			}
+            if (positions[0].charAt(i) == '/') {
+                row--;
+                file = 0;
+            } else if (Character.isDigit(positions[0].charAt(i))){
+                int emptySquares = Character.getNumericValue(position.charAt(i));
+                for (int j = 0; j < emptySquares; j++) {
+                    this.square[file][row] = 0;
+                    file++;
+                }
+            } else {
+                byte piece = pieceLetterToByte(positions[0].charAt(i));
+                int colour = piece / Math.abs(piece);
+                this.square[file][row] = piece;
+                materialCount += PIECEVALUE[Math.abs(piece)] * colour;
+                if (colour == 1) {
+                    dangerToBlackKing += PIECEDANGER[piece * colour];
+                } else {
+                    dangerToWhiteKing += PIECEDANGER[piece * colour];
+                }
+                piecesLeft++;
+                pieceAdvancement[Math.abs(piece)] += 2 * row - 7;
+                bitboard.add(Math.abs(piece), (piece > 0) ? 0 : 1, (8 * file + row));
+                file++;
+            }
 		}
-		if (positions[1].equals("w")) {
-			this.toMove = true;
-		} else if (positions[1].equals("b")) {
-			this.toMove = false;
-		} else {
-			throw new IllegalArgumentException();
+		switch (positions[1]) {
+			case "w":
+				this.toMove = true;
+				break;
+			case "b":
+				this.toMove = false;
+				break;
+			default:
+				throw new IllegalArgumentException();
 		}
 		setCastlingRights(positions[2]);
 		if (!(positions[3].equals("-"))) {
@@ -282,12 +232,12 @@ public class Board {
 	public void printBoard() {
 		Logging.printLine("");
 		for (int i = 7; i >= 0; i--) {
-			String row = "";
+			StringBuilder row = new StringBuilder();
 			for (int j = 0; j < 8; j++) {
-				row += Transformation.numberToPiece(square[j][i]) + " ";
+				row.append(Transformation.numberToPiece(square[j][i])).append(" ");
 			}
 
-			Logging.printLine(row);
+			Logging.printLine(row.toString());
 		}
 		Logging.printLine("");
 		Logging.printLine(Transformation.numberToCastling(castlingRights) + " " 
@@ -344,6 +294,7 @@ public class Board {
 		
 		if (capturedPiece != 0) {
 			piecesLeft--;
+			bitboard.remove(endSquare);
 			if (capturedPiece > 0) {
 				materialCount -= PIECEVALUE[capturedPiece];
 				dangerToBlackKing -= PIECEDANGER[capturedPiece];
@@ -358,6 +309,8 @@ public class Board {
 		if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
 			endSquare = move % 64;
+
+            bitboard.move(startSquare, endSquare);
 			
 			if (startSquare == 32) { // if we move with the King (or e1 isn't even the king) we can't castle anymore
 				removeCastlingRights((byte) 0x38);
@@ -390,6 +343,7 @@ public class Board {
 					square[4][0] = 0;
 					square[5][0] = 4; // rook move in castling
 					square[7][0] = 0;
+					bitboard.move(56, 40);
 					changeToMove();
 					return;
 				} else if (endSquare == 16) {
@@ -397,6 +351,7 @@ public class Board {
 					square[4][0] = 0;
 					square[3][0] = 4; // rook move in castling
 					square[0][0] = 0;
+					bitboard.move(0, 24);
 					changeToMove();
 					return;
 				}
@@ -406,6 +361,7 @@ public class Board {
 					square[4][7] = 0;
 					square[5][7] = -4; // rook move in castling
 					square[7][7] = 0;
+					bitboard.move(63, 47);
 					changeToMove();
 					return;
 				} else if (endSquare == 23) {
@@ -413,6 +369,7 @@ public class Board {
 					square[4][7] = 0;
 					square[3][7] = -4; // rook move in castling
 					square[0][7] = 0;
+					bitboard.move(7, 31);
 					changeToMove();
 					return;
 				}
@@ -425,10 +382,12 @@ public class Board {
 					square[enPassant / 8][(enPassant % 8) - 1] = 0; // capture the pawn that is on the square before ep
 					materialCount += PAWNVALUE;
 					pieceAdvancement[1] -= 2 * ((enPassant % 8) - 1) - 7;
+					bitboard.remove(endSquare - 1);
 				} else {
 					square[enPassant / 8][(enPassant % 8) + 1] = 0;
 					materialCount -= PAWNVALUE;
 					pieceAdvancement[1] -= 2 * ((enPassant % 8) + 1) - 7;
+                    bitboard.remove(endSquare + 1);
 				}
 			}
 			
@@ -446,12 +405,15 @@ public class Board {
 				setEnPassant((byte) ((startSquare + endSquare) / 2));  			// we update the en passant to be 
 																				// in the middle of start/end square
 			}
-			
+
 		} else if (move < (1 << 16) && move > (1 << 15)) {
 			int startSquare = (move - (1 << 15)) / (1 << 9);
 			endSquare = (move % (1 << 9)) / (1 << 3);
 			
 			byte promotion = (byte) (move % (1 << 3));
+
+			bitboard.remove(startSquare);
+			bitboard.add(promotion, (toMove) ? 0 : 1, endSquare);
 			
 			square[startSquare / 8][startSquare % 8] = 0;
 			pieceAdvancement[1] -= 2 * (startSquare % 8) - 7;
@@ -520,12 +482,16 @@ public class Board {
 				square[2][0] = 0;
 				square[3][0] = 0; // Rook move get undone.
 				square[0][0] = 4;
+				bitboard.move(24, 0);
+				bitboard.move(16, 32);
 			} else if (move == (1 << 12) + (32 << 6) + 48) { // White castle king side.
 				assert square[4][0] == 0 && square[5][0] == 4 && square[6][0] == 6 && square[7][0] == 0;
 				square[4][0] = 6; 
 				square[6][0] = 0;
 				square[5][0] = 0; 
 				square[7][0] = 4;
+				bitboard.move(40, 56);
+				bitboard.move(48, 32);
 			} else if (move == (1 << 12) + (39 << 6) + 23) { // Black castle queen side.
 				assert square[4][7] == 0 && square[3][7] == -4 && square[2][7] == -6 
 						&& square[1][7] == 0 && square[0][7] == 0;
@@ -533,14 +499,16 @@ public class Board {
 				square[2][7] = 0;
 				square[3][7] = 0; 
 				square[0][7] = -4;
-			} else if (move == (1 << 12) + (39 << 6) + 55) { // Black castle king side.
+				bitboard.move(31, 7);
+				bitboard.move(23, 39);
+			} else { // Black castle king side.
 				assert square[4][7] == 0 && square[5][7] == -4 && square[6][7] == -6 && square[7][7] == 0;
-				square[4][7] = -6; 
+				square[4][7] = -6;
 				square[6][7] = 0;
-				square[5][7] = 0; 
+				square[5][7] = 0;
 				square[7][7] = -4;
-			} else {
-				assert false;
+				bitboard.move(47, 63);
+				bitboard.move(55, 39);
 			}
 		} else if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
@@ -551,7 +519,8 @@ public class Board {
 			
 			square[startSquare / 8][startSquare % 8] = square[endSquare / 8][endSquare % 8]; // actual moving
 			square[endSquare / 8][endSquare % 8] = capturedPiece; // put captured piece back on its square
-			
+            boolean success = bitboard.move(endSquare, startSquare);
+            assert success;
 			if (Math.abs(square[startSquare / 8][startSquare % 8]) == 1 && endSquare == enPassant) {
 				
 											// a pawn moving and ending on the en passant square ALWAYS means capture
@@ -560,12 +529,14 @@ public class Board {
 					assert endSquare - startSquare == -7 || endSquare - startSquare == 9;
 					assert square[endSquare / 8][(endSquare % 8) - 1] == 0; // should be empty
 					square[endSquare / 8][(endSquare % 8) - 1] = -1; // pawn added back on; -1 because of en passant
+                    bitboard.add(1, 1, endSquare - 1);
 					materialCount -= PAWNVALUE;
 					pieceAdvancement[1] += 2 * ((enPassant % 8) - 1) - 7;
 				} else if (endSquare % 8 == 2) {
 					assert endSquare - startSquare == 7 || endSquare - startSquare == -9;
 					assert square[endSquare / 8][(endSquare % 8) + 1] == 0;
 					square[endSquare / 8][(endSquare % 8) + 1] = 1;
+					bitboard.add(1, 0, endSquare + 1);
 					materialCount += PAWNVALUE;
 					pieceAdvancement[1] += 2 * ((enPassant % 8) + 1) - 7;
 				} else {
@@ -584,12 +555,16 @@ public class Board {
 			
 			if (endSquare % 8 == 7) {
 				square[startSquare / 8][startSquare % 8] = 1;
+				bitboard.add(1, 0, startSquare);
+				bitboard.remove(endSquare);
 				
-				square[endSquare / 8][endSquare % 8] = capturedPiece;
+				square[endSquare / 8][endSquare % 8] = capturedPiece; // bitboard change done below
 				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
 				dangerToBlackKing -= PIECEDANGER[promotion];
 			} else if (endSquare % 8 == 0) {
 				square[startSquare / 8][startSquare % 8] = -1;
+				bitboard.add(1, 1, startSquare);
+				bitboard.remove(endSquare);
 				
 				square[endSquare / 8][endSquare % 8] = capturedPiece;
 				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
@@ -604,18 +579,19 @@ public class Board {
 		castlingRights = oldCastlingRights;
 		
 		if (piece != 0) {
-			piecesLeft++;
-			if (piece > 0) {
-				materialCount += PIECEVALUE[piece]; // piece gets back on the board, so added to materialCount
-				dangerToBlackKing += PIECEDANGER[piece]; // and to danger-numbers
-				pieceAdvancement[piece] += 2 * (endSquare % 8) - 7; // and add back its advancement
-			} else {
-				materialCount -= PIECEVALUE[Math.abs(piece)];
-				dangerToWhiteKing += PIECEDANGER[Math.abs(piece)];
-				pieceAdvancement[Math.abs(piece)] += 2 * (endSquare % 8) - 7;
-			}
-		}
-		
+            piecesLeft++;
+            if (piece > 0) {
+                materialCount += PIECEVALUE[piece]; // piece gets back on the board, so added to materialCount
+                dangerToBlackKing += PIECEDANGER[piece]; // and to danger-numbers
+                pieceAdvancement[piece] += 2 * (endSquare % 8) - 7; // and add back its advancement
+				bitboard.add(piece, 0, endSquare);
+            } else {
+                materialCount -= PIECEVALUE[Math.abs(piece)];
+                dangerToWhiteKing += PIECEDANGER[Math.abs(piece)];
+                pieceAdvancement[Math.abs(piece)] += 2 * (endSquare % 8) - 7;
+                bitboard.add(-piece, 1, endSquare);
+            }
+        }
 	}
 
 	/**
@@ -699,18 +675,18 @@ public class Board {
 	}
 	
 	public String getSquareString() {
-		String squareString = "";
+		StringBuilder squareString = new StringBuilder();
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				squareString += square[i][j];
+				squareString.append(square[i][j]);
 			}
 		}
 		if (toMove) {
-		    squareString += (byte) 0;
+		    squareString.append((byte) 0);
 		} else {
-		    squareString += (byte) 1;
+		    squareString.append((byte) 1);
 		}
-		return squareString;
+		return squareString.toString();
 	}
 
 	public byte getEnPassant() {
@@ -767,4 +743,24 @@ public class Board {
 	public void setqNodes(long qNodes) {
 		this.qNodes = qNodes;
 	}
+
+	private static byte pieceLetterToByte(char piece) {
+	    byte pieceInt = 0;
+	    switch (piece) {
+	        case 'k': pieceInt = -6; break;
+            case 'q': pieceInt = -5; break;
+            case 'r': pieceInt = -4; break;
+            case 'b': pieceInt = -3; break;
+            case 'n': pieceInt = -2; break;
+            case 'p': pieceInt = -1; break;
+            case 'P': pieceInt = 1; break;
+            case 'N': pieceInt = 2; break;
+            case 'B': pieceInt = 3; break;
+            case 'R': pieceInt = 4; break;
+            case 'Q': pieceInt = 5; break;
+            case 'K': pieceInt = 6; break;
+        }
+
+        return pieceInt;
+    }
 }

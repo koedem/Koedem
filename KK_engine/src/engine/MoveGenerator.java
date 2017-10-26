@@ -21,28 +21,24 @@ public final class MoveGenerator {
 		}
 		@SuppressWarnings("unchecked")
 		ArrayList<Integer>[] movesByPriority = (ArrayList<Integer>[]) new ArrayList[6];
-		movesByPriority[0] = new ArrayList<Integer>(1); // save all Qs getting captured
-		movesByPriority[1] = new ArrayList<Integer>(1); // save all Rs getting captured
-		movesByPriority[2] = new ArrayList<Integer>(1); // Bs getting captured
-		movesByPriority[3] = new ArrayList<Integer>(1); // Ns getting captured
-		movesByPriority[4] = new ArrayList<Integer>(1); // Ps getting captured
-		movesByPriority[5] = new ArrayList<Integer>(10); // non-captures
+		movesByPriority[0] = new ArrayList<>(1); // save all Qs getting captured
+		movesByPriority[1] = new ArrayList<>(1); // save all Rs getting captured
+		movesByPriority[2] = new ArrayList<>(1); // Bs getting captured
+		movesByPriority[3] = new ArrayList<>(1); // Ns getting captured
+		movesByPriority[4] = new ArrayList<>(1); // Ps getting captured
+		movesByPriority[5] = new ArrayList<>(10); // non-captures
 		for (byte i = 0; i < 8; i++) {
 			for (byte j = 0; j < 8; j++) {
 				
 				if (toMove) {
 					if (board.square[i][j] == 1) {
 						pawnMove(i, j, board, toMove, movesByPriority, movesSize);
-						continue;
 					} else if (board.square[i][j] == 2) {
 						knightMove(i, j, board, toMove, movesByPriority, movesSize);
-						continue;
 					} else if (board.square[i][j] == 3) {
 						bishopMove(i, j, board, toMove, false, movesByPriority, movesSize);
-						continue;
 					} else if (board.square[i][j] == 4) {
 						rookMove(i, j, board, toMove, false, movesByPriority, movesSize);
-						continue;
 					} else if (board.square[i][j] == 5) { // queen moves like rook + bishop
 						rookMove(i, j, board, toMove, true, movesByPriority, movesSize);
 						bishopMove(i, j, board, toMove, true, movesByPriority, movesSize);
@@ -52,16 +48,12 @@ public final class MoveGenerator {
 				} else {
 					if (board.square[i][j] == -1) {
 						pawnMove(i, j, board, toMove, movesByPriority, movesSize);
-						continue;
 					} else if (board.square[i][j] == -2) {
 						knightMove(i, j, board, toMove, movesByPriority, movesSize);
-						continue;
 					} else if (board.square[i][j] == -3) {
 						bishopMove(i, j, board, toMove, false, movesByPriority, movesSize);
-						continue;
 					} else if (board.square[i][j] == -4) {
 						rookMove(i, j, board, toMove, false, movesByPriority, movesSize);
-						continue;
 					} else if (board.square[i][j] == -5) { // queen moves like rook + bishop
 						rookMove(i, j, board, toMove, true, movesByPriority, movesSize);
 						bishopMove(i, j, board, toMove, true, movesByPriority, movesSize);
@@ -86,11 +78,11 @@ public final class MoveGenerator {
 	 * @return ArrayList of Integers, containing all captures.
 	 */
 	public static ArrayList<Integer> collectCaptures(Board board, boolean toMove) {
-		ArrayList<Integer> captures = new ArrayList<Integer>(1); // save all Qs getting captured
-		ArrayList<Integer> captureR = new ArrayList<Integer>(1); // save all Rs getting captured
-		ArrayList<Integer> captureB = new ArrayList<Integer>(1);
-		ArrayList<Integer> captureN = new ArrayList<Integer>(1);
-		ArrayList<Integer> captureP = new ArrayList<Integer>(1);
+		ArrayList<Integer> captures = new ArrayList<>(1); // save all Qs getting captured
+		ArrayList<Integer> captureR = new ArrayList<>(1); // save all Rs getting captured
+		ArrayList<Integer> captureB = new ArrayList<>(1);
+		ArrayList<Integer> captureN = new ArrayList<>(1);
+		ArrayList<Integer> captureP = new ArrayList<>(1);
 		
 		for (byte i = 0; i < 8; i++) {
 			for (byte j = 0; j < 8; j++) {
@@ -98,16 +90,12 @@ public final class MoveGenerator {
 				if (toMove) {
 					if (board.square[i][j] == 1) {
 						pawnCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						continue;
 					} else if (board.square[i][j] == 2) {
 						knightCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						continue;
 					} else if (board.square[i][j] == 3) {
 						bishopCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						continue;
 					} else if (board.square[i][j] == 4) {
 						rookCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						continue;
 					} else if (board.square[i][j] == 5) { // queen moves like rook + bishop
 						rookCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
 						bishopCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
@@ -117,16 +105,12 @@ public final class MoveGenerator {
 				} else {
 					if (board.square[i][j] == -1) {
 						pawnCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						continue;
 					} else if (board.square[i][j] == -2) {
 						knightCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						continue;
 					} else if (board.square[i][j] == -3) {
 						bishopCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						continue;
 					} else if (board.square[i][j] == -4) {
 						rookCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						continue;
 					} else if (board.square[i][j] == -5) { // queen moves like rook + bishop
 						rookCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
 						bishopCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
@@ -155,10 +139,6 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
-	 * @param nonCaptures2 
-	 * @param captureP 
-	 * @param captureN 
-	 * @param captureB 
 	 */
 	private static void pawnMove(byte file, byte row, Board board, boolean toMove,
 			ArrayList<Integer>[] movesByPriority, int[] movesSize) {
@@ -343,10 +323,6 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
-	 * @param nonCaptures2 
-	 * @param captureP 
-	 * @param captureN 
-	 * @param captureB 
 	 */
 	private static void knightMove(byte file, byte row, Board board, boolean toMove,
 			ArrayList<Integer>[] movesByPriority, int[] movesSize) {
@@ -631,10 +607,6 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
-	 * @param nonCaptures2 
-	 * @param captureP 
-	 * @param captureN 
-	 * @param captureB 
 	 */
 	private static void bishopMove(byte file, byte row, Board board, boolean toMove, boolean queen,
 			ArrayList<Integer>[] movesByPriority, int[] movesSize) {
@@ -777,10 +749,6 @@ public final class MoveGenerator {
 	 * @param row : " "
 	 * @param board : on which board we are
 	 * @param toMove : who to move it is
-	 * @param nonCaptures2 
-	 * @param captureP 
-	 * @param captureN 
-	 * @param captureB 
 	 */
 	private static void kingMove(byte file, byte row, Board board, boolean toMove,
 			ArrayList<Integer>[] movesByPriority, int[] movesSize) {
@@ -982,7 +950,6 @@ public final class MoveGenerator {
 					if (board.getSquare(file + 1, row + 1) == -6) {
 						captures.clear();
 						captures.add(-1);
-						return;
 					} else if (board.getSquare(file + 1, row + 1) == -5) {
 						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
 					} else if (board.getSquare(file + 1, row + 1) == -4) {
@@ -1061,7 +1028,6 @@ public final class MoveGenerator {
 					if (board.getSquare(file + 1, row - 1) == 6) {
 						captures.clear();
 						captures.add(-1);
-						return;
 					} else if (board.getSquare(file + 1, row - 1) == 5) {
 						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
 					} else if (board.getSquare(file + 1, row - 1) == 4) {
@@ -1288,7 +1254,6 @@ public final class MoveGenerator {
 				if (Math.abs(board.square[file + 1][row + 2]) == 6) {
 					captures.clear();
 					captures.add(-1);
-					return;
 				} else if (Math.abs(board.square[file + 1][row + 2]) == 5) {
 					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2));
 				} else if (Math.abs(board.square[file + 1][row + 2]) == 4) {
@@ -1339,7 +1304,6 @@ public final class MoveGenerator {
 				}
 				break;
 			} else if (squareValue == 1) {
-				continue;
 			} else {
 				break;
 			}
@@ -1365,7 +1329,6 @@ public final class MoveGenerator {
 				}
 				break;
 			} else if (squareValue == 1) {
-				continue;
 			} else {
 				break;
 			}
@@ -1391,7 +1354,6 @@ public final class MoveGenerator {
 				}
 				break;
 			} else if (squareValue == 1) {
-				continue;
 			} else {
 				break;
 			}
@@ -1417,7 +1379,6 @@ public final class MoveGenerator {
 				}
 				break;
 			} else if (squareValue == 1) {
-				continue;
 			} else {
 				break;
 			}
@@ -1459,7 +1420,6 @@ public final class MoveGenerator {
 				}
 				break;
 			} else if (squareValue == 1) {
-				continue;
 			} else {
 				break;
 			}
@@ -1485,7 +1445,6 @@ public final class MoveGenerator {
 				}
 				break;
 			} else if (squareValue == 1) {
-				continue;
 			} else {
 				break;
 			}
@@ -1511,7 +1470,6 @@ public final class MoveGenerator {
 				}
 				break;
 			} else if (squareValue == 1) {
-				continue;
 			} else {
 				break;
 			}
@@ -1537,7 +1495,6 @@ public final class MoveGenerator {
 				}
 				break;
 			} else if (squareValue == 1) {
-				continue;
 			} else {
 				break;
 			}
@@ -1706,7 +1663,6 @@ public final class MoveGenerator {
 				if (Math.abs(board.square[file][row + 1]) == 6) {
 					captures.clear();
 					captures.add(-1);
-					return;
 				} else if (Math.abs(board.square[file][row + 1]) == 5) {
 					captures.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1));
 				} else if (Math.abs(board.square[file][row + 1]) == 4) {
@@ -1725,7 +1681,8 @@ public final class MoveGenerator {
 	
 	public static int[] activityEval(Board board, boolean toMove) {
 		int[] movesSize = new int[6];
-		collectMoves(board, toMove, movesSize);
+		ArrayList moves = collectMoves(board, toMove, movesSize);
+		moves = null;
 		return movesSize;
 	}
 	
@@ -1764,7 +1721,7 @@ public final class MoveGenerator {
 		if (moves.get(0) == -1) {
 			return moves;
 		}
-		ArrayList<Integer> checks = new ArrayList<Integer>();
+		ArrayList<Integer> checks = new ArrayList<>();
 		for (int index = 0; index < moves.size(); index++) {
 			int move = moves.get(index);
 			byte capturedPiece;
@@ -1799,7 +1756,7 @@ public final class MoveGenerator {
 	public static ArrayList<Integer> collectCheckMoves(Board board, boolean toMove) {
 		int[] movesSize = new int[6];
 		ArrayList<Integer> moves = collectMoves(board, toMove, movesSize);
-		ArrayList<Integer> checks = new ArrayList<Integer>();
+		ArrayList<Integer> checks = new ArrayList<>();
 		if (moves.get(0) == -1) {
 			return checks;
 		}

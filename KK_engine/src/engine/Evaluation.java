@@ -1,5 +1,6 @@
 package engine;
 
+import engineIO.Logging;
 import engineIO.UCI;
 import test.Assertions;
 
@@ -38,6 +39,11 @@ public final class Evaluation {
 
 		assert Assertions.advancement(board);
 		assert Assertions.materialCount(board);
+		//assert Evaluation.correctBitBoard(board);
+        if (!Evaluation.correctBitBoard(board)) {
+            Logging.printLine("BitBoard-Error.");
+            System.exit(1);
+        }
 		
 		if (isMaterialOnly()) {
 			if (toMove) {
@@ -62,7 +68,9 @@ public final class Evaluation {
 		int[] blackSize = MoveGenerator.activityEval(board, false);
 		
 		eval += activityEval(board, whiteSize, blackSize);
-		
+		whiteSize = null;
+		blackSize = null;
+
 		if (!toMove) {
 			eval = (short) -eval;
 		}
@@ -204,5 +212,20 @@ public final class Evaluation {
 
 	public static void setMaterialOnly(boolean materialOnly) {
 		Evaluation.materialOnly = materialOnly;
+	}
+
+	private static boolean correctBitBoard(Board board) {
+		boolean correct = true;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (board.getSquare(i, j) != board.bitboard.getSquare(i * 8 + j)) {
+                    Logging.printLine("BitBoard wrong." + i + " " + j);
+                    board.printBoard();
+                    board.bitboard.printBitBoard();
+                    return false;
+                }
+            }
+        }
+		return correct;
 	}
 }
