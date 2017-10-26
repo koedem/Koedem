@@ -73,12 +73,12 @@ public class Board implements Serializable {
 	 * Material value of a knight in centi pawns according to Larry Kaufmann (Komodo team).
 	 */
 	public static final int KNIGHTVALUE = 325;
-	
+
 	/**
-	 * Material value of a bishop in centi pawns according to Larry Kaufmann (Komodo team).
+	 * Material value of a bishop in centi pawns according to Larry Kaufmann (Komodo team). Decreased by 60cp because the Bishop is not as strong in this game.
 	 */
-	public static final int BISHOPVALUE = 335;
-	
+	public static final int BISHOPVALUE = 275;
+
 	/**
 	 * Material value of a rook in centi pawns according to Larry Kaufmann (Komodo team).
 	 */
