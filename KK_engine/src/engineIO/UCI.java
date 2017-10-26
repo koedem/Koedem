@@ -108,10 +108,6 @@ public final class UCI {
 				for (Node value : board.getHashTable().values()) {
 					value.print();
 				}
-			} else if (command.equals("materialOnly on")) {
-				Evaluation.setMaterialOnly(true);
-			} else if (command.equals("materialOnly off")) {
-				Evaluation.setMaterialOnly(false);
 			} else if (command.equals("print bitboard")) {
 				board.bitboard.printBitBoard();
 			}
