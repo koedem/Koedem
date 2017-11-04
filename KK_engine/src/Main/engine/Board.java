@@ -2,6 +2,8 @@ package Main.engine;
 
 import java.io.*;
 import java.util.Hashtable;
+
+import Main.Utility.DeepCopy;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 
@@ -131,31 +133,8 @@ public class Board implements Serializable {
 		setFENPosition(fen);
 	}
 	
-	public Board cloneBoard() {
-		Board clone = new Board();
-        ObjectOutputStream out = null;
-        String path = ".\\temp" + System.nanoTime() + ".ser";
-        try {
-            FileOutputStream file = new FileOutputStream(path);
-            out = new ObjectOutputStream(file);
-            out.writeObject(this);
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        ObjectInputStream in = null;
-        try {
-            FileInputStream file = new FileInputStream(path);
-            in = new ObjectInputStream(file);
-            clone = (Board) in.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-		return clone;
+	Board cloneBoard() {
+		return (Board) DeepCopy.copy(this);
 	}
 	
 	/**

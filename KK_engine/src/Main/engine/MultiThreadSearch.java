@@ -29,6 +29,7 @@ public class MultiThreadSearch implements Callable<int[]> {
 		int[] move = null;
 		int[] movesSize = new int[6]; // unused
 		board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[256], movesSize));
+		Logging.printLine("info search started at milli: " + System.currentTimeMillis());
 		
 		for (int i = 1; i <= depth; i++) {
 			if (moveOrdering) {

@@ -49,6 +49,7 @@ public final class UCI {
 		Logging.printLine(engineName + " by Tom Marvolo.");
 		while (!command.equals("quit")) {
 			command = sc.nextLine();
+			Logging.printLine("info command received at milli: " + Long.toString(System.currentTimeMillis()));
 			Logging.addToLogFile(">> " + command);
 			
 			if (command.equals("uci")) {
