@@ -1,10 +1,10 @@
-package engine;
+package Main.engine;
 
 import java.util.concurrent.Callable;
 
-import engineIO.Logging;
-import engineIO.Transformation;
-import engineIO.UCI;
+import Main.engineIO.Logging;
+import Main.engineIO.Transformation;
+import Main.engineIO.UCI;
 
 public class NonLosingThread implements Callable<int[]> {
 	private Board board;
@@ -15,7 +15,7 @@ public class NonLosingThread implements Callable<int[]> {
 	
 	public NonLosingThread(Board board, int depth, boolean aggressive, boolean logging) {
 		this.board = board.cloneBoard();
-		this.board.setRootMoves(MoveGenerator.collectAllPNMoves(this.board, this.board.getToMove()));
+		this.board.setRootMoves(this.board.getMoveGenerator().collectAllPNMoves(new int[256], this.board, this.board.getToMove()));
 		this.depth = depth;
 		this.aggressive = aggressive;
 		if (aggressive) {
@@ -43,8 +43,11 @@ public class NonLosingThread implements Callable<int[]> {
 			move = MateFinder.rootMateFinder(board, board.getToMove(), i, time, aggressive);
 			
 			if (logging) {
-				Logging.printLine(threadName + "Non losing moves: " + board.getRootMoves().size() + ". Nodes: " 
+				Logging.printLine(threadName + "Non losing moves: " + board.getRootMoves()[0] + ". Nodes: "
 					+ Transformation.nodeCountOutput(board.nodes));
+				for (int index = 1; index <= board.getRootMoves()[0]; index++) {
+					Logging.printLine(Transformation.numberToMove(board.getRootMoves()[index]) + " ");
+				}
 			}
 			
 			if (move[move.length - 1] < 0) {

@@ -1,6 +1,6 @@
 package test;
 
-import engine.Board;
+import Main.engine.Board;
 
 /**
  * This class provides methods for assertion testing.

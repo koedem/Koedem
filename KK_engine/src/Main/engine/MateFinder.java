@@ -1,8 +1,8 @@
-package engine;
+package Main.engine;
 
 import java.util.ArrayList;
 
-import engineIO.UCI;
+import Main.engineIO.UCI;
 
 public final class MateFinder {
 
@@ -10,19 +10,19 @@ public final class MateFinder {
 		int alpha = -30000;
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
-		ArrayList<Integer> moves = board.getRootMoves();
-		int bestMove = 0;
-		for (int moveIndex = 0; moveIndex < moves.size(); moveIndex++) {
+		int[] moves = board.getRootMoves();
+		int bestMove = 1;
+		for (int moveIndex = 1; moveIndex <= moves[0]; moveIndex++) {
 			board.nodes++;
-			byte capturedPiece = board.getSquare((moves.get(moveIndex) / 8) % 8, moves.get(moveIndex) % 8);
+			byte capturedPiece = board.getSquare((moves[moveIndex] / 8) % 8, moves[moveIndex] % 8);
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
-			board.makeMove(moves.get(moveIndex));
+			board.makeMove(moves[moveIndex]);
 			int[] innerPV = new int[depth + 1];
 			if (depth > 1) {
 				innerPV = mateFinder(board, !toMove, depth, depth - 1, aggressive);
 				innerPV[depth] = -innerPV[depth];
-				innerPV[0] = moves.get(moveIndex);
+				innerPV[0] = moves[moveIndex];
 				//UserInteraction.printEngineOutput("NonLosing Search move ", innerPV, board, time);
 				
 				if (innerPV[depth] > 9000) {
@@ -39,18 +39,18 @@ public final class MateFinder {
 				bestMove = moveIndex;
 			}
 			board.setEnPassant(enPassant);
-			board.unmakeMove(moves.get(moveIndex), capturedPiece, castlingRights);
+			board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
 			board.addCastlingRights(castlingRights);
 			if (innerPV[depth] < -9000) {
-				moves.remove(moveIndex);
+				moves[moveIndex] = moves[moves[0]--]; // replace moveIndex with the last array element and then decrease array size by one to de facto remove moveIndex
 				moveIndex--;
 			}
 		}
 		
-		if (moves.size() > 0) {
-			int bestMoveText = moves.get(bestMove);
-			moves.set(bestMove, moves.get(0));
-			moves.set(0, bestMoveText); // order best move to top
+		if (moves[0] > 0) {
+			int bestMoveText = moves[bestMove];
+			moves[bestMove] =  moves[1];
+			moves[1] = bestMoveText; // order best move to top
 		}
 		return principleVariation;
 	}
@@ -58,21 +58,21 @@ public final class MateFinder {
 	public static int[] mateFinder(Board board, boolean toMove, int depth, int depthLeft, boolean aggressive) {
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -9999;
-		ArrayList<Integer> moves = null;
+		int moves[] = new int[256];
 		if (depthLeft % 2 == 1) {
-			moves = MoveGenerator.collectAllPNMoves(board, toMove);
+			moves = board.getMoveGenerator().collectAllPNMoves(moves, board, toMove);
 		} else {
 			if (aggressive) {
-				moves = MoveGenerator.collectCheckMoves(board, toMove);
+				moves = board.getMoveGenerator().collectCheckMoves(new int[256], moves, board, toMove);
 			} else {
-				moves = MoveGenerator.collectPNSearchMoves(board, toMove);
+				moves = board.getMoveGenerator().collectPNSearchMoves(new int[256], moves, board, toMove);
 			}
 		}
 		
-		if (moves.size() > 0 && moves.get(0) == -1) {
+		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
 			return principleVariation;
-		} else if (depthLeft % 2 == 0 && moves.size() == 0) {
+		} else if (depthLeft % 2 == 0 && moves[0] == 0) {
 			principleVariation[depth] = 0;
 			return principleVariation;
 		} else if (board.getHashTable().get(board.getSquareString()) != null && depthLeft != depth) {

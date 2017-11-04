@@ -1,12 +1,15 @@
-package engine;
+package Main.engine;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Hashtable;
-import engineIO.Logging;
-import engineIO.Transformation;
+import Main.engineIO.Logging;
+import Main.engineIO.Transformation;
 
 public class Board implements Serializable {
+
+	private MoveGenerator moveGenerator = new MoveGenerator(this);
+	private Evaluation evaluation = new Evaluation(this);
+	private Search search = new Search(this);
 
 	private static final int QUEENDANGER = 12;
 	private static final int ROOKDANGER = 5;
@@ -27,7 +30,7 @@ public class Board implements Serializable {
 	 * White pieces get positive values, black pieces negative ones, empty squares a 0.
 	 * Format as fileRow, each reduced by one. Example: d6 becomes 3, 5.
 	 */
-	protected byte[][] square = new byte[8][8];
+	byte[][] square = new byte[8][8];
 	
 	/**
 	 * True = white to move, false = black to move.
@@ -106,9 +109,9 @@ public class Board implements Serializable {
 	 */
 	private Hashtable<String, Node> hashTable = new Hashtable<>();
 
-	private ArrayList<Integer> rootMoves = new ArrayList<>();
+	private int[] rootMoves = new int[256];
 
-	public static String bestmove = "";
+	public String bestmove = "";
 	
 	/**
 	 * Constructor, create new Board and setup the chess start position
@@ -705,11 +708,11 @@ public class Board implements Serializable {
 		this.hashTable = hashTable;
 	}
 
-	public ArrayList<Integer> getRootMoves() {
+	public int[] getRootMoves() {
 		return rootMoves;
 	}
 
-	public void setRootMoves(ArrayList<Integer> rootMoves) {
+	public void setRootMoves(int[] rootMoves) {
 		this.rootMoves = rootMoves;
 	}
 
@@ -763,4 +766,28 @@ public class Board implements Serializable {
 
         return pieceInt;
     }
+
+	public MoveGenerator getMoveGenerator() {
+		return moveGenerator;
+	}
+
+	public void setMoveGenerator(MoveGenerator moveGenerator) {
+		this.moveGenerator = moveGenerator;
+	}
+
+	public Evaluation getEvaluation() {
+		return evaluation;
+	}
+
+	public void setEvaluation(Evaluation evaluation) {
+		this.evaluation = evaluation;
+	}
+
+	public Search getSearch() {
+		return search;
+	}
+
+	public void setSearch(Search search) {
+		this.search = search;
+	}
 }

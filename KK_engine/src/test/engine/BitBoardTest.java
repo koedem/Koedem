@@ -1,10 +1,6 @@
-package test;
+package test.engine;
 
 import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
-import engine.BitBoard;
 
 public class BitBoardTest {
 

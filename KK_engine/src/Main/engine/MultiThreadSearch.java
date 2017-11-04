@@ -1,10 +1,10 @@
-package engine;
+package Main.engine;
 
 import java.util.concurrent.Callable;
 
-import engineIO.Logging;
-import engineIO.Transformation;
-import engineIO.UCI;
+import Main.engineIO.Logging;
+import Main.engineIO.Transformation;
+import Main.engineIO.UCI;
 
 public class MultiThreadSearch implements Callable<int[]> {
 
@@ -28,13 +28,13 @@ public class MultiThreadSearch implements Callable<int[]> {
 		board.setqNodes(0);
 		int[] move = null;
 		int[] movesSize = new int[6]; // unused
-		board.setRootMoves(MoveGenerator.collectMoves(board, board.getToMove(), movesSize));
+		board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[256], movesSize));
 		
 		for (int i = 1; i <= depth; i++) {
 			if (moveOrdering) {
-				move = Search.rootMax(board, board.getToMove(), i, time);
+				move = board.getSearch().rootMax(board.getToMove(), i, time);
 			} else {
-				move = Search.negaMax(board, board.getToMove(), i, i, -30000, 30000);
+				move = board.getSearch().negaMax(board.getToMove(), i, i, -30000, 30000);
 			}
 			
 			if (Math.abs(move[move.length - 1]) > 9000) {

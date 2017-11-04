@@ -3,19 +3,10 @@ package test;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.util.NoSuchElementException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
-
-import engine.Board;
-import engine.MultiThreadSearch;
-import engineIO.Logging;
-import engineIO.UCI;
 
 
 public class Coverage {
@@ -56,7 +47,7 @@ public class Coverage {
         System.setIn(in);
 	    String args[] = null;
 	    //try {
-            engineIO.UCI.main(args);
+            Main.engineIO.UCI.main(args);
         /*} catch (NoSuchElementException e) {
 	        e.printStackTrace();
         }*/

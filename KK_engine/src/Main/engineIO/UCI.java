@@ -1,4 +1,4 @@
-package engineIO;
+package Main.engineIO;
 
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -6,14 +6,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import engine.Board;
-import engine.Evaluation;
-import engine.MateFinderThread;
-import engine.MoveGenerator;
-import engine.MultiThreadSearch;
-import engine.Node;
-import engine.NonLosingThread;
-import engine.Search;
+import Main.engine.Board;
+import Main.engine.Evaluation;
+import Main.engine.MateFinderThread;
+import Main.engine.MoveGenerator;
+import Main.engine.MultiThreadSearch;
+import Main.engine.Node;
+import Main.engine.NonLosingThread;
 
 /**
  * 
@@ -68,8 +67,9 @@ public final class UCI {
 				board.printBoard();
 			} else if (command.equals("print legal moves")) {
 				int[] movesSize = new int[6]; // unused
-				ArrayList<Integer> moves = MoveGenerator.collectMoves(board, board.getToMove(), movesSize);
-				if (moves.get(0) == -1) {
+				int[] moves = new int[256];
+				moves = board.getMoveGenerator().collectMoves(board.getToMove(), moves, movesSize);
+				if (moves[0] == -1) {
 					Logging.printLine("Illegal position.");
 					continue;
 				}
@@ -92,7 +92,7 @@ public final class UCI {
 					Logging.printLine(Transformation.numberToMove(capture));
 				}
 			} else if (command.equals("q search")) {
-				ArrayList<Integer> reversePV = Search.qSearch(board, board.getToMove(), -30000, 30000);
+				ArrayList<Integer> reversePV = board.getSearch().qSearch(board.getToMove(), -30000, 30000);
 				Logging.printLine(Integer.toString(reversePV.get(0)));
 				reversePV.remove(0);
 				StringBuilder pv = new StringBuilder();
@@ -103,7 +103,7 @@ public final class UCI {
 				Logging.printLine(pv.toString());
 				board.nodes = 0;
 			} else if (command.equals("evaluate")) {
-				Logging.printLine(Integer.toString(Evaluation.evaluation(board, board.getToMove(), -30000)));
+				Logging.printLine(Integer.toString(board.getEvaluation().evaluation(board.getToMove(), -30000)));
 			} else if (command.equals("Hashtable")) {
 				for (Node value : board.getHashTable().values()) {
 					value.print();
@@ -209,7 +209,7 @@ public final class UCI {
 		}
 	}
 	
-	public static void inputGo(String command) {
+	private static void inputGo(String command) {
 		MultiThreadSearch thread = null;
 		
 		if (command.contains("depth")) {
@@ -263,7 +263,8 @@ public final class UCI {
 					move = future.get();
 				} catch (Exception e) {
 					int[] movesSize = new int[6];
-					ArrayList<Integer> moves = MoveGenerator.collectMoves(board, board.getToMove(), movesSize);
+					int[] moves = new int[256];
+					moves = board.getMoveGenerator().collectMoves(board.getToMove(), moves, movesSize);
 					Logging.printLine("bestmove " + board.bestmove);
 				}
 				break;

@@ -1,17 +1,23 @@
-package engine;
+package Main.engine;
 
-import engineIO.Logging;
-import engineIO.UCI;
+import Main.engineIO.Logging;
+import Main.engineIO.UCI;
 import test.Assertions;
+
+import java.io.Serializable;
 
 /**
  * 
  * @author Anon
  *
  */
-public final class Evaluation {
+public final class Evaluation implements Serializable {
 	
 	private static boolean materialOnly = false;
+	private int[] whiteSize = new int[6];
+	private int[] blackSize = new int[6];
+	private int[] storage = new int[256];
+	private Board board;
 	
 	@SuppressWarnings("unused")
 	private static final int PAWNACTIVITYFULL = 0;
@@ -28,19 +34,22 @@ public final class Evaluation {
 	private static final int KINGACTIVITYFULL = -3;
 	private static final int KINGACTIVITYEMPTY = 1;
 
+	public Evaluation(Board board) {
+		this.board = board;
+	}
+
 	/**
-	 * 
-	 * @param board : board on which we are
+	 *
 	 * @param toMove : who to move it is
 	 * @param lowBound Score that the player is guaranteed. If material eval is far below this, cutoff.
 	 * @return evaluation based on material
 	 */
-	public static int evaluation(Board board, boolean toMove, int lowBound) {
+	public int evaluation(boolean toMove, int lowBound) {
 
 		assert Assertions.advancement(board);
 		assert Assertions.materialCount(board);
 		//assert Evaluation.correctBitBoard(board);
-        if (!Evaluation.correctBitBoard(board)) {
+        if (!correctBitBoard()) {
             Logging.printLine("BitBoard-Error.");
             System.exit(1);
         }
@@ -53,8 +62,8 @@ public final class Evaluation {
 			}
 		}
 		int eval = board.getMaterialCount();
-		eval += advancementEval(board);
-		eval += pieceSquareTables(board);
+		eval += advancementEval();
+		eval += pieceSquareTables();
 		
 		if (toMove && eval + 100 < lowBound) {
 			board.abortedNodes++;
@@ -64,12 +73,10 @@ public final class Evaluation {
 			return -eval;
 		}
 		
-		int[] whiteSize = MoveGenerator.activityEval(board, true);
-		int[] blackSize = MoveGenerator.activityEval(board, false);
+		whiteSize = board.getMoveGenerator().activityEval(storage, true);
+		blackSize = board.getMoveGenerator().activityEval(storage, false);
 		
-		eval += activityEval(board, whiteSize, blackSize);
-		whiteSize = null;
-		blackSize = null;
+		eval += activityEval(board);
 
 		if (!toMove) {
 			eval = (short) -eval;
@@ -78,7 +85,7 @@ public final class Evaluation {
 		return eval;
 	}
 	
-	private static int activityEval(Board board, int[] whiteSize, int[] blackSize) {
+	private int activityEval(Board board) {
 		int activityEval = 0;
 		int piecesLeft = board.getPiecesLeft();
 		//activityEval += PAWNACTIVITYFULL * (whiteSize[0] - blackSize[0]);
@@ -98,11 +105,10 @@ public final class Evaluation {
 	}
 
 	/**
-	 * 
-	 * @param board game board
+	 *
 	 * @return Eval term how far pieces are advanced.
 	 */
-	private static int advancementEval(Board board) {
+	private int advancementEval() {
 		int advancementEval = 0;
 		int piecesLeft = board.getPiecesLeft();
 		advancementEval += (int) (board.getPieceAdvancement(1) * ((32.0 - piecesLeft) / 16.0));
@@ -121,7 +127,7 @@ public final class Evaluation {
 		return advancementEval;
 	}
 	
-	public static int pieceSquareTables(Board board) {
+	private int pieceSquareTables() {
 		int pieceSquares = 0;
 		
 		if (board.getDangerToWhiteKing() + board.getDangerToBlackKing() > 40) {
@@ -202,9 +208,6 @@ public final class Evaluation {
 		
 		return pieceSquares;
 	}
-	
-	private Evaluation() {
-	}
 
 	public static boolean isMaterialOnly() {
 		return materialOnly;
@@ -214,7 +217,7 @@ public final class Evaluation {
 		Evaluation.materialOnly = materialOnly;
 	}
 
-	private static boolean correctBitBoard(Board board) {
+	private boolean correctBitBoard() {
 		boolean correct = true;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {

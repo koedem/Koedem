@@ -1,10 +1,10 @@
-package engine;
+package Main.engine;
 
 import java.util.concurrent.Callable;
 
-import engineIO.Logging;
-import engineIO.Transformation;
-import engineIO.UCI;
+import Main.engineIO.Logging;
+import Main.engineIO.Transformation;
+import Main.engineIO.UCI;
 
 public class MateFinderThread implements Callable<int[]> {
 
