@@ -1905,7 +1905,7 @@ public class MoveGenerator implements Serializable {
 		return movesSize;
 	}
 	
-	int[] collectAllPNMoves(int[] storage, Board board, boolean toMove) {
+	public int[] collectAllPNMoves(int[] storage, Board board, boolean toMove) {
 		int[] movesSize = new int[6];
 		storage = collectMoves(toMove, storage, movesSize);
 		if (storage[0] == -1) {
@@ -2064,5 +2064,12 @@ public class MoveGenerator implements Serializable {
 			}
 		}
 		return isFree;
+	}
+
+	/**
+	 * This method does nothing right now. If we ever have add state to the MoveGenerator we need to implement that state being resetted here.
+	 */
+	public void resetMoveGenerator() {
+
 	}
 }

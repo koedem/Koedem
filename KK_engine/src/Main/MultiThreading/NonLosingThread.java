@@ -1,21 +1,24 @@
-package Main.engine;
+package Main.MultiThreading;
 
 import java.util.concurrent.Callable;
 
+import Main.engine.Board;
+import Main.engine.MateFinder;
+import Main.engine.MoveGenerator;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
 
 public class NonLosingThread implements Callable<int[]> {
-	private Board board;
-	private int depth;
+	private Board   board;
+	private int     depth;
 	private boolean aggressive;
-	private String threadName;
+	private String  threadName;
 	private boolean logging;
 	
 	public NonLosingThread(Board board, int depth, boolean aggressive, boolean logging) {
 		this.board = board.cloneBoard();
-		this.board.setRootMoves(this.board.getMoveGenerator().collectAllPNMoves(new int[256], this.board, this.board.getToMove()));
+		this.board.setRootMoves(this.board.getMoveGenerator().collectAllPNMoves(new int[MoveGenerator.MAX_MOVE_COUNT], this.board, this.board.getToMove()));
 		this.depth = depth;
 		this.aggressive = aggressive;
 		if (aggressive) {
@@ -29,9 +32,9 @@ public class NonLosingThread implements Callable<int[]> {
 	@Override
 	public int[] call() throws Exception {
 		long time = System.currentTimeMillis();
-		board.nodes = 0;
-		board.abortedNodes = 0;
-		board.setqNodes(0);
+		board.getSearch().nodes = 0;
+		board.getSearch().abortedNodes = 0;
+		board.getSearch().qNodes = 0;
 		int[] move = null;
 		for (int i = 3; i < depth; i += 2) {
 			if (logging) {
@@ -44,7 +47,7 @@ public class NonLosingThread implements Callable<int[]> {
 			
 			if (logging) {
 				Logging.printLine(threadName + "Non losing moves: " + board.getRootMoves()[0] + ". Nodes: "
-					+ Transformation.nodeCountOutput(board.nodes));
+					+ Transformation.nodeCountOutput(board.getSearch().nodes));
 				for (int index = 1; index <= board.getRootMoves()[0]; index++) {
 					Logging.printLine(Transformation.numberToMove(board.getRootMoves()[index]) + " ");
 				}

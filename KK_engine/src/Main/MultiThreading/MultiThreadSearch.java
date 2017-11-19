@@ -1,17 +1,20 @@
-package Main.engine;
+package Main.MultiThreading;
 
+import java.lang.reflect.Modifier;
 import java.util.concurrent.Callable;
 
+import Main.engine.Board;
+import Main.engine.MoveGenerator;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
 
 public class MultiThreadSearch implements Callable<int[]> {
 
-	private Board board;
-	private int depth;
+	private Board   board;
+	private int     depth;
 	private boolean moveOrdering;
-	private long timeLimit;
+	private long    timeLimit;
 	
 	public MultiThreadSearch(Board board, int depth, int threadNumber, boolean moveOrdering, long timeLimit) {
 		this.board = board.cloneBoard();
@@ -23,12 +26,12 @@ public class MultiThreadSearch implements Callable<int[]> {
 	@Override
 	public int[] call() throws Exception {
 		long time = System.currentTimeMillis();
-		board.nodes = 0;
-		board.abortedNodes = 0;
-		board.setqNodes(0);
+		board.getSearch().nodes = 0;
+		board.getSearch().abortedNodes = 0;
+		board.getSearch().qNodes = 0;
 		int[] move = null;
 		int[] movesSize = new int[6]; // unused
-		board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[256], movesSize));
+		board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT], movesSize));
 		Logging.printLine("info search started at milli: " + System.currentTimeMillis());
 		
 		for (int i = 1; i <= depth; i++) {
@@ -49,6 +52,7 @@ public class MultiThreadSearch implements Callable<int[]> {
 		}
 		UCI.printEngineOutput("", move, board, board.getToMove(), time);
 
+		assert move != null;
 		Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
 		return move;
 	}

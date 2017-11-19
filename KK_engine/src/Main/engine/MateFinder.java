@@ -13,7 +13,7 @@ public final class MateFinder {
 		int[] moves = board.getRootMoves();
 		int bestMove = 1;
 		for (int moveIndex = 1; moveIndex <= moves[0]; moveIndex++) {
-			board.nodes++;
+			board.getSearch().nodes++;
 			byte capturedPiece = board.getSquare((moves[moveIndex] / 8) % 8, moves[moveIndex] % 8);
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
@@ -58,14 +58,14 @@ public final class MateFinder {
 	public static int[] mateFinder(Board board, boolean toMove, int depth, int depthLeft, boolean aggressive) {
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -9999;
-		int moves[] = new int[256];
+		int moves[] = new int[MoveGenerator.MAX_MOVE_COUNT];
 		if (depthLeft % 2 == 1) {
 			moves = board.getMoveGenerator().collectAllPNMoves(moves, board, toMove);
 		} else {
 			if (aggressive) {
-				moves = board.getMoveGenerator().collectCheckMoves(new int[256], moves, board, toMove);
+				moves = board.getMoveGenerator().collectCheckMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, board, toMove);
 			} else {
-				moves = board.getMoveGenerator().collectPNSearchMoves(new int[256], moves, board, toMove);
+				moves = board.getMoveGenerator().collectPNSearchMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, board, toMove);
 			}
 		}
 		
@@ -79,8 +79,9 @@ public final class MateFinder {
 			principleVariation[depth] = 0;
 			return principleVariation;
 		}
-		for (Integer move : moves) {
-			board.nodes++;
+		for (int index = 1; index <= moves[0]; index++) {
+			int move = moves[index];
+			board.getSearch().nodes++;
 			byte capturedPiece = board.getSquare((move / 8) % 8, move % 8);
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();

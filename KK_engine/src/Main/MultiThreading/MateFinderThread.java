@@ -1,17 +1,19 @@
-package Main.engine;
+package Main.MultiThreading;
 
 import java.util.concurrent.Callable;
 
+import Main.engine.Board;
+import Main.engine.MateFinder;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
 
 public class MateFinderThread implements Callable<int[]> {
 
-	private Board board;
-	private int depth;
+	private Board   board;
+	private int     depth;
 	private boolean aggressive;
-	private String threadName;
+	private String  threadName;
 	private boolean logging;
 	
 	public MateFinderThread(Board board, int depth, boolean aggressive, boolean logging) {
@@ -29,9 +31,9 @@ public class MateFinderThread implements Callable<int[]> {
 	@Override
 	public int[] call() throws Exception {
 		long time = System.currentTimeMillis();
-		board.nodes = 0;
-		board.abortedNodes = 0;
-		board.setqNodes(0);
+		board.getSearch().nodes = 0;
+		board.getSearch().abortedNodes = 0;
+		board.getSearch().qNodes = 0;
 		int[] move = null;
 		for (int i = 2; i < depth; i += 2) {
 			if (logging) {
@@ -44,7 +46,7 @@ public class MateFinderThread implements Callable<int[]> {
 			
 			if (logging) {
 				Logging.printLine(threadName + "Finished depth " + i  + ". Nodes: " 
-						+ Transformation.nodeCountOutput(board.nodes));
+						+ Transformation.nodeCountOutput(board.getSearch().nodes));
 			}
 			
 			if (move[move.length - 1] > 0) {

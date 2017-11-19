@@ -22,10 +22,6 @@ public class Board implements Serializable {
 
 	public BitBoard bitboard;
 	public AttackBoard attackBoard;
-
-	public long nodes = 0;
-	public long abortedNodes = 0;
-	private long qNodes = 0;
 	
 	/**
 	 * Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6. 
@@ -111,7 +107,7 @@ public class Board implements Serializable {
 	 */
 	private Hashtable<String, Node> hashTable = new Hashtable<>();
 
-	private int[] rootMoves = new int[256];
+	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
 
 	public String bestmove = "";
 	
@@ -133,7 +129,7 @@ public class Board implements Serializable {
 		setFENPosition(fen);
 	}
 	
-	Board cloneBoard() {
+	public Board cloneBoard() {
 		return (Board) DeepCopy.copy(this);
 	}
 	
@@ -710,21 +706,6 @@ public class Board implements Serializable {
 	public void setDangerToBlackKing(int dangerToBlackKing) {
 		this.dangerToBlackKing = dangerToBlackKing;
 	}
-	
-	/**
-	 * Adds 1 to the private qNodes variable.
-	 */
-	public void incrementQNodes() {
-		setqNodes(getqNodes() + 1);
-	}
-
-	public long getqNodes() {
-		return qNodes;
-	}
-
-	public void setqNodes(long qNodes) {
-		this.qNodes = qNodes;
-	}
 
 	private static byte pieceLetterToByte(char piece) {
 	    byte pieceInt = 0;
@@ -768,5 +749,12 @@ public class Board implements Serializable {
 
 	public void setSearch(Search search) {
 		this.search = search;
+	}
+
+	public void resetBoard() {
+		moveGenerator.resetMoveGenerator();
+		evaluation.resetEvaluation();
+		search.resetSearch();
+
 	}
 }

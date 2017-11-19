@@ -16,11 +16,15 @@ public class Search implements Serializable {
 	private Board board;
 	private int[][] storage = new int[101][MoveGenerator.MAX_MOVE_COUNT];
 
+	public long nodes = 0;
+	public long abortedNodes = 0;
+	public long qNodes = 0;
+
 	public Search(Board board) {
 		this.board = board;
 	}
 	
-	int[] rootMax(boolean toMove, int depth, long time) {
+	public int[] rootMax(boolean toMove, int depth, long time) {
 		Logging.printLine("");
 		Logging.printLine("Starting depth " + depth + ".");
 		int alpha = -30000;
@@ -116,7 +120,7 @@ public class Search implements Serializable {
 	 * @return the principle variation we get for the position
 	 */
 	@SuppressWarnings("unused")
-	int[] negaMax(boolean toMove, int depth, int depthLeft, int alphaBound, int betaBound) {
+	public int[] negaMax(boolean toMove, int depth, int depthLeft, int alphaBound, int betaBound) {
 		int alpha = alphaBound;
 		int beta = betaBound;
 		int[] principleVariation = new int[depth + 1];
@@ -256,7 +260,7 @@ public class Search implements Serializable {
 			byte enPassant = board.getEnPassant();
 			board.makeMove(capture);
 			ArrayList<Integer> innerPV = qSearch(!toMove, -beta, -alpha);
-			board.incrementQNodes();
+			qNodes++;
 			if (innerPV.get(0) == -10000) {
 				principleVariation = new ArrayList<>(1);
 				principleVariation.add(0, 10000);
@@ -281,5 +285,14 @@ public class Search implements Serializable {
 		}
 		captures = null;
 		return principleVariation;
+	}
+
+	/**
+	 * This method does nothing right now. If we ever have add state to the Search we need to implement that state being resetted here.
+	 */
+	public void resetSearch() {
+		nodes = 0;
+		abortedNodes = 0;
+		qNodes = 0;
 	}
 }

@@ -6,13 +6,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import Main.MultiThreading.ThreadOrganization;
 import Main.engine.Board;
 import Main.engine.Evaluation;
-import Main.engine.MateFinderThread;
+import Main.MultiThreading.MateFinderThread;
 import Main.engine.MoveGenerator;
-import Main.engine.MultiThreadSearch;
+import Main.MultiThreading.MultiThreadSearch;
 import Main.engine.Node;
-import Main.engine.NonLosingThread;
+import Main.MultiThreading.NonLosingThread;
 
 /**
  * 
@@ -30,6 +31,10 @@ public final class UCI {
 	private static int minLeft = 20;
 	private static int kingSafety = 10;
 	private static int dynamism = 10;
+
+	private static int threadCount = 1;
+	private static final int LOWER_THREAD_COUNT = 1;
+	private static final int UPPER_THREAD_COUNT = 5;
 
 	private static boolean threadFinished = false;
 
@@ -68,7 +73,7 @@ public final class UCI {
 				board.printBoard();
 			} else if (command.equals("print legal moves")) {
 				int[] movesSize = new int[6]; // unused
-				int[] moves = new int[256];
+				int[] moves = new int[MoveGenerator.MAX_MOVE_COUNT];
 				moves = board.getMoveGenerator().collectMoves(board.getToMove(), moves, movesSize);
 				if (moves[0] == -1) {
 					Logging.printLine("Illegal position.");
@@ -100,9 +105,9 @@ public final class UCI {
 				for (Integer capture : reversePV) {
 					pv.append(Transformation.numberToMove(capture)).append(" ");
 				}
-				pv.append("Node count: ").append(board.nodes);
+				pv.append("Node count: ").append(board.getSearch().nodes);
 				Logging.printLine(pv.toString());
-				board.nodes = 0;
+				board.getSearch().nodes = 0;
 			} else if (command.equals("evaluate")) {
 				Logging.printLine(Integer.toString(board.getEvaluation().evaluation(board.getToMove(), -30000)));
 			} else if (command.equals("Hashtable")) {
@@ -162,10 +167,22 @@ public final class UCI {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
+			case "Threads":
+				try {
+					int newCount = Integer.parseInt(parameters[4]);
+					if (newCount >= LOWER_THREAD_COUNT && newCount <= UPPER_THREAD_COUNT) {
+						threadCount = newCount;
+						ThreadOrganization.updateThreadCount(threadCount, board);
+					} else {
+						Logging.printLine("Illegal value for option 'Threads'. Should be between " + LOWER_THREAD_COUNT + " and " + UPPER_THREAD_COUNT + ".");
+					}
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Threads'. Should be an integer.");
+				}
 		}
 	}
 
-	public static void inputUCI() {
+	private static void inputUCI() {
 		Logging.printLine("id name " + engineName);
 		Logging.printLine("id author Tom Marvolo");
 		
@@ -174,15 +191,16 @@ public final class UCI {
 		Logging.printLine("option name MinTime type spin default 500 min 1 max 10000");
 		Logging.printLine("option name KingSafety type spin default 10 min 1 max 100");
 		Logging.printLine("option name Dynamism type spin default 10 min 1 max 100");
+		Logging.printLine("option name Threads type spin default 1 min 1 max 5");
 		
 		Logging.printLine("uciok");
 	}
 	
-	public static void inputIsReady() {
+	private static void inputIsReady() {
 		Logging.printLine("readyok");
 	}
 	
-	public static void inputPosition(String input) {
+	private static void inputPosition(String input) {
 		String command = input.substring(9);
 		String[] parameters = command.split(" ");
 		for (int i = 0; i < parameters.length; i++) {
@@ -264,7 +282,7 @@ public final class UCI {
 					move = future.get();
 				} catch (Exception e) {
 					int[] movesSize = new int[6];
-					int[] moves = new int[256];
+					int[] moves = new int[MoveGenerator.MAX_MOVE_COUNT];
 					moves = board.getMoveGenerator().collectMoves(board.getToMove(), moves, movesSize);
 					Logging.printLine("bestmove " + board.bestmove);
 				}
@@ -353,7 +371,7 @@ public final class UCI {
 				pv.append(Transformation.numberToMove(move[i])).append(" ");
 			}
 			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes " 
-					+ board.nodes + " time " + (System.currentTimeMillis() - time) + " pv " 
+					+ board.getSearch().nodes + " time " + (System.currentTimeMillis() - time) + " pv "
 					+ pv);
 		} else {
 			StringBuilder pv = new StringBuilder(praefix);
@@ -377,9 +395,9 @@ public final class UCI {
 				}
 			}
 			Logging.printLine(pv.toString() + move[move.length - 1]);
-			Logging.printLine(praefix + "Node count: " + Transformation.nodeCountOutput(((board.nodes
-					+ board.abortedNodes))) + "(" + Transformation.nodeCountOutput(board.nodes)
-					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.getqNodes()) + ". Time used: "
+			Logging.printLine(praefix + "Node count: " + Transformation.nodeCountOutput(((board.getSearch().nodes
+					+ board.getSearch().abortedNodes))) + "(" + Transformation.nodeCountOutput(board.getSearch().nodes)
+					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.getSearch().qNodes) + ". Time used: "
 					+ Transformation.timeUsedOutput((System.currentTimeMillis() - time)));
 		}
 	}

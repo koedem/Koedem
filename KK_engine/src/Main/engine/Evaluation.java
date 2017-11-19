@@ -16,7 +16,7 @@ public final class Evaluation implements Serializable {
 	private static boolean materialOnly = false;
 	private int[] whiteSize = new int[6];
 	private int[] blackSize = new int[6];
-	private int[] storage = new int[256];
+	private int[] storage = new int[MoveGenerator.MAX_MOVE_COUNT];
 	private Board board;
 	
 	@SuppressWarnings("unused")
@@ -66,10 +66,10 @@ public final class Evaluation implements Serializable {
 		eval += pieceSquareTables();
 		
 		if (toMove && eval + 100 < lowBound) {
-			board.abortedNodes++;
+			board.getSearch().abortedNodes++;
 			return eval;
 		} else if (!toMove && -eval + 100 < lowBound) {
-			board.abortedNodes++;
+			board.getSearch().abortedNodes++;
 			return -eval;
 		}
 		
@@ -81,7 +81,7 @@ public final class Evaluation implements Serializable {
 		if (!toMove) {
 			eval = (short) -eval;
 		}
-		board.nodes++;
+		board.getSearch().nodes++;
 		return eval;
 	}
 	
@@ -218,8 +218,7 @@ public final class Evaluation implements Serializable {
 	}
 
 	private boolean correctBitBoard() {
-		boolean correct = true;
-        for (int i = 0; i < 8; i++) {
+		for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 if (board.getSquare(i, j) != board.bitboard.getSquare(i * 8 + j)) {
                     Logging.printLine("BitBoard wrong." + i + " " + j);
@@ -229,6 +228,13 @@ public final class Evaluation implements Serializable {
                 }
             }
         }
-		return correct;
+		return true;
+	}
+
+	/**
+	 * This method does nothing right now. If we ever have add state to the Evaluation we need to implement that state being resetted here.
+	 */
+	public void resetEvaluation() {
+
 	}
 }
