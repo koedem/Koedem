@@ -38,17 +38,18 @@ public final class UCI {
 
 	private static boolean threadFinished = false;
 
-	private static ExecutorService executor = Executors.newFixedThreadPool(5);
-	static String engineName = "Koedem";
-	static Board board = new Board();
-	private static Scanner sc = new Scanner(System.in);
+	private static ExecutorService executor            = Executors.newFixedThreadPool(5);
+	static String                  engineName          = "Koedem";
+	static Board                   board               = new Board();
+	private static String          lastPositionCommand = "";
+	private static Scanner         sc                  = new Scanner(System.in);
 	
 	public static void main(String[] args) {
 		uciCommunication();
 		System.exit(0);
 	}
 	
-	public static void uciCommunication() {
+	private static void uciCommunication() {
 		Logging.setup();
 		String command = "";
 		Logging.printLine(engineName + " by Tom Marvolo.");
@@ -67,6 +68,7 @@ public final class UCI {
 				inputUCINewGame();
 			} else if (command.startsWith("position")) {
 				inputPosition(command);
+				lastPositionCommand = command;
 			} else if (command.contains("go")) {
 				inputGo(command);
 			} else if (command.equals("print")) {
@@ -201,7 +203,22 @@ public final class UCI {
 	}
 	
 	private static void inputPosition(String input) {
-		String command = input.substring(9);
+		String command;
+		if (input.startsWith(lastPositionCommand)) {
+			command = input.substring(lastPositionCommand.length()); // if we previously had the same command start we don't need to set that up again
+			if (lastPositionCommand.contains("moves")) { // the only thing that changed is we have new moves; no need to go through the rest
+				String[] parameters = command.split(" ");
+				for (String parameter : parameters) {
+					if (!parameter.equals("")) {
+						Node node = new Node(board, 0, 0, 0, board.getToMove());
+						board.makeMove(parameter);
+					}
+				}
+				return;
+			}
+		} else {
+			command = input.substring(9);
+		}
 		String[] parameters = command.split(" ");
 		for (int i = 0; i < parameters.length; i++) {
 			switch (parameters[i]) {
