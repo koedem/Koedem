@@ -12,11 +12,13 @@ import Main.engineIO.UCI;
 public class MultiThreadSearch implements Callable<int[]> {
 
 	private Board   board;
+	private Board   oldBoard;
 	private int     depth;
 	private boolean moveOrdering;
 	private long    timeLimit;
 	
 	public MultiThreadSearch(Board board, int depth, int threadNumber, boolean moveOrdering, long timeLimit) {
+		this.oldBoard = board;
 		this.board = board.cloneBoard();
 		this.depth = depth;
 		this.moveOrdering = moveOrdering;
@@ -48,7 +50,7 @@ public class MultiThreadSearch implements Callable<int[]> {
 			if (System.currentTimeMillis() - time > timeLimit) {
 				break;
 			}
-			board.bestmove = Transformation.numberToMove(move[0]);
+			oldBoard.bestmove = Transformation.numberToMove(move[0]); // tell the uci thread the current best move
 		}
 		UCI.printEngineOutput("", move, board, board.getToMove(), time);
 
