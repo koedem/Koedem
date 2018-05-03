@@ -95,6 +95,7 @@ public class Search implements Serializable {
 			board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
 		}
 		if (principleVariation[depth] == -9999) {
+			principleVariation[depth] = 9999;
 			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
 			if (captures.size() == 0 || captures.get(0) != -1) {
 				principleVariation[depth] = 0;
@@ -203,6 +204,7 @@ public class Search implements Serializable {
 			innerPV = null;
 		}
 		if (principleVariation[depth] == -9999) {
+			principleVariation[depth] = 9999;
 			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
 			if (captures.size() == 0 || captures.get(0) != -1) {
 				principleVariation[depth] = 0;
