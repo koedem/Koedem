@@ -383,13 +383,14 @@ public final class UCI {
 	
 	public static void printEngineOutput(String praefix, int[] move, Board board, boolean toMove, long time) {
 		if (UCI.uci) {
+			long timeUsed = System.currentTimeMillis() - time;
 			StringBuilder pv = new StringBuilder();
 			for (int i = 0; i < move.length - 1; i++) {
 				pv.append(Transformation.numberToMove(move[i])).append(" ");
 			}
-			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes " 
-					+ board.getSearch().nodes + " nps " + 1000 * board.getSearch().nodes / (System.currentTimeMillis() - time)
-			                  + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
+			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes "
+			      + board.getSearch().nodes + " nps " + 1000 * board.getSearch().nodes / (timeUsed > 0 ? timeUsed : 1)
+			      + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
 		} else {
 			StringBuilder pv = new StringBuilder(praefix);
 			for (int j = 0; j < move.length - 1; j++) {
