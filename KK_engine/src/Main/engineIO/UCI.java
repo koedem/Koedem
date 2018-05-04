@@ -388,8 +388,8 @@ public final class UCI {
 				pv.append(Transformation.numberToMove(move[i])).append(" ");
 			}
 			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes " 
-					+ board.getSearch().nodes + " time " + (System.currentTimeMillis() - time) + " pv "
-					+ pv);
+					+ board.getSearch().nodes + " nps " + 1000 * board.getSearch().nodes / (System.currentTimeMillis() - time)
+			                  + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
 		} else {
 			StringBuilder pv = new StringBuilder(praefix);
 			for (int j = 0; j < move.length - 1; j++) {
