@@ -56,9 +56,9 @@ public final class Evaluation implements Serializable {
 		
 		if (isMaterialOnly()) {
 			if (toMove) {
-				return -board.getMaterialCount();
-			} else {
 				return board.getMaterialCount();
+			} else {
+				return -board.getMaterialCount();
 			}
 		}
 		int eval = board.getMaterialCount();
