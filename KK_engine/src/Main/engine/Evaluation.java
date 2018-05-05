@@ -58,7 +58,7 @@ public final class Evaluation implements Serializable {
 			if (toMove) {
 				return -board.getMaterialCount();
 			} else {
-				return +board.getMaterialCount();
+				return board.getMaterialCount();
 			}
 		}
 		int eval = board.getMaterialCount();
@@ -67,10 +67,10 @@ public final class Evaluation implements Serializable {
 		
 		if (toMove && eval + 100 < lowBound) {
 			board.getSearch().abortedNodes++;
-			return -eval;
+			return eval;
 		} else if (!toMove && -eval + 100 < lowBound) {
 			board.getSearch().abortedNodes++;
-			return eval;
+			return -eval;
 		}
 		
 		whiteSize = board.getMoveGenerator().activityEval(storage, true);
