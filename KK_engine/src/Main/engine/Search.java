@@ -44,7 +44,7 @@ public class Search implements Serializable {
 			} else {
 				capturedPiece = board.getSquare((moves[moveIndex] / 64) % 8, (moves[moveIndex] / 8) % 8);
 			}
-			byte castlingRights = board.getCastlingRights();
+			short castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(moves[moveIndex]);
 			int[] innerPV = new int[depth + 1];
@@ -95,7 +95,6 @@ public class Search implements Serializable {
 			board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
 		}
 		if (principleVariation[depth] == -9999) {
-			principleVariation[depth] = 9999;
 			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
 			if (captures.size() == 0 || captures.get(0) != -1) {
 				principleVariation[depth] = 0;
@@ -159,7 +158,7 @@ public class Search implements Serializable {
 			} else {
 				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
 			}
-			byte castlingRights = board.getCastlingRights();
+			short castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 			
@@ -204,7 +203,6 @@ public class Search implements Serializable {
 			innerPV = null;
 		}
 		if (principleVariation[depth] == -9999) {
-			principleVariation[depth] = 9999;
 			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
 			if (captures.size() == 0 || captures.get(0) != -1) {
 				principleVariation[depth] = 0;
@@ -258,7 +256,7 @@ public class Search implements Serializable {
 			} else {
 				capturedPiece = board.getSquare((capture / 64) % 8, (capture / 8) % 8);
 			}
-			byte castlingRights = board.getCastlingRights();
+			short castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(capture);
 			ArrayList<Integer> innerPV = qSearch(!toMove, -beta, -alpha);

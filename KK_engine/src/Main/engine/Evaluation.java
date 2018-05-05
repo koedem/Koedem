@@ -49,10 +49,10 @@ public final class Evaluation implements Serializable {
 		assert Assertions.advancement(board);
 		assert Assertions.materialCount(board);
 		//assert Evaluation.correctBitBoard(board);
-        if (!correctBitBoard()) {
+        /*if (!correctBitBoard()) {
             Logging.printLine("BitBoard-Error.");
             System.exit(1);
-        }
+        }*/
 		
 		if (isMaterialOnly()) {
 			if (toMove) {
@@ -82,7 +82,7 @@ public final class Evaluation implements Serializable {
 			eval = (short) -eval;
 		}
 		board.getSearch().nodes++;
-		return -eval;
+		return eval;
 	}
 	
 	private int activityEval(Board board) {

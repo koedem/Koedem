@@ -970,7 +970,7 @@ public class MoveGenerator implements Serializable {
 				}
 			}
 
-			if (file == 4 && row == 0) {
+			/*if (file == 4 && row == 0) {
 				if ((board.getCastlingRights() & 0x18) == 0x18) {
 					if (board.square[5][0] == 0 && board.square[6][0] == 0) {
 						board.square[5][0] = 6;
@@ -995,7 +995,7 @@ public class MoveGenerator implements Serializable {
 						board.square[3][0] = 0;
 					}
 				}
-			}
+			}*/
 		} else {
 			if (file > 0) {
 				if ((capturedPiece = board.getSquare(file - 1, row)) == 0) {
@@ -1109,7 +1109,7 @@ public class MoveGenerator implements Serializable {
 				}
 			}
 
-			if (file == 4 && row == 7) {
+			/*if (file == 4 && row == 7) {
 				if ((board.getCastlingRights() & 0x3) == 0x3) {
 					if (board.square[5][7] == 0 && board.square[6][7] == 0) {
 						board.square[5][7] = -6;
@@ -1133,7 +1133,7 @@ public class MoveGenerator implements Serializable {
 						board.square[3][7] = 0;
 					}
 				}
-			}
+			}*/
 		}
 	}
 	
@@ -1920,7 +1920,7 @@ public class MoveGenerator implements Serializable {
 			} else {
 				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
 			}
-			byte castlingRights = board.getCastlingRights();
+			short castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 			if (MateFinder.inCheck(board)) {
@@ -1953,7 +1953,7 @@ public class MoveGenerator implements Serializable {
 			} else {
 				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
 			}
-			byte castlingRights = board.getCastlingRights();
+			short castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 			if (MateFinder.inCheck(board)) {
@@ -2000,7 +2000,7 @@ public class MoveGenerator implements Serializable {
 			} else {
 				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
 			}
-			byte castlingRights = board.getCastlingRights();
+			short castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 			if (MateFinder.inCheck(board)) {

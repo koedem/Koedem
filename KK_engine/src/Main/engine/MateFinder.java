@@ -15,7 +15,7 @@ public final class MateFinder {
 		for (int moveIndex = 1; moveIndex <= moves[0]; moveIndex++) {
 			board.getSearch().nodes++;
 			byte capturedPiece = board.getSquare((moves[moveIndex] / 8) % 8, moves[moveIndex] % 8);
-			byte castlingRights = board.getCastlingRights();
+			short castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(moves[moveIndex]);
 			int[] innerPV = new int[depth + 1];
@@ -83,7 +83,7 @@ public final class MateFinder {
 			int move = moves[index];
 			board.getSearch().nodes++;
 			byte capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			byte castlingRights = board.getCastlingRights();
+			short castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 			int[] innerPV = new int[depth + 1];
