@@ -292,6 +292,11 @@ public class Board implements Serializable {
 	 * @param move The move to play.
 	 */
 	public void makeMove(String move) {
+		if (move.equals("0-0")) {
+
+		} else if (move.equals("0-0-0")) {
+
+		}
 		int startSquare = Transformation.squareToNumber(move.substring(0, 2));
 		int endSquare = Transformation.squareToNumber(move.substring(2, 4));
 		if (move.length() == 4) {
@@ -511,10 +516,10 @@ public class Board implements Serializable {
 		int endSquare = 0; // will get changed to correct endSquare
 		boolean gotoBelow = false; // using deprecated goto TODO don't do that
 		
-		/*if (oldCastlingRights != castlingRights && move < (1 << 13)) {
+		if (oldCastlingRights != castlingRights && move < (1 << 13)) {
 			int startSquare = (move / 64) % 64;
 			endSquare = move % 64;
-			if (toMove && (oldCastlingRights & 0xFF00) != (castlingRights & 0xFF00)) {
+			if (!toMove && (oldCastlingRights & 0xFF00) != (castlingRights & 0xFF00)) { // Black to move means last move was from White
 				if (endSquare / 8 == ((oldCastlingRights & 0x7000) >> 8) && endSquare % 8 == 0) { // White moving onto a White rook = castling
 					square[2][0] = 0;
 					square[3][0] = 0;
@@ -528,7 +533,7 @@ public class Board implements Serializable {
 					square[endSquare / 8][endSquare % 8] = 4;
 					gotoBelow = true;
 				}
-			} else if (!toMove && (oldCastlingRights & 0xFF) != (castlingRights & 0xFF)) {
+			} else if (toMove && (oldCastlingRights & 0xFF) != (castlingRights & 0xFF)) {
 				if (endSquare / 8 == ((oldCastlingRights & 0x70)) && endSquare % 8 == 7) { // Black moving onto a Black rook = castling
 					square[2][7] = 0;
 					square[3][7] = 0;
@@ -543,7 +548,7 @@ public class Board implements Serializable {
 					gotoBelow = true;
 				}
 			}
-		}*/
+		}
 
 		if (move < (1 << 13) && move > (1 << 12) && !gotoBelow) {
 			int startSquare = (move / 64) % 64;
