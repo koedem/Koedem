@@ -29,6 +29,11 @@ public final class UCI {
 	private static int baseTime = 100;
 	private static int incTime = 2;
 	private static int minLeft = 20;
+											// For scenarios with possibly inaccurate system time we have backup:
+	private static int lowerKN_Bound = 0;   // We don't move before we searched lowerKN_Bound * timeLimit many nodes.
+											// Should be lower than kN/s
+	private static int upperKN_Bound = 500; // No matter what the timer says, when upperKN_Bound * timeLimit nodes
+											// are exceeded we move. Should be higher than kN/s
 	private static int kingSafety = 10;
 	private static int dynamism = 10;
 
@@ -155,6 +160,20 @@ public final class UCI {
 					Logging.printLine("Illegal value for option 'MinLeft'.");
 				}
 				break;
+			case "Lower KN searched bound":
+				try {
+					lowerKN_Bound = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Lower KN searched bound'.");
+				}
+				break;
+			case "Upper KN searched bound":
+				try {
+					upperKN_Bound = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Upper KN searched bound'.");
+				}
+				break;
 			case "KingSafety":
 				try {
 					kingSafety = Integer.parseInt(parameters[4]);
@@ -191,6 +210,8 @@ public final class UCI {
 		Logging.printLine("option name BaseTime type spin default 100 min 1 max 10000");
 		Logging.printLine("option name IncTime type spin default 5000 min 1 max 10000");
 		Logging.printLine("option name MinTime type spin default 500 min 1 max 10000");
+		Logging.printLine("option name Lower KN searched bound type spin default 0 min 0 max 1000");
+		Logging.printLine("option name Upper KN searched bound type spin default 500 min 1 max 10000");
 		Logging.printLine("option name KingSafety type spin default 10 min 1 max 100");
 		Logging.printLine("option name Dynamism type spin default 10 min 1 max 100");
 		Logging.printLine("option name Threads type spin default 1 min 1 max 5");
@@ -437,5 +458,13 @@ public final class UCI {
 
 	public static void setDynamism(int dynamism) {
 		UCI.dynamism = dynamism;
+	}
+
+	public static int getLowerKN_Bound() {
+		return lowerKN_Bound;
+	}
+
+	public static int getUpperKN_Bound() {
+		return upperKN_Bound;
 	}
 }
