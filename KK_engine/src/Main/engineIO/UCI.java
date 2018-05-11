@@ -160,18 +160,18 @@ public final class UCI {
 					Logging.printLine("Illegal value for option 'MinLeft'.");
 				}
 				break;
-			case "Lower KN searched bound":
+			case "Lower_KN_searched_bound":
 				try {
 					lowerKN_Bound = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
-					Logging.printLine("Illegal value for option 'Lower KN searched bound'.");
+					Logging.printLine("Illegal value for option 'Lower_KN_searched_bound'.");
 				}
 				break;
-			case "Upper KN searched bound":
+			case "Upper_KN_searched_bound":
 				try {
 					upperKN_Bound = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
-					Logging.printLine("Illegal value for option 'Upper KN searched bound'.");
+					Logging.printLine("Illegal value for option 'Upper_KN_searched_bound'.");
 				}
 				break;
 			case "KingSafety":
@@ -210,8 +210,8 @@ public final class UCI {
 		Logging.printLine("option name BaseTime type spin default 100 min 1 max 10000");
 		Logging.printLine("option name IncTime type spin default 5000 min 1 max 10000");
 		Logging.printLine("option name MinTime type spin default 500 min 1 max 10000");
-		Logging.printLine("option name Lower KN searched bound type spin default 0 min 0 max 1000");
-		Logging.printLine("option name Upper KN searched bound type spin default 500 min 1 max 10000");
+		Logging.printLine("option name Lower_KN_searched_bound type spin default 0 min 0 max 1000");
+		Logging.printLine("option name Upper_KN_searched_bound type spin default 500 min 1 max 10000");
 		Logging.printLine("option name KingSafety type spin default 10 min 1 max 100");
 		Logging.printLine("option name Dynamism type spin default 10 min 1 max 100");
 		Logging.printLine("option name Threads type spin default 1 min 1 max 5");

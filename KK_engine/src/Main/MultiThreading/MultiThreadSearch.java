@@ -49,7 +49,7 @@ public class MultiThreadSearch implements Callable<int[]> {
 			
 			if (System.currentTimeMillis() - time > timeLimit                   // We break if the time is up
 			    && board.getSearch().nodes > timeLimit * UCI.getLowerKN_Bound() // and we searched enough nodes.
-			    || board.getSearch().nodes < timeLimit * UCI.getUpperKN_Bound()) { // Or when we searched more than enough nodes.
+			    || board.getSearch().nodes > timeLimit * UCI.getUpperKN_Bound()) { // Or when we searched more than enough nodes.
 				break;
 			}
 			oldBoard.bestmove = Transformation.numberToMove(move[0]); // tell the uci thread the current best move
