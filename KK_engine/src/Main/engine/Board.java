@@ -227,7 +227,7 @@ public class Board implements Serializable {
 										}
 									} break;
 					}
-				} else if (Character.isUpperCase(c)) {
+				} else if (Character.isLowerCase(c)) {
 					switch (c) {
 						case 'a': castlingRights |= 0x0080; break;
 						case 'b': castlingRights |= 0x0090; break;
@@ -292,18 +292,34 @@ public class Board implements Serializable {
 	 * @param move The move to play.
 	 */
 	public void makeMove(String move) {
-		if (move.equals("0-0")) {
-
-		} else if (move.equals("0-0-0")) {
-
-		}
-		int startSquare = Transformation.squareToNumber(move.substring(0, 2));
-		int endSquare = Transformation.squareToNumber(move.substring(2, 4));
-		if (move.length() == 4) {
-			makeMove((1 << 12) + (startSquare << 6) + endSquare);
-		} else if (move.length() == 5) {
-			makeMove((1 << 15) + (startSquare << 9) + (endSquare << 3) 
-					+ Math.abs(Transformation.stringToPiece(move.charAt(4))));
+		if (move.equals("O-O")) {
+			if (toMove) {
+				assert (getCastlingRights() & (1 << 11)) != 0; // we must still have castling rights
+				makeMove((1 << 12) + (Long.numberOfTrailingZeros(bitboard.getBitBoard(0, 6, 0)) << 6)
+				         + ((getCastlingRights() & 0x700) >>> 5)); // Shift by 8 bits to the right, then * 8 since square = 8 * file + row
+			} else {
+				assert (getCastlingRights() & (1 << 3)) != 0; // we must still have castling rights
+				makeMove((1 << 12) + (Long.numberOfTrailingZeros(bitboard.getBitBoard(1, 6, 0)) << 6)
+				         + ((getCastlingRights() & 0x7) << 3) + 7); // Black to move means end square in on row 7
+			}
+		} else if (move.equals("O-O-O")) {
+			if (toMove) {
+				assert (getCastlingRights() & (1 << 15)) != 0; // we must still have castling rights
+				makeMove((1 << 12) + (Long.numberOfTrailingZeros(bitboard.getBitBoard(0, 6, 0)) << 6)
+				         + ((getCastlingRights() & 0x7000) >>> 9));
+			} else {
+				assert (getCastlingRights() & (1 << 7)) != 0; // we must still have castling rights
+				makeMove((1 << 12) + (Long.numberOfTrailingZeros(bitboard.getBitBoard(1, 6, 0)) << 6)
+				         + ((getCastlingRights() & 0x70) >>> 1) + 7);
+			}
+		} else {
+			int startSquare = Transformation.squareToNumber(move.substring(0, 2));
+			int endSquare   = Transformation.squareToNumber(move.substring(2, 4));
+			if (move.length() == 4) {
+				makeMove((1 << 12) + (startSquare << 6) + endSquare);
+			} else if (move.length() == 5) {
+				makeMove((1 << 15) + (startSquare << 9) + (endSquare << 3) + Math.abs(Transformation.stringToPiece(move.charAt(4))));
+			}
 		}
 	}
 	
@@ -335,9 +351,16 @@ public class Board implements Serializable {
 					if (startSquare > endSquare) { // queenside castling
 						square[2][0] = 6;
 						square[3][0] = 4;
+						bitboard.remove(startSquare); // remove King BB first (to prevent problems with Rook moving to old King square)
+						bitboard.move(endSquare, 24); // new Rook square = 3 * 8 + 0
+						bitboard.add(6, 0, 16);
+
 					} else {
 						square[6][0] = 6;
 						square[5][0] = 4;
+						bitboard.remove(startSquare);
+						bitboard.move(endSquare, 40);
+						bitboard.add(6, 0, 48);
 					}
 				} else {
 					Logging.printLine("Error: Illegal castling:");
@@ -352,9 +375,15 @@ public class Board implements Serializable {
 					if (startSquare > endSquare) { // queenside castling
 						square[2][7] = -6;
 						square[3][7] = -4;
+						bitboard.remove(startSquare); // see above for White castling
+						bitboard.move(endSquare, 31);
+						bitboard.add(6, 1, 23);
 					} else {
 						square[6][7] = -6;
 						square[5][7] = -4;
+						bitboard.remove(startSquare);
+						bitboard.move(endSquare, 47);
+						bitboard.add(6, 1, 55);
 					}
 				} else {
 					Logging.printLine("Error: Illegal castling:");
@@ -371,10 +400,24 @@ public class Board implements Serializable {
 				materialCount -= PIECEVALUE[capturedPiece];
 				dangerToBlackKing -= PIECEDANGER[capturedPiece];
 				pieceAdvancement[capturedPiece] -= 2 * (endSquare % 8) - 7;
+				if (capturedPiece == 4) {
+					if (((castlingRights & 0x7000) >>> 12) == endSquare / 8) {
+						removeCastlingRights((short) 0xF000);
+					} else if (((castlingRights & 0x700) >>> 8) == endSquare / 8) {
+						removeCastlingRights((short) 0xF00);
+					}
+				}
 			} else {
 				materialCount += PIECEVALUE[Math.abs(capturedPiece)];
 				dangerToWhiteKing -= PIECEDANGER[Math.abs(capturedPiece)];
 				pieceAdvancement[Math.abs(capturedPiece)] -= 2 * (endSquare % 8) - 7;
+				if (capturedPiece == -4) {
+					if (((castlingRights & 0x70) >>> 4) == endSquare / 8) {
+						removeCastlingRights((short) 0xF0);
+					} else if ((castlingRights & 0x7) == endSquare / 8) {
+						removeCastlingRights((short) 0xF);
+					}
+				}
 			}
 		}
 		
@@ -389,13 +432,13 @@ public class Board implements Serializable {
             } else if (square[startSquare / 8][startSquare % 8] == -6) {
             	removeCastlingRights((short) 0xFF);
             } else if (square[startSquare / 8][startSquare % 8] == 4) {
-            	if (((castlingRights >> 12) & 0x7) == startSquare / 8) {
+            	if (((castlingRights >>> 12) & 0x7) == startSquare / 8) {
 		            removeCastlingRights((short) 0xF000);
-	            } else if (((castlingRights >> 8) & 0x7) == startSquare / 8) {
+	            } else if (((castlingRights >>> 8) & 0x7) == startSquare / 8) {
             		removeCastlingRights((short) 0x0F00);
 				}
 			} else if (square[startSquare / 8][startSquare % 8] == -4) {
-	            if (((castlingRights >> 4) & 0x7) == startSquare / 8) {
+	            if (((castlingRights >>> 4) & 0x7) == startSquare / 8) {
 		            removeCastlingRights((short) 0xF0);
 	            } else if ((castlingRights & 0x7) == startSquare / 8) {
 		            removeCastlingRights((short) 0x0F);
@@ -403,13 +446,13 @@ public class Board implements Serializable {
             }
 
             if (square[endSquare / 8][endSquare % 8] == 4) { // rook gets captured
-	            if (((castlingRights >> 12) & 0x7) == endSquare / 8) {
+	            if (((castlingRights >>> 12) & 0x7) == endSquare / 8) {
 		            removeCastlingRights((short) 0xF000);
-	            } else if (((castlingRights >> 8) & 0x7) == endSquare / 8) {
+	            } else if (((castlingRights >>> 8) & 0x7) == endSquare / 8) {
 		            removeCastlingRights((short) 0x0F00);
 	            }
             } else if (square[endSquare / 8][endSquare % 8] == -4) {
-	            if (((castlingRights >> 4) & 0x7) == endSquare / 8) {
+	            if (((castlingRights >>> 4) & 0x7) == endSquare / 8) {
 		            removeCastlingRights((short) 0xF0);
 	            } else if ((castlingRights & 0x7) == endSquare / 8) {
 		            removeCastlingRights((short) 0x0F);
@@ -514,43 +557,64 @@ public class Board implements Serializable {
 	public void unmakeMove(int move, byte capturedPiece, short oldCastlingRights) {
 		int piece = capturedPiece;
 		int endSquare = 0; // will get changed to correct endSquare
-		boolean gotoBelow = false; // using deprecated goto TODO don't do that
+		boolean castling = false;
 		
 		if (oldCastlingRights != castlingRights && move < (1 << 13)) {
 			int startSquare = (move / 64) % 64;
 			endSquare = move % 64;
-			if (!toMove && (oldCastlingRights & 0xFF00) != (castlingRights & 0xFF00)) { // Black to move means last move was from White
-				if (endSquare / 8 == ((oldCastlingRights & 0x7000) >> 8) && endSquare % 8 == 0) { // White moving onto a White rook = castling
+			if (!toMove && capturedPiece == 4) { // Black to move means last move was from White
+				if (endSquare / 8 == ((oldCastlingRights & 0x7000) >>> 12) && endSquare % 8 == 0) { // White moving onto a White rook = castling
 					square[2][0] = 0;
 					square[3][0] = 0;
 					square[startSquare / 8][startSquare % 8] = 6;
 					square[endSquare / 8][endSquare % 8] = 4;
-					gotoBelow = true;
-				} else if (endSquare / 8 == ((oldCastlingRights & 0x0700) >> 8) && endSquare % 8 == 0) { // White moving onto a White rook = castling
+					bitboard.remove(16); // Do the opposite of the corresponding makeMove code
+					bitboard.move(24, endSquare);
+					bitboard.add(6, 0, startSquare);
+					castling = true;
+				} else if (endSquare / 8 == ((oldCastlingRights & 0x0700) >>> 8) && endSquare % 8 == 0) { // White moving onto a White rook = castling
 					square[5][0] = 0;
 					square[6][0] = 0;
 					square[startSquare / 8][startSquare % 8] = 6;
 					square[endSquare / 8][endSquare % 8] = 4;
-					gotoBelow = true;
+					bitboard.remove(48);
+					bitboard.move(40, endSquare);
+					bitboard.add(6, 0, startSquare);
+					castling = true;
+				} else {
+					assert false;
 				}
-			} else if (toMove && (oldCastlingRights & 0xFF) != (castlingRights & 0xFF)) {
-				if (endSquare / 8 == ((oldCastlingRights & 0x70)) && endSquare % 8 == 7) { // Black moving onto a Black rook = castling
+			} else if (toMove && capturedPiece == -4) {
+				if (endSquare / 8 == ((oldCastlingRights & 0x70) >>> 4) && endSquare % 8 == 7) { // Black moving onto a Black rook = castling
 					square[2][7] = 0;
 					square[3][7] = 0;
 					square[startSquare / 8][startSquare % 8] = -6;
 					square[endSquare / 8][endSquare % 8] = -4;
-					gotoBelow = true;
+					bitboard.remove(23);
+					bitboard.move(31, endSquare);
+					bitboard.add(6, 1, startSquare);
+					castling = true;
 				} else if (endSquare / 8 == ((oldCastlingRights & 0x07)) && endSquare % 8 == 7) { // Black moving onto a Black rook = castling
 					square[5][7] = 0;
 					square[6][7] = 0;
 					square[startSquare / 8][startSquare % 8] = -6;
 					square[endSquare / 8][endSquare % 8] = -4;
-					gotoBelow = true;
+					bitboard.remove(55);
+					bitboard.move(47, endSquare);
+					bitboard.add(6, 1, startSquare);
+					castling = true;
+				} else {
+					assert false;
 				}
+			}
+			if (castling) {
+				changeToMove();
+				castlingRights = oldCastlingRights;
+				return;
 			}
 		}
 
-		if (move < (1 << 13) && move > (1 << 12) && !gotoBelow) {
+		if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
 			endSquare = move % 64;
 			
@@ -643,10 +707,11 @@ public class Board implements Serializable {
 	}
 	
 	/**
-	 * Castling rights is a byte. Check for white King side castle with & 0x18 == 0x18, Q side & 0x30 == 0x30,
-	 * black K side 0x3 == 0x3, Q side 0x6 == 0x6.
+	 * Castling rights is a short. Bits for castling rights are 1 << 3 (Black King side), 1 << 7 (Black Queen side),
+	 * 1 << 11 (White King side) and 1 << 15 (White Queen side).
+	 * The respective rook positions are in the bits 0x7, 0x70, 0x700 and 0x7000.
 	 * 
-	 * @return Which castlings are still possible.
+	 * @return Which castlings are still possible and where the rooks are.
 	 */
 	public short getCastlingRights() {
 		return castlingRights;

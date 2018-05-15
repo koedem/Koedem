@@ -970,6 +970,67 @@ public class MoveGenerator implements Serializable {
 				}
 			}
 
+			if ((board.getCastlingRights() & (1 << 11)) == (1 << 11) && board.square[(board.getCastlingRights() & 0x700) >>> 8][0] == 4) {
+				boolean castlingLegality = true;
+				assert file * 8 + row == Long.numberOfTrailingZeros(board.bitboard.getBitBoard(0, 6, 0));
+				for (int f = file + 1; f <= 6; f++) {
+					if (board.square[f][0] != 0 && (((board.getCastlingRights() & 0x700) >>> 8) != f)) {
+						castlingLegality = false;
+						break;
+					}
+				}
+				if (file == 6 && board.square[5][0] != 0) {
+					castlingLegality = false;
+				}
+				if (castlingLegality) {
+					for (int f = file + 1; f <= 6; f++) { // Short castling never is to the left, even in 960;
+														// so squares between King and g1 are in question
+						board.square[f][0] = 6;
+					}
+					ArrayList<Integer> testLegality = collectCaptures(board, false);
+					if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + ((board.getCastlingRights() & 0x700) >>> 5);
+						movesSize[5]++;
+					}
+
+					for (int f = file + 1; f <= 6; f++) {
+						board.square[f][0] = 0;
+					}
+					board.square[(board.getCastlingRights() & 0x700) >>> 8][0] = 4; // potentially put the rook back on the board
+				}
+			}
+
+			if ((board.getCastlingRights() & (1 << 15)) == (1 << 15) && board.square[(board.getCastlingRights() & 0x7000) >>> 12][0] == 4) {
+				boolean castlingLegality = true;
+				assert file * 8 + row == Long.numberOfTrailingZeros(board.bitboard.getBitBoard(0, 6, 0));
+				for (int f = file - 1; f >= 2; f--) {
+					if (board.square[f][0] != 0 && (((board.getCastlingRights() & 0x7000) >>> 12) != f)) {
+						castlingLegality = false;
+						break;
+					}
+				}
+				for (int f = ((board.getCastlingRights() & 0x7000) >>> 12) + 1; f <= 3; f++) {
+					if (board.square[f][0] != 0 && board.square[f][0] != 6) {
+						castlingLegality = false;
+						break;
+					}
+				}
+				if (castlingLegality) {
+					for (int f = file - 1; f >= 2; f--) {
+						board.square[f][0] = 6;
+					}
+					ArrayList<Integer> testLegality = collectCaptures(board, false);
+					if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + ((board.getCastlingRights() & 0x7000) >>> 9);
+						movesSize[5]++;
+					}
+
+					for (int f = file - 1; f >= 2; f--) {
+						board.square[f][0] = 0;
+					}
+					board.square[(board.getCastlingRights() & 0x7000) >>> 12][0] = 4; // potentially put the rook back on the board
+				}
+			}
 			/*if (file == 4 && row == 0) {
 				if ((board.getCastlingRights() & 0x18) == 0x18) {
 					if (board.square[5][0] == 0 && board.square[6][0] == 0) {
@@ -1109,6 +1170,68 @@ public class MoveGenerator implements Serializable {
 				}
 			}
 
+			if ((board.getCastlingRights() & (1 << 3)) == (1 << 3) && board.square[(board.getCastlingRights() & 0x7)][7] == -4) {
+				boolean castlingLegality = true;
+				assert file * 8 + row == Long.numberOfTrailingZeros(board.bitboard.getBitBoard(1, 6, 0));
+				for (int f = file + 1; f <= 6; f++) {
+					if (board.square[f][7] != 0 && ((board.getCastlingRights() & 0x7) != f)) {
+						castlingLegality = false;
+						break;
+					}
+					if (file == 6 && board.square[5][7] != 0) {
+						castlingLegality = false;
+						break;
+					}
+				}
+				if (castlingLegality) {
+					for (int f = file + 1; f <= 6; f++) { // Short castling never is to the left, even in 960;
+						// so squares between King and g1 are in question
+						board.square[f][7] = -6;
+					}
+					ArrayList<Integer> testLegality = collectCaptures(board, true);
+					if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + ((board.getCastlingRights() & 0x7) << 3) + 7;
+						movesSize[5]++;
+					}
+
+					for (int f = file + 1; f <= 6; f++) {
+						board.square[f][7] = 0;
+					}
+					board.square[board.getCastlingRights() & 0x7][7] = -4; // potentially put the rook back on the board
+				}
+			}
+
+			if ((board.getCastlingRights() & (1 << 7)) == (1 << 7) && board.square[(board.getCastlingRights() & 0x70) >>> 4][0] == -4) {
+				boolean castlingLegality = true;
+				assert file * 8 + row == Long.numberOfTrailingZeros(board.bitboard.getBitBoard(1, 6, 0));
+				for (int f = file - 1; f >= 2; f--) {
+					if (board.square[f][7] != 0 && (((board.getCastlingRights() & 0x70) >>> 4) != f)) {
+						castlingLegality = false;
+						break;
+					}
+				}
+				for (int f = ((board.getCastlingRights() & 0x70) >>> 4) + 1; f <= 3; f++) {
+					if (board.square[f][7] != 0 && board.square[f][7] != -6) {
+						castlingLegality = false;
+						break;
+					}
+				}
+				if (castlingLegality) {
+					for (int f = file - 1; f >= 2; f--) {
+						board.square[f][7] = -6;
+					}
+					ArrayList<Integer> testLegality = collectCaptures(board, true);
+					if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + ((board.getCastlingRights() & 0x70) >>> 1) + 7;
+						movesSize[5]++;
+					}
+
+					for (int f = file - 1; f >= 2; f--) {
+						board.square[f][7] = 0;
+					}
+					board.square[(board.getCastlingRights() & 0x70) >>> 4][0] = -4; // potentially put the rook back on the board
+				}
+			}
 			/*if (file == 4 && row == 7) {
 				if ((board.getCastlingRights() & 0x3) == 0x3) {
 					if (board.square[5][7] == 0 && board.square[6][7] == 0) {

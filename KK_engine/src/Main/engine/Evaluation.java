@@ -48,11 +48,11 @@ public final class Evaluation implements Serializable {
 
 		assert Assertions.advancement(board);
 		assert Assertions.materialCount(board);
-		//assert Evaluation.correctBitBoard(board);
-        if (!correctBitBoard()) {
+		assert correctBitBoard();
+        /*if (!correctBitBoard()) {
             Logging.printLine("BitBoard-Error.");
             System.exit(1);
-        }
+        }*/
 		
 		if (isMaterialOnly()) {
 			if (toMove) {
