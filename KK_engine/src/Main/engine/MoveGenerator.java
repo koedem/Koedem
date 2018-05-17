@@ -1178,10 +1178,9 @@ public class MoveGenerator implements Serializable {
 						castlingLegality = false;
 						break;
 					}
-					if (file == 6 && board.square[5][7] != 0) {
-						castlingLegality = false;
-						break;
-					}
+				}
+				if (file == 6 && board.square[5][7] != 0) {
+					castlingLegality = false;
 				}
 				if (castlingLegality) {
 					for (int f = file + 1; f <= 6; f++) { // Short castling never is to the left, even in 960;
