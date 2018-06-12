@@ -116,8 +116,8 @@ public final class MateFinder {
 			}
 		}
 		if (principleVariation[depth] == -9999) {
-			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
-			if (captures.size() == 0 || captures.get(0) != -1) {
+			int[] captures = board.getMoveGenerator().collectCaptures(!toMove, new int[256]);
+			if (captures[0] != -1) {
 				principleVariation[depth] = 0;
 			}
 		}
@@ -134,8 +134,8 @@ public final class MateFinder {
 	
 	public static boolean inCheck(Board board) {
 		boolean inCheck = false;
-		ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, board.getToMove());
-		if (captures.size() > 0 && captures.get(0) == -1) {
+		int[] captures = board.getMoveGenerator().collectCaptures(board.getToMove(), new int[256]); // TODO why toMove and not !toMove ??
+		if (captures[0] == -1) {
 			inCheck = true;
 		}
 		return inCheck;

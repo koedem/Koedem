@@ -92,20 +92,20 @@ public final class UCI {
 			} else if (command.equals("find mate")) {
 				mateFinder(board, true);
 			} else if (command.equals("print legal captures")) {
-				ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, board.getToMove());
-				if (captures.size() == 0) {
+				int[] captures = board.getMoveGenerator().collectCaptures(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT]);
+				if (captures[0] == 0) {
 					Logging.printLine("There are no legal captures.");
 					continue;
 				}
-				if (captures.get(0) == -1) {
+				if (captures[0] == -1) {
 					Logging.printLine("Illegal position.");
 					continue;
 				}
-				for (Integer capture : captures) {
-					Logging.printLine(Transformation.numberToMove(capture));
+				for (int i = 1; i <= captures[0]; i++) {
+					Logging.printLine(Transformation.numberToMove(captures[i]));
 				}
 			} else if (command.equals("q search")) {
-				ArrayList<Integer> reversePV = board.getSearch().qSearch(board.getToMove(), -30000, 30000);
+				ArrayList<Integer> reversePV = board.getSearch().qSearch(board.getToMove(), -30000, 30000, 0);
 				Logging.printLine(Integer.toString(reversePV.get(0)));
 				reversePV.remove(0);
 				StringBuilder pv = new StringBuilder();
