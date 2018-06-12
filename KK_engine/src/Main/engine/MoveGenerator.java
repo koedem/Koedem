@@ -1009,8 +1009,8 @@ public class MoveGenerator implements Serializable {
 														// so squares between King and g1 are in question
 						board.square[f][0] = 6;
 					}
-					int castlingLegality[] = collectCaptures(false, castlingTestCaptures);
-					if (castlingLegality[0] != -1) {
+					int castlingLegalityCaptures[] = collectCaptures(false, castlingTestCaptures);
+					if (castlingLegalityCaptures[0] != -1) {
 						nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + ((board.getCastlingRights() & 0x700) >>> 5);
 						movesSize[5]++;
 					}
@@ -1041,8 +1041,8 @@ public class MoveGenerator implements Serializable {
 					for (int f = file - 1; f >= 2; f--) {
 						board.square[f][0] = 6;
 					}
-					int castlingLegality[] = collectCaptures(false, castlingTestCaptures);
-					if (castlingLegality.get[0] != -1) {
+					int castlingLegalityCaptures[] = collectCaptures(false, castlingTestCaptures);
+					if (castlingLegalityCaptures[0] != -1) {
 						nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + ((board.getCastlingRights() & 0x7000) >>> 9);
 						movesSize[5]++;
 					}
@@ -1209,8 +1209,8 @@ public class MoveGenerator implements Serializable {
 						// so squares between King and g1 are in question
 						board.square[f][7] = -6;
 					}
-					int[] castlingLegality = collectCaptures(true, castlingTestCaptures);
-					if (castlingLegality[0] != -1) {
+					int[] castlingLegalityCaptures = collectCaptures(true, castlingTestCaptures);
+					if (castlingLegalityCaptures[0] != -1) {
 						nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + ((board.getCastlingRights() & 0x7) << 3) + 7;
 						movesSize[5]++;
 					}
@@ -1241,8 +1241,8 @@ public class MoveGenerator implements Serializable {
 					for (int f = file - 1; f >= 2; f--) {
 						board.square[f][7] = -6;
 					}
-					int[] castlingLegality = collectCaptures(true, castlingTestCaptures);
-					if (castlingLegality[0] != -1) {
+					int[] castlingLegalityCaptures = collectCaptures(true, castlingTestCaptures);
+					if (castlingLegalityCaptures[0] != -1) {
 						nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + ((board.getCastlingRights() & 0x70) >>> 1) + 7;
 						movesSize[5]++;
 					}
