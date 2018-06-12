@@ -14,7 +14,10 @@ import Main.engineIO.UCI;
 public class Search implements Serializable {
 
 	private Board board;
-	private int[][] storage = new int[101][MoveGenerator.MAX_MOVE_COUNT];
+	private int[][] movesStorage = new int[101][MoveGenerator.MAX_MOVE_COUNT];
+	private int[][] capturesStorage = new int[30][MoveGenerator.MAX_MOVE_COUNT]; // 30 because thats max number of captures;
+                                                                                // TODO: Less than MAX_MOVE_COUNT
+    private int[] utilityCaptures = new int[MoveGenerator.MAX_MOVE_COUNT];
 
 	public long nodes = 0;
 	public long abortedNodes = 0;
@@ -66,7 +69,7 @@ public class Search implements Serializable {
 					innerPV[depth]++;
 				}
 			} else if (depth == 1) {
-				ArrayList<Integer> qsearch = qSearch(!toMove, -beta, -alpha);
+				ArrayList<Integer> qsearch = qSearch(!toMove, -beta, -alpha, 0);
 				innerPV[depth] = -qsearch.get(0);
 				innerPV[0] = moves[moveIndex];
 				if (innerPV[depth] > 9000) {
@@ -95,8 +98,8 @@ public class Search implements Serializable {
 			board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
 		}
 		if (principleVariation[depth] == -9999) {
-			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
-			if (captures.size() == 0 || captures.get(0) != -1) {
+			utilityCaptures = board.getMoveGenerator().collectCaptures(!toMove, utilityCaptures);
+			if (utilityCaptures[0] != -1) { // stalemate detection
 				principleVariation[depth] = 0;
 				return principleVariation;
 			}
@@ -126,7 +129,7 @@ public class Search implements Serializable {
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
 		int[] movesSize = new int[6]; // unused
-		int[] moves = board.getMoveGenerator().collectMoves(toMove, storage[depth - depthLeft], movesSize);
+		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - depthLeft], movesSize);
 		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
 			return principleVariation;
@@ -178,7 +181,7 @@ public class Search implements Serializable {
 					innerPV[depth]++;
 				}
 			} else if (depthLeft == 1) {
-				ArrayList<Integer> qsearch = qSearch(!toMove, -beta, -alpha);
+				ArrayList<Integer> qsearch = qSearch(!toMove, -beta, -alpha, 0);
 				innerPV[depth] = -qsearch.get(0);
 				innerPV[depth - depthLeft] = move;
 				if (innerPV[depth] > 9000) {
@@ -203,8 +206,8 @@ public class Search implements Serializable {
 			innerPV = null;
 		}
 		if (principleVariation[depth] == -9999) {
-			ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, !toMove);
-			if (captures.size() == 0 || captures.get(0) != -1) {
+			utilityCaptures = board.getMoveGenerator().collectCaptures(!toMove, utilityCaptures);
+			if (utilityCaptures[0] != -1) { // stalemate detection
 				principleVariation[depth] = 0;
 				return principleVariation;
 			}
@@ -225,7 +228,9 @@ public class Search implements Serializable {
 	 * @param betaBound Beta bound for the alpha-beta search.
 	 * @return The best chain of captures and its evaluation. (can be empty if captures are bad)
 	 */
-	public ArrayList<Integer> qSearch(boolean toMove, int alphaBound, int betaBound) {
+	public ArrayList<Integer> qSearch(boolean toMove, int alphaBound, int betaBound, int depthSoFar) {
+	    // IMPORTANT: If anything other than captures should be calculated in this method, the ArraySizes might need to be changed.
+
 		int alpha = alphaBound;
 		int beta = betaBound;
 		ArrayList<Integer> principleVariation = new ArrayList<>(1);
@@ -244,12 +249,13 @@ public class Search implements Serializable {
 		if (principleVariation.get(0) >= beta) {
 			return principleVariation;
 		}
-		ArrayList<Integer> captures = MoveGenerator.collectCaptures(board, toMove);
-		if (captures.size() > 0 && captures.get(0) == -1) {
+		capturesStorage[depthSoFar] = board.getMoveGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);
+		if (capturesStorage[depthSoFar][0] == -1) {
 			principleVariation.set(0, 10000);
 			return principleVariation;
 		}
-		for (Integer capture : captures) {
+		for (int i = 1; i <= capturesStorage[depthSoFar][0]; i++) {
+		    int capture = capturesStorage[depthSoFar][i];
 			byte capturedPiece;
 			if (capture < (1 << 13)) {
 				capturedPiece = board.getSquare((capture / 8) % 8, capture % 8);
@@ -259,7 +265,7 @@ public class Search implements Serializable {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(capture);
-			ArrayList<Integer> innerPV = qSearch(!toMove, -beta, -alpha);
+			ArrayList<Integer> innerPV = qSearch(!toMove, -beta, -alpha, depthSoFar + 1);
 			qNodes++;
 			if (innerPV.get(0) == -10000) {
 				principleVariation = new ArrayList<>(1);
@@ -283,7 +289,6 @@ public class Search implements Serializable {
 			}
 			innerPV = null;
 		}
-		captures = null;
 		return principleVariation;
 	}
 

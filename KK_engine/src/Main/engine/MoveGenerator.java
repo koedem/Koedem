@@ -25,17 +25,25 @@ public class MoveGenerator implements Serializable {
 	 *                 captures[i][0] stores the number of capture moves in that array. captures[0] should be empty
 	 *                 except captures[0][0] == -1 if the position was illegal (king capture possible or similar)
 	 */
-	private int[][] captures = new int[6][64]; // hopefully at max 64 captures for a single captured piece type; captures[0] isn't used
+	private final int[][] captures = new int[6][64]; // hopefully at max 64 captures for a single captured piece type; captures[0] isn't used
+
+    /**
+     * Array to put non-capture moves in. nonCaptures[0] stores the number of non capture moves.
+     */
+    private final int[] nonCaptures = new int[MAX_MOVE_COUNT];
+
+    /**
+     * Array to put captures to test for castling legality in.
+     */
+    private final int[] castlingTestCaptures = new int [MAX_MOVE_COUNT];
 
 	/**
-	 * Array to put non-capture moves in. nonCaptures[0] stores the number of non capture moves.
+	 * 2D array to put captures in. First index is the piece that gets captured. (1 = pawn, 2 = knight etc.)
+	 *                 captures[i][0] stores the number of capture moves in that array. captures[0] should be empty
+	 *                 except captures[0][0] == -1 if the position was illegal (king capture possible or similar)
 	 */
-	private int[] nonCaptures = new int[MAX_MOVE_COUNT];
+	private final int[][] qSearchCaptures = new int[6][64]; // hopefully at max 64 captures for a single captured piece type; captures[0] isn't used
 
-	private byte file = 0; // this is non-local to only have one instance of it to prevent memory leaks
-	private byte row = 0;
-	private int startSquare = 0;
-	private int capturedPiece, capturedPieceValue;
 
 	public MoveGenerator(Board board) {
 		this.board = board;
@@ -51,61 +59,58 @@ public class MoveGenerator implements Serializable {
 			captures[piece][0] = 0;
 		}
 		nonCaptures[0] = 0;
-		startSquare = 0;
-		file = 0;
 
-		while (file < 8) {
-			row = 0;
-			while (row < 8) {
+		byte startSquare = 0;
+
+		for (byte file = 0; file < 8; file++) {
+			for (byte row = 0; row < 8; row++) {
 				if (toMove) {
 					switch (board.square[file][row]) {
 						case 1:
-							pawnMove(true, movesSize);
+							pawnMove(true, row, file, startSquare, movesSize);
 							break;
 						case 2:
-							knightMove(true, movesSize);
+							knightMove(true, row, file, startSquare, movesSize);
 							break;
 						case 3:
-							bishopMove(true, false, movesSize);
+							bishopMove(true, row, file, startSquare, false, movesSize);
 							break;
 						case 4:
-							rookMove(true, false, movesSize);
+							rookMove(true, row, file, startSquare, false, movesSize);
 							break;
 						case 5: // queen moves like rook + bishop
-							rookMove(true, true, movesSize);
-							bishopMove(true, true, movesSize);
+							rookMove(true, row, file, startSquare, true, movesSize);
+							bishopMove(true, row, file, startSquare, true, movesSize);
 							break;
 						case 6:
-							kingMove(true, movesSize);
+							kingMove(true, row, file, startSquare, movesSize);
 							break;
 					}
 				} else {
 					switch (board.square[file][row]) {
 						case -1:
-							pawnMove(false, movesSize);
+							pawnMove(false, row, file, startSquare, movesSize);
 							break;
 						case -2:
-							knightMove(false, movesSize);
+							knightMove(false, row, file, startSquare, movesSize);
 							break;
 						case -3:
-							bishopMove(false, false, movesSize);
+							bishopMove(false, row, file, startSquare, false, movesSize);
 							break;
 						case -4:
-							rookMove(false, false, movesSize);
+							rookMove(false, row, file, startSquare, false, movesSize);
 							break;
 						case -5: // queen moves like rook + bishop
-							rookMove(false, true, movesSize);
-							bishopMove(false, true, movesSize);
+							rookMove(false, row, file, startSquare, true, movesSize);
+							bishopMove(false, row, file, startSquare, true, movesSize);
 							break;
 						case -6:
-							kingMove(false, movesSize);
+							kingMove(false, row, file, startSquare, movesSize);
 							break;
 					}
 				}
 				++startSquare;
-				row++;
 			}
-			file++;
 		}
 
 		if (captures[0][0] == -1) {
@@ -125,64 +130,76 @@ public class MoveGenerator implements Serializable {
 	}
 	
 	/**
-	 * 
-	 * @param board : The board on which captures get generated.
+	 *
 	 * @param toMove : Who to move it is.
 	 * @return ArrayList of Integers, containing all captures.
 	 */
-	public static ArrayList<Integer> collectCaptures(Board board, boolean toMove) {
-		ArrayList<Integer> captures = new ArrayList<>(1); // save all Qs getting captured
-		ArrayList<Integer> captureR = new ArrayList<>(1); // save all Rs getting captured
-		ArrayList<Integer> captureB = new ArrayList<>(1);
-		ArrayList<Integer> captureN = new ArrayList<>(1);
-		ArrayList<Integer> captureP = new ArrayList<>(1);
+	public int[] collectCaptures(boolean toMove, int[] allCaptures) {
+	    for (int piece = 0; piece < 6; piece++) {
+	        qSearchCaptures[piece][0] = 0;
+        }
 		
-		for (byte i = 0; i < 8; i++) {
-			for (byte j = 0; j < 8; j++) {
-				
+		for (byte file = 0; file < 8; file++) { // don't use class variable file here to avoid "race conditions"
+			for (byte row = 0; row < 8; row++) {
 				if (toMove) {
-					if (board.square[i][j] == 1) {
-						pawnCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == 2) {
-						knightCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == 3) {
-						bishopCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == 4) {
-						rookCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == 5) { // queen moves like rook + bishop
-						rookCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						bishopCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == 6) {
-						kingCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					}
+                    switch (board.square[file][row]) {
+                        case 1:
+                            pawnCapture(true, row, file);
+                            break;
+                        case 2:
+                            knightCapture(true, row, file);
+                            break;
+                        case 3:
+                            bishopCapture(true, row, file);
+                            break;
+                        case 4:
+                            rookCapture(true, row, file);
+                            break;
+                        case 5:  // queen moves like rook + bishop
+                            rookCapture(true, row, file);
+                            bishopCapture(true, row, file);
+                            break;
+                        case 6:
+                            kingCapture(true, row, file);
+                            break;
+                    }
 				} else {
-					if (board.square[i][j] == -1) {
-						pawnCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == -2) {
-						knightCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == -3) {
-						bishopCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == -4) {
-						rookCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == -5) { // queen moves like rook + bishop
-						rookCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-						bishopCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					} else if (board.square[i][j] == -6) {
-						kingCapture(i, j, board, toMove, captures, captureR, captureB, captureN, captureP);
-					}
+                    switch (board.square[file][row]) {
+                        case -1:
+                            pawnCapture(false, row, file);
+                            break;
+                        case -2:
+                            knightCapture(false, row, file);
+                            break;
+                        case -3:
+                            bishopCapture(false, row, file);
+                            break;
+                        case -4:
+                            rookCapture(false, row, file);
+                            break;
+                        case -5:  // queen moves like rook + bishop
+                            rookCapture(false, row, file);
+                            bishopCapture(false, row, file);
+                            break;
+                        case -6:
+                            kingCapture(false, row, file);
+                            break;
+                    }
 				}
 			}
 		}
-		if (captures.size() > 0 && captures.get(0) == -1) {
-			captures.clear();
-			captures.add(-1);
-			return captures;
-		}
-		captures.addAll(captureR);
-		captures.addAll(captureB);
-		captures.addAll(captureN);
-		captures.addAll(captureP);
-		return captures;
+		if (qSearchCaptures[0][0] == -1) {
+			allCaptures[0] = -1;
+		} else {
+		    allCaptures[0] = 0;
+		    for (int piece = qSearchCaptures.length - 1; piece > 0; piece--) {
+		        int destPos = allCaptures[0] + 1; // plus one because allCaptures[0] doesn't store moves
+                System.arraycopy(qSearchCaptures[piece], 1, allCaptures, destPos, qSearchCaptures[piece][0]);
+                allCaptures[0] += qSearchCaptures[piece][0];
+            }
+        }
+
+		return allCaptures;
 	}
 	
 	/**
@@ -191,7 +208,8 @@ public class MoveGenerator implements Serializable {
 	 * @param toMove who to move it is
 	 * @param movesSize array that holds the number of legal moves that each piece type has. Does include king moves into check.
 	 */
-	private void pawnMove(boolean toMove, int[] movesSize) {
+	private void pawnMove(boolean toMove, byte row, byte file, byte startSquare, int[] movesSize) {
+	    int capturedPiece, capturedPieceValue;
 		if (toMove) {
 			if (row < 6 && row > 0) { // no promotion
 				if (board.getSquare(file, row + 1) == 0) {
@@ -352,7 +370,8 @@ public class MoveGenerator implements Serializable {
 	 * @param toMove who to move it is
 	 * @param movesSize array that holds the number of legal moves that each piece type has. Does include king moves into check.
 	 */
-	private void knightMove(boolean toMove, int[] movesSize) {
+	private void knightMove(boolean toMove, byte row, byte file, byte startSquare, int[] movesSize) {
+        int capturedPiece, capturedPieceValue;
 		if (toMove) {
 			if (file > 0 && row > 1) {
 				if ((capturedPiece = board.square[file - 1][row - 2]) == 0) {
@@ -586,7 +605,8 @@ public class MoveGenerator implements Serializable {
 	 *
 	 * @param toMove : who to move it is
 	 */
-	private void rookMove(boolean toMove, boolean queen, int[] movesSize) {
+	private void rookMove(boolean toMove, byte row, byte file, byte startSquare, boolean queen, int[] movesSize) {
+        int capturedPiece, capturedPieceValue;
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), row, board, toMove); // TODO maybe avoid using this method for perf reasons
 			if (squareValue == 0) {
@@ -718,7 +738,8 @@ public class MoveGenerator implements Serializable {
 	 *
 	 * @param toMove : who to move it is
 	 */
-	private void bishopMove(boolean toMove, boolean queen, int[] movesSize) {
+	private void bishopMove(boolean toMove, byte row, byte file, byte startSquare, boolean queen, int[] movesSize) {
+        int capturedPiece, capturedPieceValue;
 		for (byte i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
@@ -848,7 +869,8 @@ public class MoveGenerator implements Serializable {
 	 *
 	 * @param toMove : who to move it is
 	 */
-	private void kingMove(boolean toMove, int[] movesSize) {
+	private void kingMove(boolean toMove, byte row, byte file, byte startSquare, int[] movesSize) {
+        int capturedPiece, capturedPieceValue;
 		if (toMove) {
 			if (file > 0) {
 				if ((capturedPiece = board.getSquare(file - 1, row)) == 0) {
@@ -974,9 +996,9 @@ public class MoveGenerator implements Serializable {
 				if ((board.getCastlingRights() & 0x18) == 0x18) {
 					if (board.square[5][0] == 0 && board.square[6][0] == 0) {
 						board.square[5][0] = 6;
-						ArrayList<Integer> testLegality = collectCaptures(board, false);
+						int castlingLegality[] = collectCaptures(false, castlingTestCaptures);
 						// TODO make this prettier; right now we don't check [6][0] for legality because we'll find out next move in case it wasn't
-						if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						if (castlingLegality[0] != -1) {
 							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3);
 							movesSize[5]++;
 						}
@@ -987,8 +1009,8 @@ public class MoveGenerator implements Serializable {
 				if (((board.getCastlingRights() & 0x30) == 0x30)) {
 					if (board.square[3][0] == 0 && board.square[2][0] == 0 && board.square[1][0] == 0) {
 						board.square[3][0] = 6;
-						ArrayList<Integer> testLegality = collectCaptures(board, false);
-						if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						int castlingLegality[] = collectCaptures(false, castlingTestCaptures);
+						if (castlingLegality[0] != -1) {
 							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3);
 							movesSize[5]++;
 						}
@@ -1113,8 +1135,8 @@ public class MoveGenerator implements Serializable {
 				if ((board.getCastlingRights() & 0x3) == 0x3) {
 					if (board.square[5][7] == 0 && board.square[6][7] == 0) {
 						board.square[5][7] = -6;
-						ArrayList<Integer> testLegality = collectCaptures(board, true);
-						if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						int[] castlingLegality = collectCaptures(true, castlingTestCaptures);
+						if (castlingLegality[0] != -1) {
 							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3);
 							movesSize[5]++;
 						}
@@ -1125,8 +1147,8 @@ public class MoveGenerator implements Serializable {
 				if (((board.getCastlingRights() & 0x6) == 0x6)) {
 					if (board.square[3][7] == 0 && board.square[2][7] == 0 && board.square[1][7] == 0) {
 						board.square[3][7] = -6;
-						ArrayList<Integer> testLegality = collectCaptures(board, true);
-						if (testLegality.size() == 0 || testLegality.get(0) != -1) {
+						int[] castlingLegality = collectCaptures(true, castlingTestCaptures);
+						if (castlingLegality[0] != -1) {
 							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3);
 							movesSize[5]++;
 						}
@@ -1137,159 +1159,98 @@ public class MoveGenerator implements Serializable {
 		}
 	}
 	
-	private static void pawnCapture(byte file, byte row, Board board, boolean toMove, ArrayList<Integer> captures,
-			ArrayList<Integer> captureR, ArrayList<Integer> captureB,
-			ArrayList<Integer> captureN, ArrayList<Integer> captureP) {
+	private void pawnCapture(boolean toMove, byte row, byte file) {
+        int capturedPiece, capturedPieceValue;
 		if (toMove) {
 			if (row > 0 && row < 6) { // no promotion
-				if (file > 0 && board.getSquare(file - 1, row + 1) < 0) {
-					if (board.getSquare(file - 1, row + 1) == -6) {
-						captures.clear();
-						captures.add(-1);
+				if (file > 0 && (capturedPiece = board.getSquare(file - 1, row + 1)) < 0) {
+					if (capturedPiece == -6) {
+						qSearchCaptures[0][0] = -1;
 						return;
-					} else if (board.getSquare(file - 1, row + 1) == -5) {
-						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					} else if (board.getSquare(file - 1, row + 1) == -4) {
-						captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					} else if (board.getSquare(file - 1, row + 1) == -3) {
-						captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					} else if (board.getSquare(file - 1, row + 1) == -2) {
-						captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					} else if (board.getSquare(file - 1, row + 1) == -1) {
-						captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					}
+					} else {
+					    capturedPieceValue = -capturedPiece; // capturedPiece < 0 so -capturedPiece > 0 therefor legal array index
+					    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]] = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1);
+                    }
 				}
 				
-				if (file < 7 && board.getSquare(file + 1, row + 1) < 0) {
-					if (board.getSquare(file + 1, row + 1) == -6) {
-						captures.clear();
-						captures.add(-1);
-					} else if (board.getSquare(file + 1, row + 1) == -5) {
-						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					} else if (board.getSquare(file + 1, row + 1) == -4) {
-						captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					} else if (board.getSquare(file + 1, row + 1) == -3) {
-						captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					} else if (board.getSquare(file + 1, row + 1) == -2) {
-						captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					} else if (board.getSquare(file + 1, row + 1) == -1) {
-						captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
+				if (file < 7 && (capturedPiece = board.getSquare(file + 1, row + 1)) < 0) {
+					if (capturedPiece == -6) {
+						qSearchCaptures[0][0] = -1;
+						return;
+					} else {
+					    capturedPieceValue = -capturedPiece;
+						qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]] = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1);
 					}
 				}
 			} else if (row == 6) {
-				if (file > 0 && board.getSquare(file - 1, row + 1) < 0) {
-					for (int piece = 5; piece > 1; piece--) {
-						if (board.getSquare(file - 1, row + 1) == -6) {
-							captures.clear();
-							captures.add(-1);
-							return;
-						} else if (board.getSquare(file - 1, row + 1) == -5) {
-							captures.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row + 1) << 3) + piece);
-						} else if (board.getSquare(file - 1, row + 1) == -4) {
-							captureR.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row + 1) << 3) + piece);
-						} else if (board.getSquare(file - 1, row + 1) == -3) {
-							captureB.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row + 1) << 3) + piece);
-						} else if (board.getSquare(file - 1, row + 1) == -2) {
-							captureN.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row + 1) << 3) + piece);
-						} else if (board.getSquare(file - 1, row + 1) == -1) {
-							captureP.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row + 1) << 3) + piece);
-						}
-					}
+				if (file > 0 && (capturedPiece = board.getSquare(file - 1, row + 1)) < 0) {
+				    if (capturedPiece == -6) {
+				        qSearchCaptures[0][0] = -1;
+				        return;
+                    } else {
+				        capturedPieceValue = -capturedPiece;
+                        for (int piece = 5; piece > 1; piece--) {
+                            qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                    = (1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row + 1) << 3) + piece;
+                        }
+                    }
 				}
 				
-				if (file < 7 && board.getSquare(file + 1, row + 1) < 0) {
-					for (int piece = 5; piece > 1; piece--) {
-						if (board.getSquare(file + 1, row + 1) == -6) {
-							captures.clear();
-							captures.add(-1);
-							return;
-						} else if (board.getSquare(file + 1, row + 1) == -5) {
-							captures.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row + 1) << 3) + piece);
-						} else if (board.getSquare(file + 1, row + 1) == -4) {
-							captureR.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row + 1) << 3) + piece);
-						} else if (board.getSquare(file + 1, row + 1) == -3) {
-							captureB.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row + 1) << 3) + piece);
-						} else if (board.getSquare(file + 1, row + 1) == -2) {
-							captureN.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row + 1) << 3) + piece);
-						} else if (board.getSquare(file + 1, row + 1) == -1) {
-							captureP.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row + 1) << 3) + piece);
+				if (file < 7 && (capturedPiece = board.getSquare(file + 1, row + 1)) < 0) {
+				    if (capturedPiece == -6) {
+				        qSearchCaptures[0][0] = -1;
+				        return;
+                    } else {
+				        capturedPieceValue = -capturedPiece;
+				        for (int piece = 5; piece > 1; piece--) {
+						    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                    = (1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row + 1) << 3) + piece;
 						}
 					}
 				}
 			} else {
 				assert false;
 			}
-		} else if (!toMove) {
+		} else {
 			if (row > 1 && row < 7) { // no promotions
-				if (file > 0 && board.getSquare(file - 1, row - 1) > 0) {
-					if (board.getSquare(file - 1, row - 1) == 6) {
-						captures.clear();
-						captures.add(-1);
-						return;
-					} else if (board.getSquare(file - 1, row - 1) == 5) {
-						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					} else if (board.getSquare(file - 1, row - 1) == 4) {
-						captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					} else if (board.getSquare(file - 1, row - 1) == 3) {
-						captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					} else if (board.getSquare(file - 1, row - 1) == 2) {
-						captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					} else if (board.getSquare(file - 1, row - 1) == 1) {
-						captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
+				if (file > 0 && (capturedPiece = board.getSquare(file - 1, row - 1)) > 0) {
+					if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    } else {
+					    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1);
 					}
 				}
-				if (file < 7 && board.getSquare(file + 1, row - 1) > 0) {
-					if (board.getSquare(file + 1, row - 1) == 6) {
-						captures.clear();
-						captures.add(-1);
-					} else if (board.getSquare(file + 1, row - 1) == 5) {
-						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					} else if (board.getSquare(file + 1, row - 1) == 4) {
-						captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					} else if (board.getSquare(file + 1, row - 1) == 3) {
-						captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					} else if (board.getSquare(file + 1, row - 1) == 2) {
-						captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					} else if (board.getSquare(file + 1, row - 1) == 1) {
-						captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
+				if (file < 7 && (capturedPiece = board.getSquare(file + 1, row - 1)) > 0) {
+					if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    } else {
+					    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1);
 					}
 				}
 			} else if (row == 1) {
-				if (file > 0 && board.getSquare(file - 1, row - 1) > 0) {
-					for (int piece = 5; piece > 1; piece--) {
-						if (board.getSquare(file - 1, row - 1) == 6) {
-							captures.clear();
-							captures.add(-1);
-							return;
-						} else if (board.getSquare(file - 1, row - 1) == 5) {
-							captures.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row - 1) << 3) + piece);
-						} else if (board.getSquare(file - 1, row - 1) == 4) {
-							captureR.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row - 1) << 3) + piece);
-						} else if (board.getSquare(file - 1, row - 1) == 3) {
-							captureB.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row - 1) << 3) + piece);
-						} else if (board.getSquare(file - 1, row - 1) == 2) {
-							captureN.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row - 1) << 3) + piece);
-						} else if (board.getSquare(file - 1, row - 1) == 1) {
-							captureP.add((1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row - 1) << 3) + piece);
-						}
-					}
+				if (file > 0 && (capturedPiece = board.getSquare(file - 1, row - 1)) > 0) {
+				    if (capturedPiece == 6) {
+				        qSearchCaptures[0][0] = -1;
+				        return;
+                    } else {
+                        for (int piece = 5; piece > 1; piece--) {
+                            qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                                    = (1 << 15) + (file << 12) + (row << 9) + ((file - 1) << 6) + ((row - 1) << 3) + piece;
+                        }
+                    }
 				}
-				if (file < 7 && board.getSquare(file + 1, row - 1) > 0) {
-					for (int piece = 5; piece > 1; piece--) {
-						if (board.getSquare(file + 1, row - 1) == 6) {
-							captures.clear();
-							captures.add(-1);
-							return;
-						} else if (board.getSquare(file + 1, row - 1) == 5) {
-							captures.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row - 1) << 3) + piece);
-						} else if (board.getSquare(file + 1, row - 1) == 4) {
-							captureR.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row - 1) << 3) + piece);
-						} else if (board.getSquare(file + 1, row - 1) == 3) {
-							captureB.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row - 1) << 3) + piece);
-						} else if (board.getSquare(file + 1, row - 1) == 2) {
-							captureN.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row - 1) << 3) + piece);
-						} else if (board.getSquare(file + 1, row - 1) == 1) {
-							captureP.add((1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row - 1) << 3) + piece);
+				if (file < 7 && (capturedPiece = board.getSquare(file + 1, row - 1)) > 0) {
+				    if (capturedPiece == 6) {
+				        qSearchCaptures[0][0] = -1;
+				        return;
+                    } else {
+						for (int piece = 5; piece > 1; piece--) {
+						    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                                    = (1 << 15) + (file << 12) + (row << 9) + ((file + 1) << 6) + ((row - 1) << 3) + piece;
 						}
 					}
 				}
@@ -1301,221 +1262,202 @@ public class MoveGenerator implements Serializable {
 
 	/**
 	 * Generate all Knight captures.
-	 * 
-	 * @param file : position of the knight on the board
-	 * @param row : " "
-	 * @param board : on which board we are
+	 *
 	 * @param toMove : who to move it is
-	 * @param captureP 
-	 * @param captureN 
-	 * @param captureB 
-	 * @param captureR 
 	 */
-	private static void knightCapture(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB,
-			ArrayList<Integer> captureN, ArrayList<Integer> captureP) {
-		if (file > 0 && row > 1) {
-			if ((toMove && board.square[file - 1][row - 2] < 0) 
-					|| ((!toMove) && board.square[file - 1][row - 2] > 0)) {
-				
-				if (Math.abs(board.square[file - 1][row - 2]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file - 1][row - 2]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 2));
-				} else if (Math.abs(board.square[file - 1][row - 2]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 2));
-				} else if (Math.abs(board.square[file - 1][row - 2]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 2));
-				} else if (Math.abs(board.square[file - 1][row - 2]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 2));
-				} else if (Math.abs(board.square[file - 1][row - 2]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 2));
-				}
-			}
-		}
-		if (file > 0 && row < 6) {
-			if ((toMove && board.square[file - 1][row + 2] < 0) 
-					|| ((!toMove) && board.square[file - 1][row + 2] > 0)) {
-				
-				if (Math.abs(board.square[file - 1][row + 2]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file - 1][row + 2]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 2));
-				} else if (Math.abs(board.square[file - 1][row + 2]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 2));
-				} else if (Math.abs(board.square[file - 1][row + 2]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 2));
-				} else if (Math.abs(board.square[file - 1][row + 2]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 2));
-				} else if (Math.abs(board.square[file - 1][row + 2]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 2));
-				}
-			}
-		}
-		if (file > 1 && row > 0) {
-			if ((toMove && board.square[file - 2][row - 1] < 0) 
-					|| ((!toMove) && board.square[file - 2][row - 1] > 0)) {
-				
-				if (Math.abs(board.square[file - 2][row - 1]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file - 2][row - 1]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row - 1));
-				} else if (Math.abs(board.square[file - 2][row - 1]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row - 1));
-				} else if (Math.abs(board.square[file - 2][row - 1]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row - 1));
-				} else if (Math.abs(board.square[file - 2][row - 1]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row - 1));
-				} else if (Math.abs(board.square[file - 2][row - 1]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row - 1));
-				}
-			}
-		}
-		if (file > 1 && row < 7) {
-			if ((toMove && board.square[file - 2][row + 1] < 0) 
-					|| ((!toMove) && board.square[file - 2][row + 1] > 0)) {
-				
-				if (Math.abs(board.square[file - 2][row + 1]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file - 2][row + 1]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row + 1));
-				} else if (Math.abs(board.square[file - 2][row + 1]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row + 1));
-				} else if (Math.abs(board.square[file - 2][row + 1]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row + 1));
-				} else if (Math.abs(board.square[file - 2][row + 1]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row + 1));
-				} else if (Math.abs(board.square[file - 2][row + 1]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row + 1));
-				}
-			}
-		}
-		if (file < 6 && row > 0) {
-			if ((toMove && board.square[file + 2][row - 1] < 0) 
-					|| ((!toMove) && board.square[file + 2][row - 1] > 0)) {
-				
-				if (Math.abs(board.square[file + 2][row - 1]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file + 2][row - 1]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row - 1));
-				} else if (Math.abs(board.square[file + 2][row - 1]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row - 1));
-				} else if (Math.abs(board.square[file + 2][row - 1]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row - 1));
-				} else if (Math.abs(board.square[file + 2][row - 1]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row - 1));
-				} else if (Math.abs(board.square[file + 2][row - 1]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row - 1));
-				}
-			}
-		}
-		if (file < 6 && row < 7) {
-			if ((toMove && board.square[file + 2][row + 1] < 0) 
-					|| ((!toMove) && board.square[file + 2][row + 1] > 0)) {
-				
-				if (Math.abs(board.square[file + 2][row + 1]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file + 2][row + 1]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row + 1));
-				} else if (Math.abs(board.square[file + 2][row + 1]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row + 1));
-				} else if (Math.abs(board.square[file + 2][row + 1]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row + 1));
-				} else if (Math.abs(board.square[file + 2][row + 1]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row + 1));
-				} else if (Math.abs(board.square[file + 2][row + 1]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row + 1));
-				}
-			}
-		}
-		if (file < 7 && row > 1) {
-			if ((toMove && board.square[file + 1][row - 2] < 0) 
-					|| ((!toMove) && board.square[file + 1][row - 2] > 0)) {
-				
-				if (Math.abs(board.square[file + 1][row - 2]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file + 1][row - 2]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 2));
-				} else if (Math.abs(board.square[file + 1][row - 2]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 2));
-				} else if (Math.abs(board.square[file + 1][row - 2]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 2));
-				} else if (Math.abs(board.square[file + 1][row - 2]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 2));
-				} else if (Math.abs(board.square[file + 1][row - 2]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 2));
-				}
-			}
-		}
-		if (file < 7 && row < 6) {
-			if ((toMove && board.square[file + 1][row + 2] < 0) 
-					|| ((!toMove) && board.square[file + 1][row + 2] > 0)) {
-				
-				if (Math.abs(board.square[file + 1][row + 2]) == 6) {
-					captures.clear();
-					captures.add(-1);
-				} else if (Math.abs(board.square[file + 1][row + 2]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2));
-				} else if (Math.abs(board.square[file + 1][row + 2]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2));
-				} else if (Math.abs(board.square[file + 1][row + 2]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2));
-				} else if (Math.abs(board.square[file + 1][row + 2]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2));
-				} else if (Math.abs(board.square[file + 1][row + 2]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2));
-				}
-			}
-		}
+	private void knightCapture(boolean toMove, byte row, byte file) {
+        int capturedPiece, capturedPieceValue;
+	    if (toMove) {
+            if (file > 0 && row > 1) {
+                if ((capturedPiece = board.square[file - 1][row - 2]) < 0) {
+                    if (capturedPiece == -6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    capturedPieceValue = -capturedPiece;
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 2);
+                }
+            }
+            if (file > 0 && row < 6) {
+                if ((capturedPiece = board.square[file - 1][row + 2]) < 0) {
+                    if (capturedPiece == -6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    capturedPieceValue = -capturedPiece;
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 2);
+                }
+            }
+            if (file > 1 && row > 0) {
+                if ((capturedPiece = board.square[file - 2][row - 1]) < 0) {
+                    if (capturedPiece == -6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    capturedPieceValue = -capturedPiece;
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row - 1);
+                }
+            }
+            if (file > 1 && row < 7) {
+                if ((capturedPiece = board.square[file - 2][row + 1]) < 0) {
+                    if (capturedPiece == -6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    capturedPieceValue = -capturedPiece;
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row + 1);
+                }
+            }
+            if (file < 6 && row > 0) {
+                if ((capturedPiece = board.square[file + 2][row - 1]) < 0) {
+                    if (capturedPiece == -6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    capturedPieceValue = -capturedPiece;
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row - 1);
+                }
+            }
+            if (file < 6 && row < 7) {
+                if ((capturedPiece = board.square[file + 2][row + 1]) < 0) {
+                    if (capturedPiece == -6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    capturedPieceValue = -capturedPiece;
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row + 1);
+
+                }
+            }
+            if (file < 7 && row > 1) {
+                if ((capturedPiece = board.square[file + 1][row - 2]) < 0) {
+                    if (capturedPiece == -6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    capturedPieceValue = -capturedPiece;
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 2);
+
+                }
+            }
+            if (file < 7 && row < 6) {
+                if ((capturedPiece = board.square[file + 1][row + 2]) < 0) {
+                    if (capturedPiece == -6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    capturedPieceValue = -capturedPiece;
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2);
+                }
+            }
+        } else {
+            if (file > 0 && row > 1) {
+                if ((capturedPiece = board.square[file - 1][row - 2]) > 0) {
+                    if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 2);
+                }
+            }
+            if (file > 0 && row < 6) {
+                if ((capturedPiece = board.square[file - 1][row + 2]) > 0) {
+                    if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 2);
+                }
+            }
+            if (file > 1 && row > 0) {
+                if ((capturedPiece = board.square[file - 2][row - 1]) > 0) {
+                    if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row - 1);
+                }
+            }
+            if (file > 1 && row < 7) {
+                if ((capturedPiece = board.square[file - 2][row + 1]) > 0) {
+                    if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 2) << 3) + (row + 1);
+                }
+            }
+            if (file < 6 && row > 0) {
+                if ((capturedPiece = board.square[file + 2][row - 1]) > 0) {
+                    if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row - 1);
+                }
+            }
+            if (file < 6 && row < 7) {
+                if ((capturedPiece = board.square[file + 2][row + 1]) > 0) {
+                    if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 2) << 3) + (row + 1);
+                }
+            }
+            if (file < 7 && row > 1) {
+                if ((capturedPiece = board.square[file + 1][row - 2]) > 0) {
+                    if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 2);
+                }
+            }
+            if (file < 7 && row < 6) {
+                if ((capturedPiece = board.square[file + 1][row + 2]) > 0) {
+                    if (capturedPiece == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPiece][++qSearchCaptures[capturedPiece][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 2);
+                }
+            }
+        }
 	}
 	
 	/**
 	 * Generate all legal rook captures.
-	 * 
-	 * @param file : position of the rook on the board
-	 * @param row : " "
-	 * @param board : on which board we are
+	 *
 	 * @param toMove : who to move it is
-	 * @param captureP 
-	 * @param captureN 
-	 * @param captureB 
-	 * @param captureR 
 	 */
-	private static void rookCapture(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB,
-			ArrayList<Integer> captureN, ArrayList<Integer> captureP) {
+	private void rookCapture(boolean toMove, byte row, byte file) {
+        int capturedPiece, capturedPieceValue;
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), row, board, toMove);
 			if (squareValue == 0) {
-				if (Math.abs(board.square[file + i][row]) == 6) {
-					captures.clear();
-					captures.add(-1);
+				if ((capturedPieceValue = Math.abs(board.square[file + i][row])) == 6) {
+					qSearchCaptures[0][0] = -1;
 					return;
-				} else if (Math.abs(board.square[file + i][row]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + row);
-				} else if (Math.abs(board.square[file + i][row]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + row);
-				} else if (Math.abs(board.square[file + i][row]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + row);
-				} else if (Math.abs(board.square[file + i][row]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + row);
-				} else if (Math.abs(board.square[file + i][row]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + row);
 				}
+				qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                        = (1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + row;
 				break;
 			} else if (squareValue == 1) {
 			} else {
@@ -1526,21 +1468,12 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), row, board, toMove);
 			if (squareValue == 0) {
-				if (Math.abs(board.square[file - i][row]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file - i][row]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + row);
-				} else if (Math.abs(board.square[file - i][row]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + row);
-				} else if (Math.abs(board.square[file - i][row]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + row);
-				} else if (Math.abs(board.square[file - i][row]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + row);
-				} else if (Math.abs(board.square[file - i][row]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + row);
-				}
+				if ((capturedPieceValue = Math.abs(board.square[file - i][row])) == 6) {
+                    qSearchCaptures[0][0] = -1;
+                    return;
+                }
+                qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                        = (1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + row;
 				break;
 			} else if (squareValue == 1) {
 			} else {
@@ -1551,21 +1484,12 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if (Math.abs(board.square[file][row + i]) == 6) {
-					captures.clear();
-					captures.add(-1);
+				if ((capturedPieceValue = Math.abs(board.square[file][row + i])) == 6) {
+					qSearchCaptures[0][0] = -1;
 					return;
-				} else if (Math.abs(board.square[file][row + i]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + i));
-				} else if (Math.abs(board.square[file][row + i]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + i));
-				} else if (Math.abs(board.square[file][row + i]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + i));
-				} else if (Math.abs(board.square[file][row + i]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + i));
-				} else if (Math.abs(board.square[file][row + i]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + i));
 				}
+				qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                        = (1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + i);
 				break;
 			} else if (squareValue == 1) {
 			} else {
@@ -1576,24 +1500,15 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if (Math.abs(board.square[file][row - i]) == 6) {
-					captures.clear();
-					captures.add(-1);
+				if ((capturedPieceValue = Math.abs(board.square[file][row - i])) == 6) {
+					qSearchCaptures[0][0] = -1;
 					return;
-				} else if (Math.abs(board.square[file][row - i]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - i));
-				} else if (Math.abs(board.square[file][row - i]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - i));
-				} else if (Math.abs(board.square[file][row - i]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - i));
-				} else if (Math.abs(board.square[file][row - i]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - i));
-				} else if (Math.abs(board.square[file][row - i]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - i));
 				}
+				qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                        = (1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - i);
 				break;
 			} else if (squareValue == 1) {
-			} else {
+            } else {
 				break;
 			}
 		}
@@ -1601,37 +1516,20 @@ public class MoveGenerator implements Serializable {
 	
 	/**
 	 * Generate all legal bishop captures.
-	 * 
-	 * @param file : position of the bishop on the board
-	 * @param row : " "
-	 * @param board : on which board we are
+	 *
 	 * @param toMove : who to move it is
-	 * @param captureP 
-	 * @param captureN 
-	 * @param captureB 
-	 * @param captureR 
 	 */
-	private static void bishopCapture(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB,
-			ArrayList<Integer> captureN, ArrayList<Integer> captureP) {
+	private void bishopCapture(boolean toMove, byte row, byte file) {
+        int capturedPiece, capturedPieceValue;
 		for (byte i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if (Math.abs(board.square[file + i][row + i]) == 6) {
-					captures.clear();
-					captures.add(-1);
+				if ((capturedPieceValue = Math.abs(board.square[file + i][row + i])) == 6) {
+					qSearchCaptures[0][0] = -1;
 					return;
-				} else if (Math.abs(board.square[file + i][row + i]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row + i));
-				} else if (Math.abs(board.square[file + i][row + i]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row + i));
-				} else if (Math.abs(board.square[file + i][row + i]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row + i));
-				} else if (Math.abs(board.square[file + i][row + i]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row + i));
-				} else if (Math.abs(board.square[file + i][row + i]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row + i));
 				}
+				qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                        = (1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row + i);
 				break;
 			} else if (squareValue == 1) {
 			} else {
@@ -1642,21 +1540,12 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if (Math.abs(board.square[file - i][row - i]) == 6) {
-					captures.clear();
-					captures.add(-1);
+				if ((capturedPieceValue = Math.abs(board.square[file - i][row - i])) == 6) {
+					qSearchCaptures[0][0] = -1;
 					return;
-				} else if (Math.abs(board.square[file - i][row - i]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row - i));
-				} else if (Math.abs(board.square[file - i][row - i]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row - i));
-				} else if (Math.abs(board.square[file - i][row - i]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row - i));
-				} else if (Math.abs(board.square[file - i][row - i]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row - i));
-				} else if (Math.abs(board.square[file - i][row - i]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row - i));
 				}
+				qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                        = (1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row - i);
 				break;
 			} else if (squareValue == 1) {
 			} else {
@@ -1667,21 +1556,12 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if (Math.abs(board.square[file + i][row - i]) == 6) {
-					captures.clear();
-					captures.add(-1);
+				if ((capturedPieceValue = Math.abs(board.square[file + i][row - i])) == 6) {
+					qSearchCaptures[0][0] = -1;
 					return;
-				} else if (Math.abs(board.square[file + i][row - i]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row - i));
-				} else if (Math.abs(board.square[file + i][row - i]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row - i));
-				} else if (Math.abs(board.square[file + i][row - i]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row - i));
-				} else if (Math.abs(board.square[file + i][row - i]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row - i));
-				} else if (Math.abs(board.square[file + i][row - i]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row - i));
 				}
+				qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                        = (1 << 12) + (file << 9) + (row << 6) + ((file + i) << 3) + (row - i);
 				break;
 			} else if (squareValue == 1) {
 			} else {
@@ -1692,21 +1572,12 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if (Math.abs(board.square[file - i][row + i]) == 6) {
-					captures.clear();
-					captures.add(-1);
+				if ((capturedPieceValue = Math.abs(board.square[file - i][row + i])) == 6) {
+					qSearchCaptures[0][0] = -1;
 					return;
-				} else if (Math.abs(board.square[file - i][row + i]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row + i));
-				} else if (Math.abs(board.square[file - i][row + i]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row + i));
-				} else if (Math.abs(board.square[file - i][row + i]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row + i));
-				} else if (Math.abs(board.square[file - i][row + i]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row + i));
-				} else if (Math.abs(board.square[file - i][row + i]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row + i));
 				}
+				qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                        = (1 << 12) + (file << 9) + (row << 6) + ((file - i) << 3) + (row + i);
 				break;
 			} else if (squareValue == 1) {
 			} else {
@@ -1716,181 +1587,178 @@ public class MoveGenerator implements Serializable {
 	}
 	
 	/**
-	 * 
-	 * @param file : position of the king on the board
-	 * @param row : " "
-	 * @param board : on which board we are
+	 *
 	 * @param toMove : who to move it is
-	 * @param captureP 
-	 * @param captureN 
-	 * @param captureB 
-	 * @param captureR 
 	 */
-	private static void kingCapture(byte file, byte row, Board board, boolean toMove,
-			ArrayList<Integer> captures, ArrayList<Integer> captureR, ArrayList<Integer> captureB,
-			ArrayList<Integer> captureN, ArrayList<Integer> captureP) {
-		if (file > 0) {
-			if ((toMove && board.getSquare(file - 1, row) < 0) || (!toMove && board.getSquare(file - 1, row) > 0)) {
-				if (Math.abs(board.square[file - 1][row]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file - 1][row]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + row);
-				} else if (Math.abs(board.square[file - 1][row]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + row);
-				} else if (Math.abs(board.square[file - 1][row]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + row);
-				} else if (Math.abs(board.square[file - 1][row]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + row);
-				} else if (Math.abs(board.square[file - 1][row]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + row);
-				}
-			}
-			if (row > 0) {
-				if ((toMove && board.getSquare(file - 1, row - 1) < 0) 
-						|| (!toMove && board.getSquare(file - 1, row - 1) > 0)) {
-					
-					if (Math.abs(board.square[file - 1][row - 1]) == 6) {
-						captures.clear();
-						captures.add(-1);
-						return;
-					} else if (Math.abs(board.square[file - 1][row - 1]) == 5) {
-						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					} else if (Math.abs(board.square[file - 1][row - 1]) == 4) {
-						captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					} else if (Math.abs(board.square[file - 1][row - 1]) == 3) {
-						captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					} else if (Math.abs(board.square[file - 1][row - 1]) == 2) {
-						captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					} else if (Math.abs(board.square[file - 1][row - 1]) == 1) {
-						captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1));
-					}
-				}
-			}
-			if (row < 7) {
-				if ((toMove && board.getSquare(file - 1, row + 1) < 0) 
-						|| (!toMove && board.getSquare(file - 1, row + 1) > 0)) {
-					
-					if (Math.abs(board.square[file - 1][row + 1]) == 6) {
-						captures.clear();
-						captures.add(-1);
-						return;
-					} else if (Math.abs(board.square[file - 1][row + 1]) == 5) {
-						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					} else if (Math.abs(board.square[file - 1][row + 1]) == 4) {
-						captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					} else if (Math.abs(board.square[file - 1][row + 1]) == 3) {
-						captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					} else if (Math.abs(board.square[file - 1][row + 1]) == 2) {
-						captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					} else if (Math.abs(board.square[file - 1][row + 1]) == 1) {
-						captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1));
-					}
-				}
-			}
-		}
-		
-		if (file < 7) {
-			if ((toMove && board.getSquare(file + 1, row) < 0) || (!toMove && board.getSquare(file + 1, row) > 0)) {
-				if (Math.abs(board.square[file + 1][row]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file + 1][row]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + row);
-				} else if (Math.abs(board.square[file + 1][row]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + row);
-				} else if (Math.abs(board.square[file + 1][row]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + row);
-				} else if (Math.abs(board.square[file + 1][row]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + row);
-				} else if (Math.abs(board.square[file + 1][row]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + row);
-				}
-			}
-			if (row > 0) {
-				if ((toMove && board.getSquare(file + 1, row - 1) < 0) 
-						|| (!toMove && board.getSquare(file + 1, row - 1) > 0)) {
-					
-					if (Math.abs(board.square[file + 1][row - 1]) == 6) {
-						captures.clear();
-						captures.add(-1);
-						return;
-					} else if (Math.abs(board.square[file + 1][row - 1]) == 5) {
-						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					} else if (Math.abs(board.square[file + 1][row - 1]) == 4) {
-						captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					} else if (Math.abs(board.square[file + 1][row - 1]) == 3) {
-						captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					} else if (Math.abs(board.square[file + 1][row - 1]) == 2) {
-						captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					} else if (Math.abs(board.square[file + 1][row - 1]) == 1) {
-						captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1));
-					}
-				}
-			}
-			if (row < 7) {
-				if ((toMove && board.getSquare(file + 1, row + 1) < 0) 
-						|| (!toMove && board.getSquare(file + 1, row + 1) > 0)) {
-					
-					if (Math.abs(board.square[file + 1][row + 1]) == 6) {
-						captures.clear();
-						captures.add(-1);
-						return;
-					} else if (Math.abs(board.square[file + 1][row + 1]) == 5) {
-						captures.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					} else if (Math.abs(board.square[file + 1][row + 1]) == 4) {
-						captureR.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					} else if (Math.abs(board.square[file + 1][row + 1]) == 3) {
-						captureB.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					} else if (Math.abs(board.square[file + 1][row + 1]) == 2) {
-						captureN.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					} else if (Math.abs(board.square[file + 1][row + 1]) == 1) {
-						captureP.add((1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1));
-					}
-				}
-			}
-		}
-		
-		if (row > 0) {
-			if ((toMove && board.getSquare(file, row - 1) < 0) || (!toMove && board.getSquare(file, row - 1) > 0)) {
-				if (Math.abs(board.square[file][row - 1]) == 6) {
-					captures.clear();
-					captures.add(-1);
-					return;
-				} else if (Math.abs(board.square[file][row - 1]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - 1));
-				} else if (Math.abs(board.square[file][row - 1]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - 1));
-				} else if (Math.abs(board.square[file][row - 1]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - 1));
-				} else if (Math.abs(board.square[file][row - 1]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - 1));
-				} else if (Math.abs(board.square[file][row - 1]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - 1));
-				}
-			}
-		}
-		if (row < 7) {
-			if ((toMove && board.getSquare(file, row + 1) < 0) || (!toMove && board.getSquare(file, row + 1) > 0)) {
-				if (Math.abs(board.square[file][row + 1]) == 6) {
-					captures.clear();
-					captures.add(-1);
-				} else if (Math.abs(board.square[file][row + 1]) == 5) {
-					captures.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1));
-				} else if (Math.abs(board.square[file][row + 1]) == 4) {
-					captureR.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1));
-				} else if (Math.abs(board.square[file][row + 1]) == 3) {
-					captureB.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1));
-				} else if (Math.abs(board.square[file][row + 1]) == 2) {
-					captureN.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1));
-				} else if (Math.abs(board.square[file][row + 1]) == 1) {
-					captureP.add((1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1));
-				}
-			}
-		}
-		
+	private void kingCapture(boolean toMove, byte row, byte file) {
+        int capturedPiece, capturedPieceValue;
+	    if (toMove) {
+            if (file > 0) {
+                if (board.getSquare(file - 1, row) < 0) {
+                    if ((capturedPieceValue = -(board.square[file - 1][row])) == 6) { // opponent pieces are < 0 so we negate them
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + row;
+                }
+                if (row > 0) {
+                    if (board.getSquare(file - 1, row - 1) < 0) {
+                        if ((capturedPieceValue = -(board.square[file - 1][row - 1])) == 6) {
+                            qSearchCaptures[0][0] = -1;
+                            return;
+                        }
+                        qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1);
+                    }
+                }
+                if (row < 7) {
+                    if (board.getSquare(file - 1, row + 1) < 0) {
+                        if ((capturedPieceValue = -(board.square[file - 1][row + 1])) == 6) {
+                            qSearchCaptures[0][0] = -1;
+                            return;
+                        }
+                        qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1);
+                    }
+                }
+            }
+
+            if (file < 7) {
+                if (board.getSquare(file + 1, row) < 0) {
+                    if ((capturedPieceValue = -(board.square[file + 1][row])) == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + row;
+                }
+                if (row > 0) {
+                    if (board.getSquare(file + 1, row - 1) < 0) {
+                        if ((capturedPieceValue = -(board.square[file + 1][row - 1])) == 6) {
+                            qSearchCaptures[0][0] = -1;
+                            return;
+                        }
+                        qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1);
+                    }
+                }
+                if (row < 7) {
+                    if (board.getSquare(file + 1, row + 1) < 0) {
+                        if ((capturedPieceValue = -(board.square[file + 1][row + 1])) == 6) {
+                            qSearchCaptures[0][0] = -1;
+                            return;
+                        }
+                        qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1);
+                    }
+                }
+            }
+
+            if (row > 0) {
+                if (board.getSquare(file, row - 1) < 0) {
+                    if ((capturedPieceValue = -(board.square[file][row - 1])) == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - 1);
+                }
+            }
+            if (row < 7) {
+                if (board.getSquare(file, row + 1) < 0) {
+                    if ((capturedPieceValue = -(board.square[file][row + 1])) == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1);
+                }
+            }
+        } else {
+            if (file > 0) {
+                if (board.getSquare(file - 1, row) > 0) {
+                    if ((capturedPieceValue = (board.square[file - 1][row])) == 6) { // enemy pieces are > 0 so no need to change anything
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + row;
+                }
+                if (row > 0) {
+                    if (board.getSquare(file - 1, row - 1) > 0) {
+                        if ((capturedPieceValue = (board.square[file - 1][row - 1])) == 6) {
+                            qSearchCaptures[0][0] = -1;
+                            return;
+                        }
+                        qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row - 1);
+                    }
+                }
+                if (row < 7) {
+                    if (board.getSquare(file - 1, row + 1) > 0) {
+                        if ((capturedPieceValue = (board.square[file - 1][row + 1])) == 6) {
+                            qSearchCaptures[0][0] = -1;
+                            return;
+                        }
+                        qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file - 1) << 3) + (row + 1);
+                    }
+                }
+            }
+
+            if (file < 7) {
+                if (board.getSquare(file + 1, row) > 0) {
+                    if ((capturedPieceValue = (board.square[file + 1][row])) == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + row;
+                }
+                if (row > 0) {
+                    if (board.getSquare(file + 1, row - 1) > 0) {
+                        if ((capturedPieceValue = (board.square[file + 1][row - 1])) == 6) {
+                            qSearchCaptures[0][0] = -1;
+                            return;
+                        }
+                        qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row - 1);
+                    }
+                }
+                if (row < 7) {
+                    if (board.getSquare(file + 1, row + 1) > 0) {
+                        if ((capturedPieceValue = (board.square[file + 1][row + 1])) == 6) {
+                            qSearchCaptures[0][0] = -1;
+                            return;
+                        }
+                        qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                                = (1 << 12) + (file << 9) + (row << 6) + ((file + 1) << 3) + (row + 1);
+                    }
+                }
+            }
+
+            if (row > 0) {
+                if (board.getSquare(file, row - 1) > 0) {
+                    if ((capturedPieceValue = (board.square[file][row - 1])) == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row - 1);
+                }
+            }
+            if (row < 7) {
+                if (board.getSquare(file, row + 1) > 0) {
+                    if ((capturedPieceValue = (board.square[file][row + 1])) == 6) {
+                        qSearchCaptures[0][0] = -1;
+                        return;
+                    }
+                    qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]]
+                            = (1 << 12) + (file << 9) + (row << 6) + (file << 3) + (row + 1);
+                }
+            }
+        }
 	}
 
 	/**
