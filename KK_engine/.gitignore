@@ -7,3 +7,6 @@
 
 ../FastInvSqrt/
 ..StringParser/
+
+*.class
+out/*
