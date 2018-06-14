@@ -13,11 +13,18 @@ import Main.engineIO.UCI;
  */
 public class Search implements Serializable {
 
+	public static final int MAX_DEPTH = 100;
+
 	private Board board;
 	private int[][] movesStorage = new int[101][MoveGenerator.MAX_MOVE_COUNT];
 	private int[][] capturesStorage = new int[30][MoveGenerator.MAX_MOVE_COUNT]; // 30 because thats max number of captures;
                                                                                 // TODO: Less than MAX_MOVE_COUNT
     private int[] utilityCaptures = new int[MoveGenerator.MAX_MOVE_COUNT];
+
+    private static int[] unused = new int[6];
+
+    private int[] evaluations = new int[MAX_DEPTH];
+    private int[][] principleVariations = new int[MAX_DEPTH][MAX_DEPTH]; // TODO use in search and create additional one for qSearch
 
 	public long nodes = 0;
 	public long abortedNodes = 0;
@@ -122,18 +129,16 @@ public class Search implements Serializable {
 	 * 
 	 * @return the principle variation we get for the position
 	 */
-	@SuppressWarnings("unused")
 	public int[] negaMax(boolean toMove, int depth, int depthLeft, int alphaBound, int betaBound) {
 		int alpha = alphaBound;
 		int beta = betaBound;
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
-		int[] movesSize = new int[6]; // unused
-		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - depthLeft], movesSize);
+		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - depthLeft], unused);
 		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
 			return principleVariation;
-		} else if (board.getHashTable().get(board.getSquareString()) != null && depthLeft != depth) {
+		} else if (board.getHashTable().get(board.getZobristHash()) != null && depthLeft != depth) {
 			principleVariation[depth] = 0;
 			return principleVariation;
 		}

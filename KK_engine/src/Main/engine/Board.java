@@ -2,6 +2,7 @@ package Main.engine;
 
 import java.io.*;
 import java.util.Hashtable;
+import java.util.Random;
 
 import Main.Utility.DeepCopy;
 import Main.engineIO.Logging;
@@ -12,6 +13,11 @@ public class Board implements Serializable {
 	private MoveGenerator moveGenerator = new MoveGenerator(this);
 	private Evaluation evaluation = new Evaluation(this);
 	private Search search = new Search(this);
+
+	private long zobristHash;
+	private static final Random random = new Random(1234567890);
+	private static final long[] zobristKeys = initializeZobrist();
+	private static final long blackToMove = random.nextLong();
 
 	private static final int QUEENDANGER = 12;
 	private static final int ROOKDANGER = 5;
@@ -105,7 +111,7 @@ public class Board implements Serializable {
 	/**
 	 * We store every position that actually occurred in the game.
 	 */
-	private Hashtable<String, Node> hashTable = new Hashtable<>();
+	private Hashtable<Long, Node> hashTable = new Hashtable<>();
 
 	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
 
@@ -629,10 +635,10 @@ public class Board implements Serializable {
 	}
 	
 	public void putHashTableElement(Node node) {
-		hashTable.put(node.squares, node);
+		hashTable.put(node.zobristHash, node);
 	}
 	
-	public Hashtable<String, Node> getHashTable() {
+	public Hashtable<Long, Node> getHashTable() {
 		return hashTable;
 	}
 
@@ -652,19 +658,19 @@ public class Board implements Serializable {
 		this.moveNumber = moveNumber;
 	}
 	
-	public String getSquareString() {
-		StringBuilder squareString = new StringBuilder();
+	public long getZobristHash() {
+		zobristHash = 0;
+		int squareNumber = 0;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				squareString.append(square[i][j]);
+				zobristHash |= zobristKeys[(square[i][j] + 6) * 64 + squareNumber];
+				squareNumber++;
 			}
 		}
-		if (toMove) {
-		    squareString.append((byte) 0);
-		} else {
-		    squareString.append((byte) 1);
+		if (!toMove) {
+			zobristHash |= blackToMove;
 		}
-		return squareString.toString();
+		return zobristHash;
 	}
 
 	public byte getEnPassant() {
@@ -677,10 +683,6 @@ public class Board implements Serializable {
 
 	public void setMaterialCount(short materialCount) {
 		this.materialCount = materialCount;
-	}
-
-	public void setHashTable(Hashtable<String, Node> hashTable) {
-		this.hashTable = hashTable;
 	}
 
 	public int[] getRootMoves() {
@@ -756,5 +758,18 @@ public class Board implements Serializable {
 		evaluation.resetEvaluation();
 		search.resetSearch();
 
+	}
+
+	private static long[] initializeZobrist() {
+		long[] zobristKeys = new long[13 * 64];
+		for (int i = 0; i < 6 * 64; i++) {
+			zobristKeys[i] = random.nextLong();
+			zobristKeys[i + 7 * 64] = random.nextLong();
+		}
+
+		for (int i = 0; i < 64; i++) {
+			zobristKeys[64 * 6 + i] = 0;
+		}
+		return zobristKeys;
 	}
 }

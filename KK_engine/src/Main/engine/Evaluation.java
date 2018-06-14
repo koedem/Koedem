@@ -73,8 +73,8 @@ public final class Evaluation implements Serializable {
 			return -eval;
 		}
 		
-		whiteSize = board.getMoveGenerator().activityEval(storage, true);
-		blackSize = board.getMoveGenerator().activityEval(storage, false);
+		whiteSize = board.getMoveGenerator().activityEval(true, storage, whiteSize);
+		blackSize = board.getMoveGenerator().activityEval(false, storage, blackSize);
 		
 		eval += activityEval(board);
 

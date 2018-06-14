@@ -12,6 +12,7 @@ public class Node implements Serializable {
 	protected int bestMove;
 	protected boolean toMove;
 	protected String squares;
+	protected long zobristHash;
 	
 	public Node(Board board, int eval, int depth, int bestMove, boolean toMove) {
 		evaluation = eval;
@@ -29,6 +30,7 @@ public class Node implements Serializable {
 		} else {
 		    squares += (byte) 1;
 		}
+		zobristHash = board.getZobristHash();
 		board.putHashTableElement(this);
 	}
 	

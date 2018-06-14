@@ -75,7 +75,7 @@ public final class MateFinder {
 		} else if (depthLeft % 2 == 0 && moves[0] == 0) {
 			principleVariation[depth] = 0;
 			return principleVariation;
-		} else if (board.getHashTable().get(board.getSquareString()) != null && depthLeft != depth) {
+		} else if (board.getHashTable().get(board.getZobristHash()) != null && depthLeft != depth) {
 			principleVariation[depth] = 0;
 			return principleVariation;
 		}

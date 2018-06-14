@@ -1767,8 +1767,7 @@ public class MoveGenerator implements Serializable {
 	 * @param toMove For which side we want to calculate the activity.
 	 * @return int[] containing the number of legal moves the pieces from 0 (pawn) to 5 (king) have.
 	 */
-	int[] activityEval(int[] storage, boolean toMove) {
-		int[] movesSize = new int[6];
+	int[] activityEval(boolean toMove, int[] storage, int[]movesSize) {
 		collectMoves(toMove, storage, movesSize);
 		return movesSize;
 	}
