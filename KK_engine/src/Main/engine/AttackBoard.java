@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class AttackBoard implements Serializable {
 
-    private BitBoard bitboard;
+    private BitBoardInterface bitboard;
 
 	public static final long[] KINGBOARD = 
 		{ 	0xC040L, 0xE0A0L, 0x7050L, 0x3828L, 0x1C14L, 0xE0AL, 0x705L, 0x302L,
@@ -65,7 +65,7 @@ public class AttackBoard implements Serializable {
 
     private byte[][] allAttackCount = new byte[2][64];
 
-    public AttackBoard(BitBoard bitboard) {
+    public AttackBoard(BitBoardInterface bitboard) {
 		for (int colour = 0; colour < attackBoards.length; colour++) {
 			for (int piece = 0; piece < attackBoards[colour].length; piece++) {
 				for (int pieceIndex = 0; pieceIndex < attackBoards[colour][piece].length; pieceIndex++) {

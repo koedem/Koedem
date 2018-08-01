@@ -11,11 +11,11 @@ import Main.engineIO.UCI;
  * @author Anon
  *
  */
-public class Search implements Serializable {
+public class Search implements SearchInterface {
 
 	public static final int MAX_DEPTH = 100;
 
-	private Board board;
+	private BoardInterface board;
 	private int[][] movesStorage = new int[101][MoveGenerator.MAX_MOVE_COUNT];
 	private int[][] capturesStorage = new int[30][MoveGenerator.MAX_MOVE_COUNT]; // 30 because thats max number of captures;
                                                                                 // TODO: Less than MAX_MOVE_COUNT
@@ -26,11 +26,11 @@ public class Search implements Serializable {
     private int[] evaluations = new int[MAX_DEPTH];
     private int[][] principleVariations = new int[MAX_DEPTH][MAX_DEPTH]; // TODO use in search and create additional one for qSearch
 
-	public long nodes = 0;
-	public long abortedNodes = 0;
-	public long qNodes = 0;
+	private long nodes = 0;
+	private long abortedNodes = 0;
+	private long qNodes = 0;
 
-	public Search(Board board) {
+	public Search(BoardInterface board) {
 		this.board = board;
 	}
 	
@@ -304,5 +304,41 @@ public class Search implements Serializable {
 		nodes = 0;
 		abortedNodes = 0;
 		qNodes = 0;
+	}
+
+	public long getNodes() {
+		return nodes;
+	}
+
+	public void setNodes(long nodes) {
+		this.nodes = nodes;
+	}
+
+	public void incrementNodes() {
+		nodes++;
+	}
+
+	public long getAbortedNodes() {
+		return abortedNodes;
+	}
+
+	public void setAbortedNodes(long abortedNodes) {
+		this.abortedNodes = abortedNodes;
+	}
+
+	public void incrementAbortedNodes() {
+		abortedNodes++;
+	}
+
+	public long getQNodes() {
+		return qNodes;
+	}
+
+	public void setQNodes(long qNodes) {
+		this.qNodes = qNodes;
+	}
+
+	public void incrementQNodes() {
+		qNodes++;
 	}
 }

@@ -5,7 +5,7 @@ import Main.engineIO.Transformation;
 
 import java.io.Serializable;
 
-public class Node implements Serializable {
+public class Node implements NodeInterface {
 
 	protected int evaluation;
 	protected int depth;
@@ -14,7 +14,7 @@ public class Node implements Serializable {
 	protected String squares;
 	protected long zobristHash;
 	
-	public Node(Board board, int eval, int depth, int bestMove, boolean toMove) {
+	public Node(BoardInterface board, int eval, int depth, int bestMove, boolean toMove) {
 		evaluation = eval;
 		this.depth = depth;
 		this.bestMove = bestMove;

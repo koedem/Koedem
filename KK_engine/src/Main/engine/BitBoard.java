@@ -5,10 +5,10 @@ import Main.engineIO.Transformation;
 
 import java.io.Serializable;
 
-public class BitBoard implements Serializable {
+public class BitBoard implements BitBoardInterface {
 
-    private Board board;
-    public AttackBoard attackBoard;
+    private BoardInterface board;
+    private AttackBoard attackBoard;
 
 	private long[][][] bitBoards = new long[2][7][10];  // 2 colours, 7 piece types, max. 10 pieces per piece type
                                                         // bitBoards[x][0][y] for padding to normal piece values
@@ -19,7 +19,7 @@ public class BitBoard implements Serializable {
 
 	private long[] allPieces = { 0, 0 }; // 2 colours
 	
-	public BitBoard(Board board) {
+	public BitBoard(BoardInterface board) {
 		for (int colour = 0; colour < bitBoards.length; colour++) {
 			for (int piece = 0; piece < bitBoards[colour].length; piece++) {
 				for (int pieceIndex = 0; pieceIndex < bitBoards[colour][piece].length; pieceIndex++) {
@@ -45,7 +45,7 @@ public class BitBoard implements Serializable {
 								bitBoards[colour][piece][index] ^= bitBoardChange;
 								pieceTypes[colour][piece] ^= bitBoardChange;
 								allPieces[colour] ^= bitBoardChange;
-								success = board.attackBoard.move(colour, piece, index, startSquare, endSquare);
+								success = board.getAttackBoard().move(colour, piece, index, startSquare, endSquare);
 								break;
 							}
 						}
@@ -180,4 +180,12 @@ public class BitBoard implements Serializable {
         }
         Logging.printLine("");
     }
+
+	public AttackBoard getAttackBoard() {
+		return attackBoard;
+	}
+
+	public void setAttackBoard(AttackBoard attackBoard) {
+		this.attackBoard = attackBoard;
+	}
 }

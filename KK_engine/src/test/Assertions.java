@@ -1,6 +1,7 @@
 package test;
 
 import Main.engine.Board;
+import Main.engine.BoardInterface;
 
 /**
  * This class provides methods for assertion testing.
@@ -15,7 +16,7 @@ public final class Assertions {
 	 * @param board  
 	 * @return True if all incrementally updated advancement values are correct, false otherwise.
 	 */
-	public static boolean advancement(Board board) {
+	public static boolean advancement(BoardInterface board) {
 		int[] advancement = new int[7];
 		for (int file = 0; file < 8; file++) {
 			for (int row = 0; row < 8; row++) {
@@ -37,7 +38,7 @@ public final class Assertions {
 	 * @param board 
 	 * @return True if the material incrementally updated material balance is correct, false otherwise.
 	 */
-	public static boolean materialCount(Board board) {
+	public static boolean materialCount(BoardInterface board) {
 		int material = 0;
 		for (int file = 0; file < 8; file++) {
 			for (int row = 0; row < 8; row++) {

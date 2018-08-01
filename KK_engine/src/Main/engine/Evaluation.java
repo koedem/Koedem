@@ -11,13 +11,13 @@ import java.io.Serializable;
  * @author Anon
  *
  */
-public final class Evaluation implements Serializable {
+public final class Evaluation implements EvaluationInterface {
 	
 	private static boolean materialOnly = false;
 	private int[] whiteSize = new int[6];
 	private int[] blackSize = new int[6];
 	private int[] storage = new int[MoveGenerator.MAX_MOVE_COUNT];
-	private Board board;
+	private BoardInterface board;
 	
 	@SuppressWarnings("unused")
 	private static final int PAWNACTIVITYFULL = 0;
@@ -34,7 +34,7 @@ public final class Evaluation implements Serializable {
 	private static final int KINGACTIVITYFULL = -3;
 	private static final int KINGACTIVITYEMPTY = 1;
 
-	public Evaluation(Board board) {
+	public Evaluation(BoardInterface board) {
 		this.board = board;
 	}
 
@@ -66,10 +66,10 @@ public final class Evaluation implements Serializable {
 		eval += pieceSquareTables();
 		
 		if (toMove && eval + 100 < lowBound) {
-			board.getSearch().abortedNodes++;
+			board.getSearch().incrementAbortedNodes();
 			return eval;
 		} else if (!toMove && -eval + 100 < lowBound) {
-			board.getSearch().abortedNodes++;
+			board.getSearch().incrementAbortedNodes();
 			return -eval;
 		}
 		
@@ -81,11 +81,11 @@ public final class Evaluation implements Serializable {
 		if (!toMove) {
 			eval = (short) -eval;
 		}
-		board.getSearch().nodes++;
+		board.getSearch().incrementNodes();
 		return eval;
 	}
 	
-	private int activityEval(Board board) {
+	private int activityEval(BoardInterface board) {
 		int activityEval = 0;
 		int piecesLeft = board.getPiecesLeft();
 		//activityEval += PAWNACTIVITYFULL * (whiteSize[0] - blackSize[0]);
@@ -131,77 +131,77 @@ public final class Evaluation implements Serializable {
 		int pieceSquares = 0;
 		
 		if (board.getDangerToWhiteKing() + board.getDangerToBlackKing() > 40) {
-			if (board.square[3][0] == 6 || board.square[4][0] == 6 || board.square[5][0] == 6
-					|| board.square[3][1] == 6 || board.square[4][1] == 6 || board.square[5][1] == 6) {
+			if (board.getSquare(3, 0) == 6 || board.getSquare(4, 0) == 6 || board.getSquare(5, 0) == 6
+					|| board.getSquare(3, 1) == 6 || board.getSquare(4, 1) == 6 || board.getSquare(5, 1) == 6) {
 				pieceSquares -= (board.getDangerToWhiteKing() - 20) * 2;
 			}
 			
-			if (board.square[3][7] == -6 || board.square[4][7] == -6 || board.square[5][7] == -6
-					|| board.square[3][6] == -6 || board.square[4][6] == -6 || board.square[5][6] == -6) {
+			if (board.getSquare(3, 7) == -6 || board.getSquare(4, 7) == -6 || board.getSquare(5, 7) == -6
+					|| board.getSquare(3, 6) == -6 || board.getSquare(4, 6) == -6 || board.getSquare(5, 6) == -6) {
 				pieceSquares += (board.getDangerToBlackKing() - 20) * 2;
 			}
 			
 			
-			if (board.square[6][0] == 6 || board.square[7][0] == 6 || board.square[6][1] == 6 
-					|| board.square[7][1] == 6) {
-				if (board.square[5][1] == 1 && board.square[6][1] == 1 
-						&& (board.square[7][1] == 1 || board.square[7][2] == 1)) {
+			if (board.getSquare(6, 0) == 6 || board.getSquare(7, 0) == 6 || board.getSquare(6, 1) == 6 
+					|| board.getSquare(7, 1) == 6) {
+				if (board.getSquare(5, 1) == 1 && board.getSquare(6, 1) == 1 
+						&& (board.getSquare(7, 1) == 1 || board.getSquare(7, 2) == 1)) {
 					pieceSquares += (board.getDangerToWhiteKing() - 15);
-				} else if (board.square[5][1] == 1 && board.square[6][1] == 3 
-						&& board.square[6][2] == 1 && board.square[7][1] == 1) {
+				} else if (board.getSquare(5, 1) == 1 && board.getSquare(6, 1) == 3 
+						&& board.getSquare(6, 2) == 1 && board.getSquare(7, 1) == 1) {
 					pieceSquares += (board.getDangerToWhiteKing() - 15) * 2;
-				} else if (board.square[6][1] != 1 && board.square[6][2] != 1 
-						&& (board.square[7][1] == 1 || board.square[7][2] == 1)) {
+				} else if (board.getSquare(6, 1) != 1 && board.getSquare(6, 2) != 1 
+						&& (board.getSquare(7, 1) == 1 || board.getSquare(7, 2) == 1)) {
 					pieceSquares -= (board.getDangerToWhiteKing() - 15) * 3;
-				} else if (board.square[6][1] != 1 && board.square[6][2] != 1 && board.square[7][1] != 1 
-						&& board.square[7][2] != 1) {
+				} else if (board.getSquare(6, 1) != 1 && board.getSquare(6, 2) != 1 && board.getSquare(7, 1) != 1 
+						&& board.getSquare(7, 2) != 1) {
 					pieceSquares -= (board.getDangerToWhiteKing() - 15) * 6;
 				}
-				if (board.square[6][1] == 3) {
+				if (board.getSquare(6, 1) == 3) {
 					pieceSquares += (board.getDangerToWhiteKing() - 15);
 				}
 			}
 			
-			if (board.square[6][7] == -6 || board.square[7][7] == -6 || board.square[6][6] == -6 
-					|| board.square[7][6] == -6) {
-				if (board.square[5][6] == -1 && board.square[6][6] == -1 
-						&& (board.square[7][6] == -1 || board.square[7][5] == -1)) {
+			if (board.getSquare(6, 7) == -6 || board.getSquare(7, 7) == -6 || board.getSquare(6, 6) == -6 
+					|| board.getSquare(7, 6) == -6) {
+				if (board.getSquare(5, 6) == -1 && board.getSquare(6, 6) == -1 
+						&& (board.getSquare(7, 6) == -1 || board.getSquare(7, 5) == -1)) {
 					pieceSquares -= (board.getDangerToBlackKing() - 15);
-				} else if (board.square[5][6] == -1 && board.square[6][6] == -3 
-						&& board.square[6][5] == -1 && board.square[7][6] == -1) {
+				} else if (board.getSquare(5, 6) == -1 && board.getSquare(6, 6) == -3 
+						&& board.getSquare(6, 5) == -1 && board.getSquare(7, 6) == -1) {
 					pieceSquares -= (board.getDangerToBlackKing() - 15) * 2;
-				} else if (board.square[6][6] != -1 && board.square[6][5] != -1 
-						&& (board.square[7][6] == -1 || board.square[7][5] == -1)) {
+				} else if (board.getSquare(6, 6) != -1 && board.getSquare(6, 5) != -1 
+						&& (board.getSquare(7, 6) == -1 || board.getSquare(7, 5) == -1)) {
 					pieceSquares += (board.getDangerToBlackKing() - 15) * 3;
-				} else if (board.square[6][6] != -1 && board.square[6][5] != -1 && board.square[7][6] != -1 
-						&& board.square[7][5] != -1) {
+				} else if (board.getSquare(6, 6) != -1 && board.getSquare(6, 5) != -1 && board.getSquare(7, 6) != -1 
+						&& board.getSquare(7, 5) != -1) {
 					pieceSquares += (board.getDangerToBlackKing() - 15) * 6;
 				}
-				if (board.square[6][6] == -3) {
+				if (board.getSquare(6, 6) == -3) {
 					pieceSquares -= (board.getDangerToBlackKing() - 15);
 				}
 			}
 		}
 		pieceSquares = (pieceSquares * UCI.getKingSafety()) / 10;
 		
-		if (board.square[3][3] == 1) {
+		if (board.getSquare(3, 3) == 1) {
 			pieceSquares += 10;
 		}
-		if (board.square[4][3] == 1) {
+		if (board.getSquare(4, 3) == 1) {
 			pieceSquares += 10;
 		}
-		if (board.square[3][4] == -1) {
+		if (board.getSquare(3, 4) == -1) {
 			pieceSquares -= 10;
 		}
-		if (board.square[4][4] == -1) {
+		if (board.getSquare(4, 4) == -1) {
 			pieceSquares -= 10;
 		}
 		
 		if (board.getPiecesLeft() > 25) {
-			if (board.square[3][0] != 5) {
+			if (board.getSquare(3, 0) != 5) {
 				pieceSquares -= (board.getPiecesLeft() - 25);
 			}
-			if (board.square[3][7] != -5) {
+			if (board.getSquare(3, 7) != -5) {
 				pieceSquares += (board.getPiecesLeft() - 25);
 			}
 		}
@@ -220,10 +220,10 @@ public final class Evaluation implements Serializable {
 	private boolean correctBitBoard() {
 		for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (board.getSquare(i, j) != board.bitboard.getSquare(i * 8 + j)) {
+                if (board.getSquare(i, j) != board.getBitboard().getSquare(i * 8 + j)) {
                     Logging.printLine("BitBoard wrong." + i + " " + j);
                     board.printBoard();
-                    board.bitboard.printBitBoard();
+                    board.getBitboard().printBitBoard();
                     return false;
                 }
             }

@@ -7,12 +7,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import Main.MultiThreading.ThreadOrganization;
-import Main.engine.Board;
-import Main.engine.Evaluation;
+import Main.engine.*;
 import Main.MultiThreading.MateFinderThread;
-import Main.engine.MoveGenerator;
 import Main.MultiThreading.MultiThreadSearch;
-import Main.engine.Node;
 import Main.MultiThreading.NonLosingThread;
 
 /**
@@ -45,7 +42,7 @@ public final class UCI {
 
 	private static ExecutorService executor            = Executors.newFixedThreadPool(5);
 	static String                  engineName          = "Koedem";
-	static Board                   board               = new Board();
+	static BoardInterface                   board               = new Board();
 	private static String          lastPositionCommand = "";
 	private static Scanner         sc                  = new Scanner(System.in);
 	
@@ -112,9 +109,9 @@ public final class UCI {
 				for (Integer capture : reversePV) {
 					pv.append(Transformation.numberToMove(capture)).append(" ");
 				}
-				pv.append("Node count: ").append(board.getSearch().nodes);
+				pv.append("Node count: ").append(board.getSearch().getNodes());
 				Logging.printLine(pv.toString());
-				board.getSearch().nodes = 0;
+				board.getSearch().setNodes(0);
 			} else if (command.equals("evaluate")) {
 				Logging.printLine(Integer.toString(board.getEvaluation().evaluation(board.getToMove(), -30000)));
 			} else if (command.equals("Hashtable")) {
@@ -126,7 +123,7 @@ public final class UCI {
 			} else if (command.equals("materialOnly off")) {
 				Evaluation.setMaterialOnly(false);
 			} else if (command.equals("print bitboard")) {
-				board.bitboard.printBitBoard();
+				board.getBitboard().printBitBoard();
 			}
 		}
 		Logging.close();
@@ -322,7 +319,7 @@ public final class UCI {
 					int[] movesSize = new int[6];
 					int[] moves = new int[MoveGenerator.MAX_MOVE_COUNT];
 					moves = board.getMoveGenerator().collectMoves(board.getToMove(), moves, movesSize);
-					Logging.printLine("bestmove " + board.bestmove);
+					Logging.printLine("bestmove " + board.getBestmove());
 				}
 				break;
 			} else {
@@ -339,7 +336,7 @@ public final class UCI {
 		}
 	}
 	
-	public static void mateFinder(Board board, boolean logging) {
+	public static void mateFinder(BoardInterface board, boolean logging) {
 		NonLosingThread nonLosingMoves = new NonLosingThread(board, 20, false, logging);
 		NonLosingThread aggressiveNonLosing = new NonLosingThread(board, 30, true, logging);
 		MateFinderThread mateFinder = new MateFinderThread(board, 20, false, logging);
@@ -402,7 +399,7 @@ public final class UCI {
 		UCI.threadFinished = threadFinished;
 	}
 	
-	public static void printEngineOutput(String praefix, int[] move, Board board, boolean toMove, long time) {
+	public static void printEngineOutput(String praefix, int[] move, BoardInterface board, boolean toMove, long time) {
 		if (UCI.uci) {
 			long timeUsed = System.currentTimeMillis() - time;
 			StringBuilder pv = new StringBuilder();
@@ -410,7 +407,7 @@ public final class UCI {
 				pv.append(Transformation.numberToMove(move[i])).append(" ");
 			}
 			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes "
-			      + board.getSearch().nodes + " nps " + 1000 * board.getSearch().nodes / (timeUsed > 0 ? timeUsed : 1)
+			      + board.getSearch().getNodes() + " nps " + 1000 * board.getSearch().getNodes() / (timeUsed > 0 ? timeUsed : 1)
 			      + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
 		} else {
 			StringBuilder pv = new StringBuilder(praefix);
@@ -434,9 +431,9 @@ public final class UCI {
 				}
 			}
 			Logging.printLine(pv.toString() + move[move.length - 1]);
-			Logging.printLine(praefix + "Node count: " + Transformation.nodeCountOutput(((board.getSearch().nodes
-					+ board.getSearch().abortedNodes))) + "(" + Transformation.nodeCountOutput(board.getSearch().nodes)
-					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.getSearch().qNodes) + ". Time used: "
+			Logging.printLine(praefix + "Node count: " + Transformation.nodeCountOutput(((board.getSearch().getNodes()
+					+ board.getSearch().getAbortedNodes()))) + "(" + Transformation.nodeCountOutput(board.getSearch().getNodes())
+					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.getSearch().getQNodes()) + ". Time used: "
 					+ Transformation.timeUsedOutput((System.currentTimeMillis() - time)));
 		}
 	}

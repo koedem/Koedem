@@ -8,11 +8,11 @@ import Main.Utility.DeepCopy;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 
-public class Board implements Serializable {
+public class Board implements BoardInterface {
 
-	private MoveGenerator moveGenerator = new MoveGenerator(this);
-	private Evaluation evaluation = new Evaluation(this);
-	private Search search = new Search(this);
+	private MoveGeneratorInterface moveGenerator = new MoveGenerator(this);
+	private EvaluationInterface evaluation = new Evaluation(this);
+	private SearchInterface search = new Search(this);
 
 	private long zobristHash;
 	private static final Random random = new Random(1234567890);
@@ -26,15 +26,16 @@ public class Board implements Serializable {
 	
 	private static final int[] PIECEDANGER = { 0, 0, KNIGHTDANGER, BISHOPDANGER, ROOKDANGER, QUEENDANGER, 0 };
 
-	public BitBoard bitboard;
-	public AttackBoard attackBoard;
-	
+
+	private BitBoardInterface bitboard;
+	private AttackBoard       attackBoard;
+
 	/**
 	 * Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6. 
 	 * White pieces get positive values, black pieces negative ones, empty squares a 0.
 	 * Format as fileRow, each reduced by one. Example: d6 becomes 3, 5.
 	 */
-	byte[][] square = new byte[8][8];
+	private byte[][] square = new byte[8][8];
 	
 	/**
 	 * True = white to move, false = black to move.
@@ -115,14 +116,14 @@ public class Board implements Serializable {
 
 	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
 
-	public String bestmove = "";
+	private String bestmove = "";
 	
 	/**
 	 * Constructor, create new Board and setup the chess start position
 	 */
 	public Board() {
 	    bitboard = new BitBoard(this);
-	    attackBoard = bitboard.attackBoard;
+	    attackBoard = bitboard.getAttackBoard();
 		setFENPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"); // fen
 																					// of
 																					// start
@@ -131,12 +132,12 @@ public class Board implements Serializable {
 	
 	public Board(String fen) {
 		bitboard = new BitBoard(this);
-		attackBoard = bitboard.attackBoard;
+		attackBoard = bitboard.getAttackBoard();
 		setFENPosition(fen);
 	}
 	
-	public Board cloneBoard() {
-		return (Board) DeepCopy.copy(this);
+	public BoardInterface cloneBoard() {
+		return (BoardInterface) DeepCopy.copy(this);
 	}
 	
 	/**
@@ -241,6 +242,11 @@ public class Board implements Serializable {
 		return square[file][row];
 	}
 
+	@Override
+	public void setSquare(int file, int row, byte value) {
+		square[file][row] = value;
+	}
+
 	/**
 	 * This method takes a move in UCI communication style and executes that move on the board.
 	 * Examples: e2e4 = Pawn e2 to e4; e1g1 = short castle; e7e8q = Pawn e7 to e8 promotes into queen
@@ -266,7 +272,7 @@ public class Board implements Serializable {
 	 * 
 	 * @param move The move to play.
 	 */
-	public void makeMove(int move) {
+	public int makeMove(int move) {
 		int endSquare = 0; // will get changed to "true" endSquare
 		if (move < (1 << 13)) {
 			endSquare = move % 64;
@@ -329,7 +335,7 @@ public class Board implements Serializable {
 					square[7][0] = 0;
 					bitboard.move(56, 40);
 					changeToMove();
-					return;
+					return 0; // TODO change this behaviour
 				} else if (endSquare == 16) {
 					square[2][0] = 6;
 					square[4][0] = 0;
@@ -337,7 +343,7 @@ public class Board implements Serializable {
 					square[0][0] = 0;
 					bitboard.move(0, 24);
 					changeToMove();
-					return;
+					return 0; // TODO
 				}
 			} else if (startSquare == 39 && square[4][7] == -6) {
 				if (endSquare == 55) {
@@ -347,7 +353,7 @@ public class Board implements Serializable {
 					square[7][7] = 0;
 					bitboard.move(63, 47);
 					changeToMove();
-					return;
+					return 0; // TODO
 				} else if (endSquare == 23) {
 					square[2][7] = -6;
 					square[4][7] = 0;
@@ -355,7 +361,7 @@ public class Board implements Serializable {
 					square[0][7] = 0;
 					bitboard.move(7, 31);
 					changeToMove();
-					return;
+					return 0; // TODO
 				}
 			}
 			
@@ -417,6 +423,7 @@ public class Board implements Serializable {
 			assert false;
 		}
 		changeToMove();
+		return 0; // TODO
 	}
 
 	/**
@@ -663,12 +670,12 @@ public class Board implements Serializable {
 		int squareNumber = 0;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				zobristHash |= zobristKeys[(square[i][j] + 6) * 64 + squareNumber];
+				zobristHash ^= zobristKeys[(square[i][j] + 6) * 64 + squareNumber];
 				squareNumber++;
 			}
 		}
 		if (!toMove) {
-			zobristHash |= blackToMove;
+			zobristHash ^= blackToMove;
 		}
 		return zobristHash;
 	}
@@ -729,27 +736,27 @@ public class Board implements Serializable {
         return pieceInt;
     }
 
-	public MoveGenerator getMoveGenerator() {
+	public MoveGeneratorInterface getMoveGenerator() {
 		return moveGenerator;
 	}
 
-	public void setMoveGenerator(MoveGenerator moveGenerator) {
+	public void setMoveGenerator(MoveGeneratorInterface moveGenerator) {
 		this.moveGenerator = moveGenerator;
 	}
 
-	public Evaluation getEvaluation() {
+	public EvaluationInterface getEvaluation() {
 		return evaluation;
 	}
 
-	public void setEvaluation(Evaluation evaluation) {
+	public void setEvaluation(EvaluationInterface evaluation) {
 		this.evaluation = evaluation;
 	}
 
-	public Search getSearch() {
+	public SearchInterface getSearch() {
 		return search;
 	}
 
-	public void setSearch(Search search) {
+	public void setSearch(SearchInterface search) {
 		this.search = search;
 	}
 
@@ -757,7 +764,6 @@ public class Board implements Serializable {
 		moveGenerator.resetMoveGenerator();
 		evaluation.resetEvaluation();
 		search.resetSearch();
-
 	}
 
 	private static long[] initializeZobrist() {
@@ -771,5 +777,35 @@ public class Board implements Serializable {
 			zobristKeys[64 * 6 + i] = 0;
 		}
 		return zobristKeys;
+	}
+
+	@Override
+	public String getBestmove() {
+		return bestmove;
+	}
+
+	@Override
+	public void setBestmove(String bestmove) {
+		this.bestmove = bestmove;
+	}
+
+	@Override
+	public AttackBoard getAttackBoard() {
+		return attackBoard;
+	}
+
+	@Override
+	public void setAttackBoard(AttackBoard attackBoard) {
+		this.attackBoard = attackBoard;
+	}
+
+	@Override
+	public BitBoardInterface getBitboard() {
+		return bitboard;
+	}
+
+	@Override
+	public void setBitboard(BitBoardInterface bitboard) {
+		this.bitboard = bitboard;
 	}
 }

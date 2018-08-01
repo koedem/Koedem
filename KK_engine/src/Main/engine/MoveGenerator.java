@@ -8,12 +8,12 @@ import java.util.ArrayList;
  * @author Anon
  *
  */
-public class MoveGenerator implements Serializable {
+public class MoveGenerator implements MoveGeneratorInterface {
 
 	/**
 	 * The board for which we want to generate moves.
 	 */
-	private Board board;
+	private BoardInterface board;
 
 	/**
 	 * The maximum number of legal moves (+1) we expect a position to have. 218 + 1 = 219 for normal chess, rounded up to the next power of 2.
@@ -35,7 +35,7 @@ public class MoveGenerator implements Serializable {
     /**
      * Array to put captures to test for castling legality in.
      */
-    private final int[] castlingTestCaptures = new int [MAX_MOVE_COUNT];
+    private final int[] castlingTestCaptures = new int[MAX_MOVE_COUNT];
 
 	/**
 	 * 2D array to put captures in. First index is the piece that gets captured. (1 = pawn, 2 = knight etc.)
@@ -45,7 +45,7 @@ public class MoveGenerator implements Serializable {
 	private final int[][] qSearchCaptures = new int[6][64]; // hopefully at max 64 captures for a single captured piece type; captures[0] isn't used
 
 
-	public MoveGenerator(Board board) {
+	public MoveGenerator(BoardInterface board) {
 		this.board = board;
 	}
 
@@ -65,7 +65,7 @@ public class MoveGenerator implements Serializable {
 		for (byte file = 0; file < 8; file++) {
 			for (byte row = 0; row < 8; row++) {
 				if (toMove) {
-					switch (board.square[file][row]) {
+					switch (board.getSquare(file, row)) {
 						case 1:
 							pawnMove(true, row, file, startSquare, movesSize);
 							break;
@@ -87,7 +87,7 @@ public class MoveGenerator implements Serializable {
 							break;
 					}
 				} else {
-					switch (board.square[file][row]) {
+					switch (board.getSquare(file, row)) {
 						case -1:
 							pawnMove(false, row, file, startSquare, movesSize);
 							break;
@@ -142,7 +142,7 @@ public class MoveGenerator implements Serializable {
 		for (byte file = 0; file < 8; file++) { // don't use class variable file here to avoid "race conditions"
 			for (byte row = 0; row < 8; row++) {
 				if (toMove) {
-                    switch (board.square[file][row]) {
+                    switch (board.getSquare(file, row)) {
                         case 1:
                             pawnCapture(true, row, file);
                             break;
@@ -164,7 +164,7 @@ public class MoveGenerator implements Serializable {
                             break;
                     }
 				} else {
-                    switch (board.square[file][row]) {
+                    switch (board.getSquare(file, row)) {
                         case -1:
                             pawnCapture(false, row, file);
                             break;
@@ -374,7 +374,7 @@ public class MoveGenerator implements Serializable {
         int capturedPiece, capturedPieceValue;
 		if (toMove) {
 			if (file > 0 && row > 1) {
-				if ((capturedPiece = board.square[file - 1][row - 2]) == 0) {
+				if ((capturedPiece = board.getSquare(file - 1, row - 2)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare - 10);
 					movesSize[1]++;
 				} else if (capturedPiece < 0) {
@@ -388,7 +388,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file > 0 && row < 6) {
-				if ((capturedPiece = board.square[file - 1][row + 2]) == 0) {
+				if ((capturedPiece = board.getSquare(file - 1, row + 2)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare - 6);
 					movesSize[1]++;
 				} else if (capturedPiece < 0) {
@@ -402,7 +402,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file > 1 && row > 0) {
-				if ((capturedPiece = board.square[file - 2][row - 1]) == 0) {
+				if ((capturedPiece = board.getSquare(file - 2, row - 1)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare - 17);
 					movesSize[1]++;
 				} else if (capturedPiece < 0) {
@@ -416,7 +416,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file > 1 && row < 7) {
-				if ((capturedPiece = board.square[file - 2][row + 1]) == 0) {
+				if ((capturedPiece = board.getSquare(file - 2, row + 1)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare - 15);
 					movesSize[1]++;
 				} else if (capturedPiece < 0) {
@@ -430,7 +430,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file < 6 && row > 0) {
-				if ((capturedPiece = board.square[file + 2][row - 1]) == 0) {
+				if ((capturedPiece = board.getSquare(file + 2, row - 1)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare + 15);
 					movesSize[1]++;
 				} else if (capturedPiece < 0) {
@@ -444,7 +444,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file < 6 && row < 7) {
-				if ((capturedPiece = board.square[file + 2][row + 1]) == 0) {
+				if ((capturedPiece = board.getSquare(file + 2, row + 1)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare + 17);
 					movesSize[1]++;
 				} else if (capturedPiece < 0) {
@@ -458,7 +458,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file < 7 && row > 1) {
-				if ((capturedPiece = board.square[file + 1][row - 2]) == 0) {
+				if ((capturedPiece = board.getSquare(file + 1, row - 2)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare + 6);
 					movesSize[1]++;
 				} else if (capturedPiece < 0) {
@@ -472,7 +472,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file < 7 && row < 6) {
-				if ((capturedPiece = board.square[file + 1][row + 2]) == 0) {
+				if ((capturedPiece = board.getSquare(file + 1, row + 2)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare + 10);
 					movesSize[1]++;
 				} else if (capturedPiece < 0) {
@@ -486,7 +486,7 @@ public class MoveGenerator implements Serializable {
 			}
 		} else {
 			if (file > 0 && row > 1) {
-				if ((capturedPiece = board.square[file - 1][row - 2]) == 0) {
+				if ((capturedPiece = board.getSquare(file - 1, row - 2)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare - 10);
 					movesSize[1]++;
 				} else if (capturedPiece > 0) {
@@ -500,7 +500,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file > 0 && row < 6) {
-				if ((capturedPiece = board.square[file - 1][row + 2]) == 0) {
+				if ((capturedPiece = board.getSquare(file - 1, row + 2)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare - 6);
 					movesSize[1]++;
 				} else if (capturedPiece > 0) {
@@ -514,7 +514,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file > 1 && row > 0) {
-				if ((capturedPiece = board.square[file - 2][row - 1]) == 0) {
+				if ((capturedPiece = board.getSquare(file - 2, row - 1)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare - 17);
 					movesSize[1]++;
 				} else if (capturedPiece > 0) {
@@ -528,7 +528,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file > 1 && row < 7) {
-				if ((capturedPiece = board.square[file - 2][row + 1]) == 0) {
+				if ((capturedPiece = board.getSquare(file - 2, row + 1)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare - 15);
 					movesSize[1]++;
 				} else if (capturedPiece > 0) {
@@ -542,7 +542,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file < 6 && row > 0) {
-				if ((capturedPiece = board.square[file + 2][row - 1]) == 0) {
+				if ((capturedPiece = board.getSquare(file + 2, row - 1)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare + 15);
 					movesSize[1]++;
 				} else if (capturedPiece > 0) {
@@ -556,7 +556,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file < 6 && row < 7) {
-				if ((capturedPiece = board.square[file + 2][row + 1]) == 0) {
+				if ((capturedPiece = board.getSquare(file + 2, row + 1)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare + 17);
 					movesSize[1]++;
 				} else if (capturedPiece > 0) {
@@ -570,7 +570,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file < 7 && row > 1) {
-				if ((capturedPiece = board.square[file + 1][row - 2]) == 0) {
+				if ((capturedPiece = board.getSquare(file + 1, row - 2)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare + 6);
 					movesSize[1]++;
 				} else if (capturedPiece > 0) {
@@ -584,7 +584,7 @@ public class MoveGenerator implements Serializable {
 			}
 
 			if (file < 7 && row < 6) {
-				if ((capturedPiece = board.square[file + 1][row + 2]) == 0) {
+				if ((capturedPiece = board.getSquare(file + 1, row + 2)) == 0) {
 					nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + (startSquare + 10);
 					movesSize[1]++;
 				} else if (capturedPiece > 0) {
@@ -610,7 +610,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), row, board, toMove); // TODO maybe avoid using this method for perf reasons
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file + i][row])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file + i, row))) == 6) {
 					captures[0][0] = -1;
 					if (queen) {
 						movesSize[4]++;
@@ -641,7 +641,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), row, board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file - i][row])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file - i, row))) == 6) {
 					captures[0][0] = -1;
 					if (queen) {
 						movesSize[4]++;
@@ -672,7 +672,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file][row + i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file, row + i))) == 6) {
 					captures[0][0] = -1;
 					if (queen) {
 						movesSize[4]++;
@@ -703,7 +703,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file][row - i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file, row - i))) == 6) {
 					captures[0][0] = -1;
 					if (queen) {
 						movesSize[4]++;
@@ -743,7 +743,7 @@ public class MoveGenerator implements Serializable {
 		for (byte i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file + i][row + i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file + i, row + i))) == 6) {
 					captures[0][0] = -1;
 					if (queen) {
 						movesSize[4]++;
@@ -774,7 +774,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file - i][row - i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file - i, row - i))) == 6) {
 					captures[0][0] = -1;
 					if (queen) {
 						movesSize[4]++;
@@ -805,7 +805,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file + i][row - i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file + i, row - i))) == 6) {
 					captures[0][0] = -1;
 					if (queen) {
 						movesSize[4]++;
@@ -836,7 +836,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file - i][row + i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file - i, row + i))) == 6) {
 					captures[0][0] = -1;
 					if (queen) {
 						movesSize[4]++;
@@ -994,27 +994,27 @@ public class MoveGenerator implements Serializable {
 
 			if (file == 4 && row == 0) {
 				if ((board.getCastlingRights() & 0x18) == 0x18) {
-					if (board.square[5][0] == 0 && board.square[6][0] == 0) {
-						board.square[5][0] = 6;
+					if (board.getSquare(5, 0) == 0 && board.getSquare(6, 0) == 0) {
+						board.setSquare(5, 0, (byte) 6);
 						int castlingLegality[] = collectCaptures(false, castlingTestCaptures);
 						// TODO make this prettier; right now we don't check [6][0] for legality because we'll find out next move in case it wasn't
 						if (castlingLegality[0] != -1) {
 							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3);
 							movesSize[5]++;
 						}
-						board.square[5][0] = 0;
+						board.setSquare(5, 0, (byte) 0);
 					}
 				}
 
 				if (((board.getCastlingRights() & 0x30) == 0x30)) {
-					if (board.square[3][0] == 0 && board.square[2][0] == 0 && board.square[1][0] == 0) {
-						board.square[3][0] = 6;
+					if (board.getSquare(3, 0) == 0 && board.getSquare(2, 0) == 0 && board.getSquare(1, 0) == 0) {
+						board.setSquare(3, 0, (byte) 6);
 						int castlingLegality[] = collectCaptures(false, castlingTestCaptures);
 						if (castlingLegality[0] != -1) {
 							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3);
 							movesSize[5]++;
 						}
-						board.square[3][0] = 0;
+						board.setSquare(3, 0, (byte) 0);
 					}
 				}
 			}
@@ -1133,26 +1133,26 @@ public class MoveGenerator implements Serializable {
 
 			if (file == 4 && row == 7) {
 				if ((board.getCastlingRights() & 0x3) == 0x3) {
-					if (board.square[5][7] == 0 && board.square[6][7] == 0) {
-						board.square[5][7] = -6;
+					if (board.getSquare(5, 7) == 0 && board.getSquare(6, 7) == 0) {
+						board.setSquare(5, 7, (byte) -6);
 						int[] castlingLegality = collectCaptures(true, castlingTestCaptures);
 						if (castlingLegality[0] != -1) {
 							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3);
 							movesSize[5]++;
 						}
-						board.square[5][7] = 0;
+						board.setSquare(5, 7, (byte) 0);
 					}
 				}
 
 				if (((board.getCastlingRights() & 0x6) == 0x6)) {
-					if (board.square[3][7] == 0 && board.square[2][7] == 0 && board.square[1][7] == 0) {
-						board.square[3][7] = -6;
+					if (board.getSquare(3, 7) == 0 && board.getSquare(2, 7) == 0 && board.getSquare(1, 7) == 0) {
+						board.setSquare(3, 7, (byte) -6);
 						int[] castlingLegality = collectCaptures(true, castlingTestCaptures);
 						if (castlingLegality[0] != -1) {
 							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3);
 							movesSize[5]++;
 						}
-						board.square[3][7] = 0;
+						board.setSquare(3, 7, (byte) 0);
 					}
 				}
 			}
@@ -1269,7 +1269,7 @@ public class MoveGenerator implements Serializable {
         int capturedPiece, capturedPieceValue;
 	    if (toMove) {
             if (file > 0 && row > 1) {
-                if ((capturedPiece = board.square[file - 1][row - 2]) < 0) {
+                if ((capturedPiece = board.getSquare(file - 1, row - 2)) < 0) {
                     if (capturedPiece == -6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1280,7 +1280,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file > 0 && row < 6) {
-                if ((capturedPiece = board.square[file - 1][row + 2]) < 0) {
+                if ((capturedPiece = board.getSquare(file - 1, row + 2)) < 0) {
                     if (capturedPiece == -6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1291,7 +1291,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file > 1 && row > 0) {
-                if ((capturedPiece = board.square[file - 2][row - 1]) < 0) {
+                if ((capturedPiece = board.getSquare(file - 2, row - 1)) < 0) {
                     if (capturedPiece == -6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1302,7 +1302,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file > 1 && row < 7) {
-                if ((capturedPiece = board.square[file - 2][row + 1]) < 0) {
+                if ((capturedPiece = board.getSquare(file - 2, row + 1)) < 0) {
                     if (capturedPiece == -6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1313,7 +1313,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file < 6 && row > 0) {
-                if ((capturedPiece = board.square[file + 2][row - 1]) < 0) {
+                if ((capturedPiece = board.getSquare(file + 2, row - 1)) < 0) {
                     if (capturedPiece == -6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1324,7 +1324,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file < 6 && row < 7) {
-                if ((capturedPiece = board.square[file + 2][row + 1]) < 0) {
+                if ((capturedPiece = board.getSquare(file + 2, row + 1)) < 0) {
                     if (capturedPiece == -6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1336,7 +1336,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file < 7 && row > 1) {
-                if ((capturedPiece = board.square[file + 1][row - 2]) < 0) {
+                if ((capturedPiece = board.getSquare(file + 1, row - 2)) < 0) {
                     if (capturedPiece == -6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1348,7 +1348,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file < 7 && row < 6) {
-                if ((capturedPiece = board.square[file + 1][row + 2]) < 0) {
+                if ((capturedPiece = board.getSquare(file + 1, row + 2)) < 0) {
                     if (capturedPiece == -6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1360,7 +1360,7 @@ public class MoveGenerator implements Serializable {
             }
         } else {
             if (file > 0 && row > 1) {
-                if ((capturedPiece = board.square[file - 1][row - 2]) > 0) {
+                if ((capturedPiece = board.getSquare(file - 1, row - 2)) > 0) {
                     if (capturedPiece == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1370,7 +1370,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file > 0 && row < 6) {
-                if ((capturedPiece = board.square[file - 1][row + 2]) > 0) {
+                if ((capturedPiece = board.getSquare(file - 1, row + 2)) > 0) {
                     if (capturedPiece == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1380,7 +1380,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file > 1 && row > 0) {
-                if ((capturedPiece = board.square[file - 2][row - 1]) > 0) {
+                if ((capturedPiece = board.getSquare(file - 2, row - 1)) > 0) {
                     if (capturedPiece == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1390,7 +1390,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file > 1 && row < 7) {
-                if ((capturedPiece = board.square[file - 2][row + 1]) > 0) {
+                if ((capturedPiece = board.getSquare(file - 2, row + 1)) > 0) {
                     if (capturedPiece == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1400,7 +1400,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file < 6 && row > 0) {
-                if ((capturedPiece = board.square[file + 2][row - 1]) > 0) {
+                if ((capturedPiece = board.getSquare(file + 2, row - 1)) > 0) {
                     if (capturedPiece == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1410,7 +1410,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file < 6 && row < 7) {
-                if ((capturedPiece = board.square[file + 2][row + 1]) > 0) {
+                if ((capturedPiece = board.getSquare(file + 2, row + 1)) > 0) {
                     if (capturedPiece == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1420,7 +1420,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file < 7 && row > 1) {
-                if ((capturedPiece = board.square[file + 1][row - 2]) > 0) {
+                if ((capturedPiece = board.getSquare(file + 1, row - 2)) > 0) {
                     if (capturedPiece == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1430,7 +1430,7 @@ public class MoveGenerator implements Serializable {
                 }
             }
             if (file < 7 && row < 6) {
-                if ((capturedPiece = board.square[file + 1][row + 2]) > 0) {
+                if ((capturedPiece = board.getSquare(file + 1, row + 2)) > 0) {
                     if (capturedPiece == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
@@ -1452,7 +1452,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), row, board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file + i][row])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file + i, row))) == 6) {
 					qSearchCaptures[0][0] = -1;
 					return;
 				}
@@ -1468,7 +1468,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), row, board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file - i][row])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file - i, row))) == 6) {
                     qSearchCaptures[0][0] = -1;
                     return;
                 }
@@ -1484,7 +1484,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file][row + i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file, row + i))) == 6) {
 					qSearchCaptures[0][0] = -1;
 					return;
 				}
@@ -1500,7 +1500,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare(file, (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file][row - i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file, row - i))) == 6) {
 					qSearchCaptures[0][0] = -1;
 					return;
 				}
@@ -1524,7 +1524,7 @@ public class MoveGenerator implements Serializable {
 		for (byte i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file + i][row + i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file + i, row + i))) == 6) {
 					qSearchCaptures[0][0] = -1;
 					return;
 				}
@@ -1540,7 +1540,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file - i][row - i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file - i, row - i))) == 6) {
 					qSearchCaptures[0][0] = -1;
 					return;
 				}
@@ -1556,7 +1556,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file + i), (byte) (row - i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file + i][row - i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file + i, row - i))) == 6) {
 					qSearchCaptures[0][0] = -1;
 					return;
 				}
@@ -1572,7 +1572,7 @@ public class MoveGenerator implements Serializable {
 		for (int i = 1; i < 8; i++) {
 			byte squareValue = isFreeSquare((byte) (file - i), (byte) (row + i), board, toMove);
 			if (squareValue == 0) {
-				if ((capturedPieceValue = Math.abs(board.square[file - i][row + i])) == 6) {
+				if ((capturedPieceValue = Math.abs(board.getSquare(file - i, row + i))) == 6) {
 					qSearchCaptures[0][0] = -1;
 					return;
 				}
@@ -1595,7 +1595,7 @@ public class MoveGenerator implements Serializable {
 	    if (toMove) {
             if (file > 0) {
                 if (board.getSquare(file - 1, row) < 0) {
-                    if ((capturedPieceValue = -(board.square[file - 1][row])) == 6) { // opponent pieces are < 0 so we negate them
+                    if ((capturedPieceValue = -(board.getSquare(file - 1, row))) == 6) { // opponent pieces are < 0 so we negate them
                         qSearchCaptures[0][0] = -1;
                         return;
                     }
@@ -1604,7 +1604,7 @@ public class MoveGenerator implements Serializable {
                 }
                 if (row > 0) {
                     if (board.getSquare(file - 1, row - 1) < 0) {
-                        if ((capturedPieceValue = -(board.square[file - 1][row - 1])) == 6) {
+                        if ((capturedPieceValue = -(board.getSquare(file - 1, row - 1))) == 6) {
                             qSearchCaptures[0][0] = -1;
                             return;
                         }
@@ -1614,7 +1614,7 @@ public class MoveGenerator implements Serializable {
                 }
                 if (row < 7) {
                     if (board.getSquare(file - 1, row + 1) < 0) {
-                        if ((capturedPieceValue = -(board.square[file - 1][row + 1])) == 6) {
+                        if ((capturedPieceValue = -(board.getSquare(file - 1, row + 1))) == 6) {
                             qSearchCaptures[0][0] = -1;
                             return;
                         }
@@ -1626,7 +1626,7 @@ public class MoveGenerator implements Serializable {
 
             if (file < 7) {
                 if (board.getSquare(file + 1, row) < 0) {
-                    if ((capturedPieceValue = -(board.square[file + 1][row])) == 6) {
+                    if ((capturedPieceValue = -(board.getSquare(file + 1, row))) == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
                     }
@@ -1635,7 +1635,7 @@ public class MoveGenerator implements Serializable {
                 }
                 if (row > 0) {
                     if (board.getSquare(file + 1, row - 1) < 0) {
-                        if ((capturedPieceValue = -(board.square[file + 1][row - 1])) == 6) {
+                        if ((capturedPieceValue = -(board.getSquare(file + 1, row - 1))) == 6) {
                             qSearchCaptures[0][0] = -1;
                             return;
                         }
@@ -1645,7 +1645,7 @@ public class MoveGenerator implements Serializable {
                 }
                 if (row < 7) {
                     if (board.getSquare(file + 1, row + 1) < 0) {
-                        if ((capturedPieceValue = -(board.square[file + 1][row + 1])) == 6) {
+                        if ((capturedPieceValue = -(board.getSquare(file + 1, row + 1))) == 6) {
                             qSearchCaptures[0][0] = -1;
                             return;
                         }
@@ -1657,7 +1657,7 @@ public class MoveGenerator implements Serializable {
 
             if (row > 0) {
                 if (board.getSquare(file, row - 1) < 0) {
-                    if ((capturedPieceValue = -(board.square[file][row - 1])) == 6) {
+                    if ((capturedPieceValue = -(board.getSquare(file, row - 1))) == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
                     }
@@ -1667,7 +1667,7 @@ public class MoveGenerator implements Serializable {
             }
             if (row < 7) {
                 if (board.getSquare(file, row + 1) < 0) {
-                    if ((capturedPieceValue = -(board.square[file][row + 1])) == 6) {
+                    if ((capturedPieceValue = -(board.getSquare(file, row + 1))) == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
                     }
@@ -1678,7 +1678,7 @@ public class MoveGenerator implements Serializable {
         } else {
             if (file > 0) {
                 if (board.getSquare(file - 1, row) > 0) {
-                    if ((capturedPieceValue = (board.square[file - 1][row])) == 6) { // enemy pieces are > 0 so no need to change anything
+                    if ((capturedPieceValue = (board.getSquare(file - 1, row))) == 6) { // enemy pieces are > 0 so no need to change anything
                         qSearchCaptures[0][0] = -1;
                         return;
                     }
@@ -1687,7 +1687,7 @@ public class MoveGenerator implements Serializable {
                 }
                 if (row > 0) {
                     if (board.getSquare(file - 1, row - 1) > 0) {
-                        if ((capturedPieceValue = (board.square[file - 1][row - 1])) == 6) {
+                        if ((capturedPieceValue = (board.getSquare(file - 1, row - 1))) == 6) {
                             qSearchCaptures[0][0] = -1;
                             return;
                         }
@@ -1697,7 +1697,7 @@ public class MoveGenerator implements Serializable {
                 }
                 if (row < 7) {
                     if (board.getSquare(file - 1, row + 1) > 0) {
-                        if ((capturedPieceValue = (board.square[file - 1][row + 1])) == 6) {
+                        if ((capturedPieceValue = (board.getSquare(file - 1, row + 1))) == 6) {
                             qSearchCaptures[0][0] = -1;
                             return;
                         }
@@ -1709,7 +1709,7 @@ public class MoveGenerator implements Serializable {
 
             if (file < 7) {
                 if (board.getSquare(file + 1, row) > 0) {
-                    if ((capturedPieceValue = (board.square[file + 1][row])) == 6) {
+                    if ((capturedPieceValue = (board.getSquare(file + 1, row))) == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
                     }
@@ -1718,7 +1718,7 @@ public class MoveGenerator implements Serializable {
                 }
                 if (row > 0) {
                     if (board.getSquare(file + 1, row - 1) > 0) {
-                        if ((capturedPieceValue = (board.square[file + 1][row - 1])) == 6) {
+                        if ((capturedPieceValue = (board.getSquare(file + 1, row - 1))) == 6) {
                             qSearchCaptures[0][0] = -1;
                             return;
                         }
@@ -1728,7 +1728,7 @@ public class MoveGenerator implements Serializable {
                 }
                 if (row < 7) {
                     if (board.getSquare(file + 1, row + 1) > 0) {
-                        if ((capturedPieceValue = (board.square[file + 1][row + 1])) == 6) {
+                        if ((capturedPieceValue = (board.getSquare(file + 1, row + 1))) == 6) {
                             qSearchCaptures[0][0] = -1;
                             return;
                         }
@@ -1740,7 +1740,7 @@ public class MoveGenerator implements Serializable {
 
             if (row > 0) {
                 if (board.getSquare(file, row - 1) > 0) {
-                    if ((capturedPieceValue = (board.square[file][row - 1])) == 6) {
+                    if ((capturedPieceValue = (board.getSquare(file, row - 1))) == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
                     }
@@ -1750,7 +1750,7 @@ public class MoveGenerator implements Serializable {
             }
             if (row < 7) {
                 if (board.getSquare(file, row + 1) > 0) {
-                    if ((capturedPieceValue = (board.square[file][row + 1])) == 6) {
+                    if ((capturedPieceValue = (board.getSquare(file, row + 1))) == 6) {
                         qSearchCaptures[0][0] = -1;
                         return;
                     }
@@ -1767,12 +1767,12 @@ public class MoveGenerator implements Serializable {
 	 * @param toMove For which side we want to calculate the activity.
 	 * @return int[] containing the number of legal moves the pieces from 0 (pawn) to 5 (king) have.
 	 */
-	int[] activityEval(boolean toMove, int[] storage, int[]movesSize) {
+	public int[] activityEval(boolean toMove, int[] storage, int[]movesSize) {
 		collectMoves(toMove, storage, movesSize);
 		return movesSize;
 	}
 	
-	public int[] collectAllPNMoves(int[] storage, Board board, boolean toMove) {
+	public int[] collectAllPNMoves(int[] storage, BoardInterface board, boolean toMove) {
 		int[] movesSize = new int[6];
 		storage = collectMoves(toMove, storage, movesSize);
 		if (storage[0] == -1) {
@@ -1805,7 +1805,7 @@ public class MoveGenerator implements Serializable {
 		return storage;
 	}
 	
-	int[] collectPNSearchMoves(int[] storage, int[] checks, Board board, boolean toMove) {
+	public int[] collectPNSearchMoves(int[] storage, int[] checks, BoardInterface board, boolean toMove) {
 		int[] movesSize = new int[6];
 		storage = collectMoves(toMove, storage, movesSize);
 		if (storage[0] == -1) {
@@ -1852,7 +1852,7 @@ public class MoveGenerator implements Serializable {
 		return checks;
 	}
 	
-	int[] collectCheckMoves(int[] storage, int[] checks, Board board, boolean toMove) {
+	public int[] collectCheckMoves(int[] storage, int[] checks, BoardInterface board, boolean toMove) {
 		int[] movesSize = new int[6];
 		storage = collectMoves(toMove, storage, movesSize);
 		checks[0] = 0;
@@ -1906,7 +1906,7 @@ public class MoveGenerator implements Serializable {
 	 * @return 1 if the square is empty, 0 if the square is occupied by an enemy piece,
 	 *  -1 if the square is either not on the board or occupied by a friendly piece
 	 */
-	private static byte isFreeSquare(byte file, byte row, Board board, boolean toMove) {
+	private static byte isFreeSquare(byte file, byte row, BoardInterface board, boolean toMove) {
 		byte isFree;
 		if (file < 0 || file > 7 || row < 0 || row > 7) {
 			isFree = -1;
