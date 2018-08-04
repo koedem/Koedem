@@ -55,10 +55,14 @@ public class MultiThreadSearch implements Callable<int[]> {
 			}
 			oldBoard.setBestmove(Transformation.numberToMove(move[0])); // tell the uci thread the current best move
 		}
-		UCI.printEngineOutput("", move, board, board.getToMove(), time);
-
 		assert move != null;
-		Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
+		if (move[move.length - 1] == -9999) {
+			Logging.printLine("bestmove (none)");
+		} else {
+			UCI.printEngineOutput("", move, board, board.getToMove(), time);
+
+			Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
+		}
 		return move;
 	}
 }

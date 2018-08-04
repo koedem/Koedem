@@ -93,7 +93,7 @@ public class Search implements SearchInterface {
 				bestMove = moveIndex;
 				
 				if (depth != 1) {
-					if (moveIndex == 0) {
+					if (moveIndex == 1) {
 						UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time); 
 															// move on board not yet undone, thus !toMove
 					} else {

@@ -7,8 +7,10 @@ import java.util.Calendar;
 public final class Logging {
 
 	private static boolean logging = true;
+	private static String directoryName = "Koedem-Logs";
+	private static File directory = new File(directoryName);
 	private static String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-	private static File logFile = new File(timeLog);
+	private static File logFile = new File(directoryName + File.separator + timeLog);
 	private static BufferedWriter writer = null;
 	
 	public static void setup() {
@@ -19,6 +21,7 @@ public final class Logging {
 				e1.printStackTrace();
 			}*/
 			try {
+				directory.mkdir();
 				writer = new BufferedWriter(new FileWriter(logFile));
 			} catch (IOException e) {
 				e.printStackTrace();
