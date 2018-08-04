@@ -105,6 +105,7 @@ public class Search implements SearchInterface {
 			board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
 		}
 		if (principleVariation[depth] == -9999) {
+            board.setBestmove("(none)");
 			utilityCaptures = board.getMoveGenerator().collectCaptures(!toMove, utilityCaptures);
 			if (utilityCaptures[0] != -1) { // stalemate detection
 				principleVariation[depth] = 0;
