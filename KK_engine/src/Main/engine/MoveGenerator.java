@@ -1812,7 +1812,7 @@ public class MoveGenerator implements MoveGeneratorInterface {
 			return storage;
 		}
 		checks[0] = 0;
-		for (int index = 1; index <= storage[storage[0]]; index++) { // storage[0] = actual size of array excluding that entry itself
+		for (int index = 1; index <= storage[0]; index++) { // storage[0] = actual size of array excluding that entry itself
 			int move = storage[index];
 			byte capturedPiece;
 			if (move < (1 << 13)) {
