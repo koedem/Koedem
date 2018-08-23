@@ -1222,7 +1222,7 @@ public class MoveGenerator implements Serializable {
 				}
 			}
 
-			if ((board.getCastlingRights() & (1 << 7)) == (1 << 7) && board.square[(board.getCastlingRights() & 0x70) >>> 4][0] == -4) {
+			if ((board.getCastlingRights() & (1 << 7)) == (1 << 7) && board.square[(board.getCastlingRights() & 0x70) >>> 4][7] == -4) {
 				boolean castlingLegality = true;
 				assert file * 8 + row == Long.numberOfTrailingZeros(board.bitboard.getBitBoard(1, 6, 0));
 				for (int f = file - 1; f >= 2; f--) {
@@ -1250,7 +1250,7 @@ public class MoveGenerator implements Serializable {
 					for (int f = file - 1; f >= 2; f--) {
 						board.square[f][7] = 0;
 					}
-					board.square[(board.getCastlingRights() & 0x70) >>> 4][0] = -4; // potentially put the rook back on the board
+					board.square[(board.getCastlingRights() & 0x70) >>> 4][7] = -4; // potentially put the rook back on the board
 				}
 			}
 			/*if (file == 4 && row == 7) {
