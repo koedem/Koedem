@@ -190,9 +190,9 @@ public final class Transformation {
 					timeUsed /= 60;
 					return (timeUsed / 24) + "d " + (timeUsed % 24) + "h";
 				}
-				return (timeUsed / 60) + "h" + (timeUsed % 24) + "m";
+				return (timeUsed / 60) + "h" + (timeUsed % 60) + "m";
 			}
-			return (timeUsed / 60) + "m " + (timeUsed % 24) + "s";
+			return (timeUsed / 60) + "m " + (timeUsed % 60) + "s";
 		}
 		return (timeUsed / 1000) + "s " + (timeUsed % 1000) + "ms";
 	}
