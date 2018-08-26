@@ -76,8 +76,8 @@ public class Search implements SearchInterface {
 					innerPV[depth]++;
 				}
 			} else if (depth == 1) {
-				ArrayList<Integer> qsearch = qSearch(!toMove, -beta, -alpha, 0);
-				innerPV[depth] = -qsearch.get(0);
+				int qsearch = -memoryEfficientQSearch(!toMove, -beta, -alpha, 0);
+				innerPV[depth] = qsearch;
 				innerPV[0] = moves[moveIndex];
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
@@ -103,6 +103,9 @@ public class Search implements SearchInterface {
 			}
 			board.setEnPassant(enPassant);
 			board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
+			if (UCI.isThreadFinished()) {
+			    return principleVariation;
+            }
 		}
 		if (principleVariation[depth] == -9999) {
             board.setBestmove("(none)");
@@ -187,15 +190,14 @@ public class Search implements SearchInterface {
 					innerPV[depth]++;
 				}
 			} else if (depthLeft == 1) {
-				ArrayList<Integer> qsearch = qSearch(!toMove, -beta, -alpha, 0);
-				innerPV[depth] = -qsearch.get(0);
+				int qsearch = -memoryEfficientQSearch(!toMove, -beta, -alpha, 0);
+				innerPV[depth] = qsearch;
 				innerPV[depth - depthLeft] = move;
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
 				} else if (innerPV[depth] < -9000) {
 					innerPV[depth]++;
 				}
-				qsearch = null;
 			}
 			if (innerPV[depth] > principleVariation[depth]) {
 				principleVariation = innerPV;
@@ -210,6 +212,9 @@ public class Search implements SearchInterface {
 				return principleVariation;
 			}
 			innerPV = null;
+			if (UCI.isThreadFinished()) { // we should stop calculating here
+			    return principleVariation;
+            }
 		}
 		if (principleVariation[depth] == -9999) {
 			utilityCaptures = board.getMoveGenerator().collectCaptures(!toMove, utilityCaptures);
@@ -217,9 +222,6 @@ public class Search implements SearchInterface {
 				principleVariation[depth] = 0;
 				return principleVariation;
 			}
-		}
-		if (UCI.isThreadFinished()) {
-			throw new RuntimeException();
 		}
 		moves = null;
 		return principleVariation;
@@ -298,7 +300,70 @@ public class Search implements SearchInterface {
 		return principleVariation;
 	}
 
-	/**
+    /**
+     * Perform a q search (only consider captures) on the given board.
+     * Compare evaluation with and without capture and see which one is better i.e. whether the capture is good.
+     *
+     * @param toMove Who to move it is.
+     * @param alphaBound Alpha bound for alpha-beta search.
+     * @param betaBound Beta bound for the alpha-beta search.
+     * @return The evaluation of the best chain of captures.
+     */
+    public int memoryEfficientQSearch(boolean toMove, int alphaBound, int betaBound, int depthSoFar) {
+        // IMPORTANT: If anything other than captures should be calculated in this method, the ArraySizes might need to be changed.
+
+        int alpha = alphaBound;
+        int beta = betaBound;
+        int eval = board.getEvaluation().evaluation(toMove, alpha);
+        if (eval > alpha) {
+            alpha = eval;
+        }
+
+        /*if (Math.abs(eval) > 5000) { // TODO ????
+            principleVariation.set(0, -10000);
+            return principleVariation;
+        }*/
+        if (eval >= beta) {
+            return eval;
+        }
+        capturesStorage[depthSoFar] = board.getMoveGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);
+        if (capturesStorage[depthSoFar][0] == -1) {
+            return 10000;
+        }
+        for (int i = 1; i <= capturesStorage[depthSoFar][0]; i++) {
+            int capture = capturesStorage[depthSoFar][i];
+            byte capturedPiece;
+            if (capture < (1 << 13)) {
+                capturedPiece = board.getSquare((capture / 8) % 8, capture % 8);
+            } else {
+                capturedPiece = board.getSquare((capture / 64) % 8, (capture / 8) % 8);
+            }
+            byte castlingRights = board.getCastlingRights();
+            byte enPassant = board.getEnPassant();
+            board.makeMove(capture);
+            int innerEval = -memoryEfficientQSearch(!toMove, -beta, -alpha, depthSoFar + 1);
+            qNodes++;
+            if (innerEval == 10000) {
+                board.setEnPassant(enPassant);
+                board.unmakeMove(capture, capturedPiece, castlingRights);
+                return innerEval;
+            }
+            if (innerEval > eval) {
+                eval = innerEval;
+                if (eval > alpha) {
+                    alpha = eval;
+                }
+            }
+            board.setEnPassant(enPassant);
+            board.unmakeMove(capture, capturedPiece, castlingRights);
+            if (eval >= beta) {
+                return eval;
+            }
+        }
+        return eval;
+    }
+
+    /**
 	 * This method does nothing right now. If we ever have add state to the Search we need to implement that state being resetted here.
 	 */
 	public void resetSearch() {

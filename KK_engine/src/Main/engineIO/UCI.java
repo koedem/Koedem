@@ -2,6 +2,7 @@ package Main.engineIO;
 
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -112,6 +113,9 @@ public final class UCI {
 				pv.append("Node count: ").append(board.getSearch().getNodes());
 				Logging.printLine(pv.toString());
 				board.getSearch().setNodes(0);
+			} else if (command.equals("q eval")) {
+			    Logging.printLine(Integer.toString(board.getSearch().memoryEfficientQSearch(board.getToMove(), -30000, 30000, 0)));
+
 			} else if (command.equals("evaluate")) {
 				Logging.printLine(Integer.toString(board.getEvaluation().evaluation(board.getToMove(), -30000)));
 			} else if (command.equals("Hashtable")) {
@@ -313,15 +317,15 @@ public final class UCI {
 		String stop = "";
 		while (true) {
 			if (future.isDone()) {
-				try {
-					move = future.get();
-				} catch (Exception e) {
-					int[] movesSize = new int[6];
-					int[] moves = new int[MoveGenerator.MAX_MOVE_COUNT];
-					moves = board.getMoveGenerator().collectMoves(board.getToMove(), moves, movesSize);
-					Logging.printLine("bestmove " + board.getBestmove());
-				}
-				break;
+                try {
+                    move = future.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    int[] movesSize = new int[6];
+                    int[] moves = new int[MoveGenerator.MAX_MOVE_COUNT];
+                    moves = board.getMoveGenerator().collectMoves(board.getToMove(), moves, movesSize);
+                    Logging.printLine("bestmove " + board.getBestmove());
+                }
+                break;
 			} else {
 				if (sc.hasNextLine()) {
 					UCI.setThreadFinished(true);
@@ -350,32 +354,32 @@ public final class UCI {
 		future[3] = executor.submit(aggressiveNonLosing);
 		int[][] move = new int[4][];
 		boolean keepGoing = true;
-		try {
-			while(keepGoing) {
-				if (threadFinished) {
-					for (int j = 0; j < 4; j++) {
-						if (future[j].isDone()) {
-							move[j] = future[j].get();
-							if (move[j] != null && move[j][move[j].length - 1] != 0) {
-								keepGoing = false;
-								break;
-							} else {
-								move[j] = null;
-							}
-						}
-					}
-				} else if (future[0].isDone() && future[1].isDone() && future[2].isDone() && future[3].isDone()) {
-					if (logging) {
-						Logging.printLine("No forced mate for either side.");
-					}
-					break;
-				} else {
-					Thread.sleep(1000);
-				}
-			}
-		} catch (Exception e) {
-		}
-		int[] correctMove;
+        try {
+            while (keepGoing) {
+                if (threadFinished) {
+                    for (int j = 0; j < 4; j++) {
+                        if (future[j].isDone()) {
+                            move[j] = future[j].get();
+                            if (move[j] != null && move[j][move[j].length - 1] != 0) {
+                                keepGoing = false;
+                                break;
+                            } else {
+                                move[j] = null;
+                            }
+                        }
+                    }
+                } else if (future[0].isDone() && future[1].isDone() && future[2].isDone() && future[3].isDone()) {
+                    if (logging) {
+                        Logging.printLine("No forced mate for either side.");
+                    }
+                    break;
+                } else {
+                    Thread.sleep(1000);
+                }
+            }
+        } catch (InterruptedException | ExecutionException ignored) {
+        }
+        int[] correctMove;
 		if (move[0] != null) {
 			correctMove = move[0];
 		} else if (move[1] != null) {

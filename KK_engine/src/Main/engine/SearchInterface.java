@@ -31,4 +31,6 @@ public interface SearchInterface extends Serializable {
 	long getQNodes();
 
 	ArrayList<Integer> qSearch(boolean toMove, int alpha, int beta, int depthSoFar);
+
+	int memoryEfficientQSearch(boolean toMove, int alpha, int beta, int depthSoFar);
 }

@@ -55,6 +55,9 @@ public class MultiThreadSearch implements Callable<int[]> {
 				break;
 			}
 			oldBoard.setBestmove(Transformation.numberToMove(move[0])); // tell the uci thread the current best move
+            if (UCI.isThreadFinished()) {
+                break;
+            }
 		}
 		assert move != null;
 		if (board.getBestmove().equals("(none)")) {
