@@ -1,10 +1,10 @@
 package Main.engine;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
+
+import java.util.ArrayList;
 
 /**
  * 

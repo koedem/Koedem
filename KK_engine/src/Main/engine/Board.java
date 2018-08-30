@@ -1,12 +1,11 @@
 package Main.engine;
 
-import java.io.*;
-import java.util.Hashtable;
-import java.util.Random;
-
 import Main.Utility.DeepCopy;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
+
+import java.util.Hashtable;
+import java.util.Random;
 
 public class Board implements BoardInterface {
 

@@ -1,7 +1,5 @@
 package Main.engine;
 
-import java.util.ArrayList;
-
 import Main.engineIO.UCI;
 
 public final class MateFinder {

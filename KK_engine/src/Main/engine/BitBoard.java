@@ -3,8 +3,6 @@ package Main.engine;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 
-import java.io.Serializable;
-
 public class BitBoard implements BitBoardInterface {
 
     private BoardInterface board;

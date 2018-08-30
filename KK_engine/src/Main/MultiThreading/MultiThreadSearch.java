@@ -1,14 +1,12 @@
 package Main.MultiThreading;
 
-import java.lang.reflect.Modifier;
-import java.util.concurrent.Callable;
-
-import Main.engine.Board;
 import Main.engine.BoardInterface;
 import Main.engine.MoveGenerator;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
+
+import java.util.concurrent.Callable;
 
 public class MultiThreadSearch implements Callable<int[]> {
 

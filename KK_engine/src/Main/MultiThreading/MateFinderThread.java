@@ -1,13 +1,12 @@
 package Main.MultiThreading;
 
-import java.util.concurrent.Callable;
-
-import Main.engine.Board;
 import Main.engine.BoardInterface;
 import Main.engine.MateFinder;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
+
+import java.util.concurrent.Callable;
 
 public class MateFinderThread implements Callable<int[]> {
 

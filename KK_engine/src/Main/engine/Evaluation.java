@@ -4,8 +4,6 @@ import Main.engineIO.Logging;
 import Main.engineIO.UCI;
 import test.Assertions;
 
-import java.io.Serializable;
-
 /**
  * 
  * @author Anon
