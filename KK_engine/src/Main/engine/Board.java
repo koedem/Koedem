@@ -145,7 +145,14 @@ public class Board implements BoardInterface {
 	 * @param fen
 	 *            : Position that the method sets.
 	 */
-	private void setFENPosition(String fen) {
+	public void setFENPosition(String fen) {
+	    materialCount = 0;
+	    dangerToBlackKing = 0;
+	    dangerToWhiteKing = 0;
+	    piecesLeft = 0;
+	    for (int i = 0; i < pieceAdvancement.length; i++) {
+            pieceAdvancement[i] = 0;
+        }
 		String position = fen;
 		String[] positions = position.split(" ");
 		byte file = 0;
@@ -760,6 +767,7 @@ public class Board implements BoardInterface {
 	}
 
 	public void resetBoard() {
+        setFENPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 		moveGenerator.resetMoveGenerator();
 		evaluation.resetEvaluation();
 		search.resetSearch();

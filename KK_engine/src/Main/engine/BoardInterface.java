@@ -49,6 +49,8 @@ public interface BoardInterface extends Serializable {
 
 	BoardInterface cloneBoard();
 
+	void setFENPosition(String fen);
+
 	void addCastlingRights(byte castlingRights);
 
 	Hashtable<Long, Node> getHashTable();
@@ -86,4 +88,6 @@ public interface BoardInterface extends Serializable {
 	BitBoardInterface getBitboard();
 
 	void setBitboard(BitBoardInterface bitboard);
+
+	void resetBoard();
 }

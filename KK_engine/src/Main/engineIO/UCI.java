@@ -23,8 +23,9 @@ public final class UCI {
 	public static boolean uci = true;
 	
 	public static String logfile = "";
-	
-	private static int baseTime = 100;
+    public static boolean shuttingDown = false;
+
+    private static int baseTime = 100;
 	private static int incTime = 2;
 	private static int minLeft = 20;
 											// For scenarios with possibly inaccurate system time we have backup:
@@ -41,13 +42,13 @@ public final class UCI {
 
 	private static boolean threadFinished = false;
 
-	private static ExecutorService executor            = Executors.newFixedThreadPool(5);
 	static String                  engineName          = "Koedem";
 	static BoardInterface                   board               = new Board();
 	private static String          lastPositionCommand = "";
 	private static Scanner         sc                  = new Scanner(System.in);
 	
 	public static void main(String[] args) {
+	    ThreadOrganization.setUp(board);
 		uciCommunication();
 		System.exit(0);
 	}
@@ -88,7 +89,7 @@ public final class UCI {
 					Logging.printLine(Transformation.numberToMove(move));
 				}
 			} else if (command.equals("find mate")) {
-				mateFinder(board, true);
+				//mateFinder(board, true);
 			} else if (command.equals("print legal captures")) {
 				int[] captures = board.getMoveGenerator().collectCaptures(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT]);
 				if (captures[0] == 0) {
@@ -128,13 +129,19 @@ public final class UCI {
 				Evaluation.setMaterialOnly(false);
 			} else if (command.equals("print bitboard")) {
 				board.getBitboard().printBitBoard();
-			}
+			} else if (command.equals("stop")) {
+			    threadFinished = true;
+            }
 		}
+		shuttingDown = true;
 		Logging.close();
 	}
 
     private static void inputUCINewGame() {
-		board = new Board();
+		board.setFENPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+		for (int i = 0; i < ThreadOrganization.boards.length; i++) {
+		    ThreadOrganization.boards[i].resetBoard();
+        }
 	}
 
 	private static void inputSetOption(String command) {
@@ -234,6 +241,9 @@ public final class UCI {
 					if (!parameter.equals("")) {
 						Node node = new Node(board, 0, 0, 0, board.getToMove());
 						board.makeMove(parameter);
+						for (int i = 0; i < ThreadOrganization.boards.length; i++) {
+						    ThreadOrganization.boards[i].makeMove(parameter);
+                        }
 					}
 				}
 				return;
@@ -245,14 +255,20 @@ public final class UCI {
 		for (int i = 0; i < parameters.length; i++) {
 			switch (parameters[i]) {
 				case "startpos":
-					board = new Board();
+					board.resetBoard();
+					for (int k = 0; k < ThreadOrganization.boards.length; k++) {
+                        ThreadOrganization.boards[k].resetBoard();
+                    }
 					break;
 				case "fen":
 					StringBuilder fen = new StringBuilder();
 					for (int j = 0; j < 6; j++) {
 						fen.append(parameters[i + 1 + j]).append(" ");
 					}
-					board = new Board(fen.toString());
+					board.setFENPosition(fen.toString());
+                    for (int k = 0; k < ThreadOrganization.boards.length; k++) {
+                        ThreadOrganization.boards[k].setFENPosition(fen.toString());
+                    }
 					i += 6;
 					break;
 				case "moves":
@@ -261,6 +277,9 @@ public final class UCI {
 					for (int j = 0; j < (parameters.length - i); j++) {
 						Node node = new Node(board, 0, 0, 0, board.getToMove());
 						board.makeMove(parameters[i + j]);
+                        for (int k = 0; k < ThreadOrganization.boards.length; k++) {
+                            ThreadOrganization.boards[k].makeMove(parameters[i + j]);
+                        }
 					}
 					break;
 			}
@@ -268,14 +287,12 @@ public final class UCI {
 	}
 	
 	private static void inputGo(String command) {
-		MultiThreadSearch thread = null;
-		
 		if (command.contains("depth")) {
 			String[] parameters = command.split(" ");
 			int depth = Integer.parseInt(parameters[2]);
-			thread =  new MultiThreadSearch(board, depth, 1, true, 2000000000);
+			ThreadOrganization.go(depth, Integer.MAX_VALUE);
 		} else if (command.contains("infinite")) {
-			thread =  new MultiThreadSearch(board, 100, 1, true, 2000000000);
+		    ThreadOrganization.go(100, Integer.MAX_VALUE);
 		} else {
 			String[] parameters = command.split(" ");
 			int searchTime = 0;
@@ -305,42 +322,11 @@ public final class UCI {
 				}
 			}
 			Logging.printLine("Trying to use " + searchTime + "ms + finishing current ply.");
-			thread =  new MultiThreadSearch(board, 100, 1, true, searchTime);
-		}
-		
-		UCI.setThreadFinished(false);
-		Future<int[]> future = executor.submit(thread);
-		
-		
-		int[] move = null;
-		
-		String stop = "";
-		while (true) {
-			if (future.isDone()) {
-                try {
-                    move = future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    int[] movesSize = new int[6];
-                    int[] moves = new int[MoveGenerator.MAX_MOVE_COUNT];
-                    moves = board.getMoveGenerator().collectMoves(board.getToMove(), moves, movesSize);
-                    Logging.printLine("bestmove " + board.getBestmove());
-                }
-                break;
-			} else {
-				if (sc.hasNextLine()) {
-					UCI.setThreadFinished(true);
-				}
-			}
-			
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			ThreadOrganization.go(100, searchTime);
 		}
 	}
 	
-	public static void mateFinder(BoardInterface board, boolean logging) {
+	/*public static void mateFinder(BoardInterface board, boolean logging) {
 		NonLosingThread nonLosingMoves = new NonLosingThread(board, 20, false, logging);
 		NonLosingThread aggressiveNonLosing = new NonLosingThread(board, 30, true, logging);
 		MateFinderThread mateFinder = new MateFinderThread(board, 20, false, logging);
@@ -393,7 +379,7 @@ public final class UCI {
 		}
 		Logging.printLine("");
 		printEngineOutput("MateFinder found mate: ", correctMove, board, board.getToMove(), time);
-	}
+	}*/
 	
 	public static boolean isThreadFinished() {
 		return threadFinished;

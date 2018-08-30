@@ -8,64 +8,76 @@ import Main.engineIO.UCI;
 
 import java.util.concurrent.Callable;
 
-public class MultiThreadSearch implements Callable<int[]> {
+public class MultiThreadSearch implements Runnable {
 
 	private BoardInterface   board;
-	private BoardInterface   oldBoard;
-	private int     depth;
-	private boolean moveOrdering;
-	private long    timeLimit;
+    private int     depth;
+    private long    timeLimit;
 	
-	public MultiThreadSearch(BoardInterface board, int depth, int threadNumber, boolean moveOrdering, long timeLimit) {
-		this.oldBoard = board;
-		this.board = board.cloneBoard();
-		this.depth = depth;
-		this.moveOrdering = moveOrdering;
-		this.timeLimit = timeLimit;
+	public MultiThreadSearch(BoardInterface board, int threadNumber, boolean moveOrdering) {
+        this.board = board;
 	}
 	
 	@Override
-	public int[] call() {
-		long time = System.currentTimeMillis();
-		board.getSearch().setNodes(0);
-		board.getSearch().setAbortedNodes(0);
-		board.getSearch().setQNodes(0);
-		int[] move = null;
-		int[] movesSize = new int[6]; // unused
-		board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT], movesSize));
-		Logging.printLine("info search started at milli: " + System.currentTimeMillis());
-		
-		for (int i = 1; i <= depth; i++) {
-			if (moveOrdering) {
-				move = board.getSearch().rootMax(board.getToMove(), i, time);
-			} else {
-				move = board.getSearch().negaMax(board.getToMove(), i, i, -30000, 30000);
-			}
-			
-			if (Math.abs(move[move.length - 1]) > 9000) {
-				break;
-			}
-			
-			if (System.currentTimeMillis() - time > timeLimit                   // We break if the time is up
-			    && board.getSearch().getNodes() > timeLimit * UCI.getLowerKN_Bound() // and we searched enough nodes.
-			    || board.getSearch().getNodes() > timeLimit * UCI.getUpperKN_Bound() // Or when we searched more than enough nodes.
-                    || board.getBestmove().equals("(none)")) { // or there are no legal moves
-				break;
-			}
-			oldBoard.setBestmove(Transformation.numberToMove(move[0])); // tell the uci thread the current best move
-            if (UCI.isThreadFinished()) {
-                break;
+	public void run() {
+        int[] move = null;
+        int[] movesSize = new int[6]; // unused
+	    while (true) {
+	        if (UCI.shuttingDown) {
+	            break;
             }
-		}
-		assert move != null;
-		if (board.getBestmove().equals("(none)")) {
-		    oldBoard.setBestmove("(none)");
-			Logging.printLine("bestmove (none)");
-		} else {
-			UCI.printEngineOutput("", move, board, board.getToMove(), time);
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
-			Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
-		}
-		return move;
+            long time = System.currentTimeMillis();
+            board.getSearch().setNodes(0);
+            board.getSearch().setAbortedNodes(0);
+            board.getSearch().setQNodes(0);
+            board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT], movesSize));
+            Logging.printLine("info search started at milli: " + System.currentTimeMillis());
+
+            for (int i = 1; i <= depth; i++) {
+                move = board.getSearch().rootMax(board.getToMove(), i, time);
+
+                if (Math.abs(move[move.length - 1]) > 9000) {
+                    break;
+                }
+
+                if (System.currentTimeMillis() - time > timeLimit                   // We break if the time is up
+                        && board.getSearch().getNodes() > timeLimit * UCI.getLowerKN_Bound() // and we searched enough nodes.
+                        || board.getSearch().getNodes() > timeLimit * UCI.getUpperKN_Bound() // Or when we searched more than enough nodes.
+                        || board.getBestmove().equals("(none)")) { // or there are no legal moves
+                    break;
+                }
+                if (UCI.isThreadFinished()) {
+                    break;
+                }
+            }
+            assert move != null;
+            if (board.getBestmove().equals("(none)")) {
+                Logging.printLine("bestmove (none)");
+            } else {
+                UCI.printEngineOutput("", move, board, board.getToMove(), time);
+
+                Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
+            }
+        }
+	}
+
+	public void setDepth(int depth) {
+	    this.depth = depth;
+	}
+
+	public void setTimeLimit(int timeLimit) {
+	    this.timeLimit = timeLimit;
+    }
+
+    public void setBoard(BoardInterface board) {
+        this.board = board;
 	}
 }
