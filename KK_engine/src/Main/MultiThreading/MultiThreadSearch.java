@@ -8,7 +8,7 @@ import Main.engineIO.UCI;
 
 import java.util.concurrent.Callable;
 
-public class MultiThreadSearch implements Runnable {
+public class MultiThreadSearch implements SearchThreadInterface {
 
 	private BoardInterface   board;
     private int     depth;
@@ -22,10 +22,7 @@ public class MultiThreadSearch implements Runnable {
 	public void run() {
         int[] move = null;
         int[] movesSize = new int[6]; // unused
-	    while (true) {
-	        if (UCI.shuttingDown) {
-	            break;
-            }
+        while (!UCI.shuttingDown) {
             synchronized (this) {
                 try {
                     wait();
@@ -68,6 +65,10 @@ public class MultiThreadSearch implements Runnable {
             }
         }
 	}
+
+	public BoardInterface getBoard() {
+	    return board;
+    }
 
 	public void setDepth(int depth) {
 	    this.depth = depth;

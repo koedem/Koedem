@@ -8,7 +8,7 @@ import Main.engineIO.UCI;
 
 import java.util.concurrent.Callable;
 
-public class MateFinderThread implements Callable<int[]> {
+public class MateFinderThread implements SearchThreadInterface {
 
 	private BoardInterface   board;
 	private int     depth;
@@ -16,9 +16,8 @@ public class MateFinderThread implements Callable<int[]> {
 	private String  threadName;
 	private boolean logging;
 	
-	public MateFinderThread(BoardInterface board, int depth, boolean aggressive, boolean logging) {
-		this.board = board.cloneBoard();
-		this.depth = depth;
+	public MateFinderThread(BoardInterface board, boolean aggressive, boolean logging) {
+		this.board = board;
 		this.aggressive = aggressive;
 		if (aggressive) {
 			threadName = "Aggressive MateFinder ";
@@ -29,36 +28,65 @@ public class MateFinderThread implements Callable<int[]> {
 	}
 	
 	@Override
-	public int[] call() throws Exception {
-		long time = System.currentTimeMillis();
-		board.getSearch().setNodes(0);
-		board.getSearch().setAbortedNodes(0);
-		board.getSearch().setQNodes(0);
-		int[] move = null;
-		for (int i = 2; i < depth; i += 2) {
-			if (logging) {
-				Logging.printLine("");
-				Logging.printLine(threadName + "Starting depth " + i + ". Time: " 
-						+ Transformation.timeUsedOutput(System.currentTimeMillis() - time));
-			}
-			
-			move = MateFinder.mateFinder(board, board.getToMove(), i, i, aggressive);
-			
-			if (logging) {
-				Logging.printLine(threadName + "Finished depth " + i  + ". Nodes: " 
-						+ Transformation.nodeCountOutput(board.getSearch().getNodes()));
-			}
-			
-			if (move[move.length - 1] > 0) {
-				if (logging) {
-					UCI.printEngineOutput(threadName, move, board, board.getToMove(), time);
-				}
-				break;
-			}
-		}
-		if (move != null && move[move.length - 1] > 9000) {
-			UCI.setThreadFinished(true);
-		}
-		return move;
+	public void run() {
+        while (!UCI.shuttingDown) {
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            long time = System.currentTimeMillis();
+            board.getSearch().setNodes(0);
+            board.getSearch().setAbortedNodes(0);
+            board.getSearch().setQNodes(0);
+            int[] move = null;
+            for (int i = 2; i < depth; i += 2) {
+                if (logging) {
+                    Logging.printLine("");
+                    Logging.printLine(threadName + "Starting depth " + i + ". Time: "
+                            + Transformation.timeUsedOutput(System.currentTimeMillis() - time));
+                }
+
+                move = MateFinder.mateFinder(board, board.getToMove(), i, i, aggressive);
+
+                if (logging) {
+                    Logging.printLine(threadName + "Finished depth " + i + ". Nodes: "
+                            + Transformation.nodeCountOutput(board.getSearch().getNodes()));
+                }
+
+                if (move[move.length - 1] > 0) {
+                    if (logging) {
+                        UCI.printEngineOutput(threadName, move, board, board.getToMove(), time);
+                    }
+                    break;
+                }
+            }
+            if (move != null && move[move.length - 1] > 9000) {
+                UCI.setThreadFinished(true);
+            }
+        }
 	}
+
+    @Override
+    public BoardInterface getBoard() {
+        return board;
+    }
+
+    @Override
+    public void setDepth(int depth) {
+        this.depth = depth;
+    }
+
+    @Override
+    public void setTimeLimit(int timeLimit) {
+	    // TODO ?
+    }
+
+    @Override
+    public void setBoard(BoardInterface board) {
+        this.board = board;
+    }
 }

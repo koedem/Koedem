@@ -14,7 +14,7 @@ public class ThreadOrganization {
 
 	private static int threadCount = 1;
 	public static BoardInterface[] boards = new Board[5];
-	private static MultiThreadSearch[] thread = new MultiThreadSearch[5];
+	private static SearchThreadInterface[] thread = new SearchThreadInterface[5];
 
     private static ExecutorService executor            = Executors.newFixedThreadPool(5);
 
@@ -39,11 +39,25 @@ public class ThreadOrganization {
         Thread.yield(); // give the cpu to the calculating thread
     }
 
-	public static void setUp(BoardInterface board) {
-	    for (int threadNumber = 0; threadNumber < boards.length; threadNumber++) {
-            boards[threadNumber] = board.cloneBoard();
-            thread[threadNumber] = new MultiThreadSearch(boards[threadNumber], threadNumber, true);
-            executor.submit(thread[threadNumber]);
+    public static void findMate() {
+	    thread[1].setDepth(30);
+	    thread[2].setDepth(20);
+	    thread[3].setDepth(30);
+	    thread[4].setDepth(20);
+	    UCI.setThreadFinished(false);
+	    for (int threadNumber = 1; threadNumber < 5; threadNumber++) {
+	        synchronized (thread[threadNumber]) {
+                thread[threadNumber].notify();
+            }
         }
+        Thread.yield();
+    }
+
+	public static void setUp(BoardInterface board) {
+	    executor.submit(thread[0] = new MultiThreadSearch(boards[0] = board.cloneBoard(), 0, true));
+	    executor.submit(thread[1] = new MateFinderThread(boards[1] = board.cloneBoard(), true, true));
+        executor.submit(thread[2] = new MateFinderThread(boards[2] = board.cloneBoard(), false, true));
+        executor.submit(thread[3] = new NonLosingThread(boards[3] = board.cloneBoard(), true, true));
+        executor.submit(thread[4] = new NonLosingThread(boards[4] = board.cloneBoard(), false, true));
 	}
 }

@@ -89,7 +89,7 @@ public final class UCI {
 					Logging.printLine(Transformation.numberToMove(move));
 				}
 			} else if (command.equals("find mate")) {
-				//mateFinder(board, true);
+				ThreadOrganization.findMate();
 			} else if (command.equals("print legal captures")) {
 				int[] captures = board.getMoveGenerator().collectCaptures(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT]);
 				if (captures[0] == 0) {
@@ -242,6 +242,8 @@ public final class UCI {
 						Node node = new Node(board, 0, 0, 0, board.getToMove());
 						board.makeMove(parameter);
 						for (int i = 0; i < ThreadOrganization.boards.length; i++) {
+                            Node node1 = new Node(ThreadOrganization.boards[i], 0, 0, 0,
+                                    ThreadOrganization.boards[i].getToMove());
 						    ThreadOrganization.boards[i].makeMove(parameter);
                         }
 					}
@@ -278,6 +280,8 @@ public final class UCI {
 						Node node = new Node(board, 0, 0, 0, board.getToMove());
 						board.makeMove(parameters[i + j]);
                         for (int k = 0; k < ThreadOrganization.boards.length; k++) {
+                            Node node1 = new Node(ThreadOrganization.boards[k], 0, 0, 0,
+                                    ThreadOrganization.boards[k].getToMove());
                             ThreadOrganization.boards[k].makeMove(parameters[i + j]);
                         }
 					}
@@ -325,61 +329,6 @@ public final class UCI {
 			ThreadOrganization.go(100, searchTime);
 		}
 	}
-	
-	/*public static void mateFinder(BoardInterface board, boolean logging) {
-		NonLosingThread nonLosingMoves = new NonLosingThread(board, 20, false, logging);
-		NonLosingThread aggressiveNonLosing = new NonLosingThread(board, 30, true, logging);
-		MateFinderThread mateFinder = new MateFinderThread(board, 20, false, logging);
-		MateFinderThread aggressiveMateFinder = new MateFinderThread(board, 30, true, logging);
-		long time = System.currentTimeMillis();
-		threadFinished = false;
-		Future<int[]>[] future = new Future[4];
-		future[0] = executor.submit(mateFinder);
-		future[1] = executor.submit(nonLosingMoves);
-		future[2] = executor.submit(aggressiveMateFinder);
-		future[3] = executor.submit(aggressiveNonLosing);
-		int[][] move = new int[4][];
-		boolean keepGoing = true;
-        try {
-            while (keepGoing) {
-                if (threadFinished) {
-                    for (int j = 0; j < 4; j++) {
-                        if (future[j].isDone()) {
-                            move[j] = future[j].get();
-                            if (move[j] != null && move[j][move[j].length - 1] != 0) {
-                                keepGoing = false;
-                                break;
-                            } else {
-                                move[j] = null;
-                            }
-                        }
-                    }
-                } else if (future[0].isDone() && future[1].isDone() && future[2].isDone() && future[3].isDone()) {
-                    if (logging) {
-                        Logging.printLine("No forced mate for either side.");
-                    }
-                    break;
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        } catch (InterruptedException | ExecutionException ignored) {
-        }
-        int[] correctMove;
-		if (move[0] != null) {
-			correctMove = move[0];
-		} else if (move[1] != null) {
-			correctMove = move[1];
-		} else if (move[2] != null) {
-			correctMove = move[2];
-		} else if (move[3] != null) {
-			correctMove = move[3];
-		} else {
-			return;
-		}
-		Logging.printLine("");
-		printEngineOutput("MateFinder found mate: ", correctMove, board, board.getToMove(), time);
-	}*/
 	
 	public static boolean isThreadFinished() {
 		return threadFinished;
