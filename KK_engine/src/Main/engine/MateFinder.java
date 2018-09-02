@@ -2,9 +2,17 @@ package Main.engine;
 
 import Main.engineIO.UCI;
 
-public final class MateFinder {
+import java.io.Serializable;
 
-	public static int[] rootMateFinder(BoardInterface board, boolean toMove, int depth, long time, boolean aggressive) {
+public class MateFinder implements Serializable {
+
+	private BoardInterface board;
+
+	public MateFinder(BoardInterface board) {
+		this.board = board;
+	}
+
+	public int[] rootMateFinder(boolean toMove, int depth, long time, boolean aggressive) {
 		int alpha = -30000;
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
@@ -18,7 +26,7 @@ public final class MateFinder {
 			board.makeMove(moves[moveIndex]);
 			int[] innerPV = new int[depth + 1];
 			if (depth > 1) {
-				innerPV = mateFinder(board, !toMove, depth, depth - 1, aggressive);
+				innerPV = mateFinder(!toMove, depth, depth - 1, aggressive);
 				innerPV[depth] = -innerPV[depth];
 				innerPV[0] = moves[moveIndex];
 				//UserInteraction.printEngineOutput("NonLosing Search move ", innerPV, board, time);
@@ -53,17 +61,17 @@ public final class MateFinder {
 		return principleVariation;
 	}
 	
-	public static int[] mateFinder(BoardInterface board, boolean toMove, int depth, int depthLeft, boolean aggressive) {
+	public int[] mateFinder(boolean toMove, int depth, int depthLeft, boolean aggressive) {
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -9999;
 		int moves[] = new int[MoveGenerator.MAX_MOVE_COUNT];
 		if (depthLeft % 2 == 1) {
-			moves = board.getMoveGenerator().collectAllPNMoves(moves, board, toMove);
+			moves = board.getCheckMoveGenerator().collectAllPNMoves(moves, toMove);
 		} else {
 			if (aggressive) {
-				moves = board.getMoveGenerator().collectCheckMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, board, toMove);
+				moves = board.getCheckMoveGenerator().collectCheckMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, toMove);
 			} else {
-				moves = board.getMoveGenerator().collectPNSearchMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, board, toMove);
+				moves = board.getCheckMoveGenerator().collectPNSearchMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, board, toMove);
 			}
 		}
 		
@@ -86,7 +94,7 @@ public final class MateFinder {
 			board.makeMove(move);
 			int[] innerPV = new int[depth + 1];
 			if (depthLeft > 1) {
-				innerPV = mateFinder(board, !toMove, depth, depthLeft - 1, aggressive);
+				innerPV = mateFinder(!toMove, depth, depthLeft - 1, aggressive);
 				innerPV[depth] = -innerPV[depth];
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
@@ -95,7 +103,7 @@ public final class MateFinder {
 				}
 			} else if (depthLeft == 1) {
 				innerPV[depth] = 0;
-				if (inCheck(board)) {
+				if (inCheck()) {
 					innerPV[depth] = -9999;
 				}
 			}
@@ -114,7 +122,7 @@ public final class MateFinder {
 			}
 		}
 		if (principleVariation[depth] == -9999) {
-			int[] captures = board.getMoveGenerator().collectCaptures(!toMove, new int[256]);
+			int[] captures = board.getCaptureGenerator().collectCaptures(!toMove, new int[256]);
 			if (captures[0] != -1) {
 				principleVariation[depth] = 0;
 			}
@@ -130,15 +138,15 @@ public final class MateFinder {
 		return principleVariation;
 	}
 	
-	public static boolean inCheck(BoardInterface board) {
+	private boolean inCheck() {
 		boolean inCheck = false;
-		int[] captures = board.getMoveGenerator().collectCaptures(board.getToMove(), new int[256]); // TODO why toMove and not !toMove ??
+		int[] captures = board.getCaptureGenerator().collectCaptures(board.getToMove(), new int[256]); // TODO why toMove and not !toMove ??
 		if (captures[0] == -1) {
 			inCheck = true;
 		}
 		return inCheck;
 	}
-	
-	private MateFinder() {
+
+	void resetMateFinder() {
 	}
 }

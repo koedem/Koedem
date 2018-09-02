@@ -83,11 +83,19 @@ public interface BoardInterface extends Serializable {
 
 	MoveGeneratorInterface getMoveGenerator();
 
+	CaptureGeneratorInterface getCaptureGenerator();
+
+	CheckMoveGeneratorInterface getCheckMoveGenerator();
+
 	EvaluationInterface getEvaluation();
+
+	MateFinder getMateFinder();
 
 	BitBoardInterface getBitboard();
 
 	void setBitboard(BitBoardInterface bitboard);
 
 	void resetBoard();
+
+	int isFreeSquare(int file, int row, boolean toMove);
 }

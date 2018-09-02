@@ -109,7 +109,7 @@ public class Search implements SearchInterface {
 		}
 		if (principleVariation[depth] == -9999) {
             board.setBestmove("(none)");
-			utilityCaptures = board.getMoveGenerator().collectCaptures(!toMove, utilityCaptures);
+			utilityCaptures = board.getCaptureGenerator().collectCaptures(!toMove, utilityCaptures);
 			if (utilityCaptures[0] != -1) { // stalemate detection
 				principleVariation[depth] = 0;
 				return principleVariation;
@@ -217,7 +217,7 @@ public class Search implements SearchInterface {
             }
 		}
 		if (principleVariation[depth] == -9999) {
-			utilityCaptures = board.getMoveGenerator().collectCaptures(!toMove, utilityCaptures);
+			utilityCaptures = board.getCaptureGenerator().collectCaptures(!toMove, utilityCaptures);
 			if (utilityCaptures[0] != -1) { // stalemate detection
 				principleVariation[depth] = 0;
 				return principleVariation;
@@ -257,7 +257,7 @@ public class Search implements SearchInterface {
 		if (principleVariation.get(0) >= beta) {
 			return principleVariation;
 		}
-		capturesStorage[depthSoFar] = board.getMoveGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);
+		capturesStorage[depthSoFar] = board.getCaptureGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);
 		if (capturesStorage[depthSoFar][0] == -1) {
 			principleVariation.set(0, 10000);
 			return principleVariation;
@@ -326,7 +326,7 @@ public class Search implements SearchInterface {
         if (eval >= beta) {
             return eval;
         }
-        capturesStorage[depthSoFar] = board.getMoveGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);
+        capturesStorage[depthSoFar] = board.getCaptureGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);
         if (capturesStorage[depthSoFar][0] == -1) {
             return 10000;
         }

@@ -39,7 +39,7 @@ public class NonLosingThread implements SearchThreadInterface {
             }
 
             long time = System.currentTimeMillis();
-            this.board.setRootMoves(this.board.getMoveGenerator().collectAllPNMoves(new int[MoveGenerator.MAX_MOVE_COUNT], this.board, this.board.getToMove()));
+            this.board.setRootMoves(this.board.getCheckMoveGenerator().collectAllPNMoves(new int[MoveGenerator.MAX_MOVE_COUNT], this.board.getToMove()));
             board.getSearch().setNodes(0);
             board.getSearch().setAbortedNodes(0);
             board.getSearch().setQNodes(0);
@@ -51,7 +51,7 @@ public class NonLosingThread implements SearchThreadInterface {
                             + Transformation.timeUsedOutput(System.currentTimeMillis() - time));
                 }
 
-                move = MateFinder.rootMateFinder(board, board.getToMove(), i, time, aggressive);
+                move = board.getMateFinder().rootMateFinder(board.getToMove(), i, time, aggressive);
 
                 if (logging) {
                     Logging.printLine(threadName + "Non losing moves: " + board.getRootMoves()[0] + ". Nodes: "

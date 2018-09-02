@@ -50,7 +50,7 @@ public class MateFinderThread implements SearchThreadInterface {
                             + Transformation.timeUsedOutput(System.currentTimeMillis() - time));
                 }
 
-                move = MateFinder.mateFinder(board, board.getToMove(), i, i, aggressive);
+                move = board.getMateFinder().mateFinder(board.getToMove(), i, i, aggressive);
 
                 if (logging) {
                     Logging.printLine(threadName + "Finished depth " + i + ". Nodes: "

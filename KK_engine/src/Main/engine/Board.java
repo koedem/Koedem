@@ -10,8 +10,11 @@ import java.util.Random;
 public class Board implements BoardInterface {
 
 	private MoveGeneratorInterface moveGenerator = new MoveGenerator(this);
+	private CaptureGeneratorInterface captureGenerator = new CaptureGenerator(this);
+	private CheckMoveGeneratorInterface checkMoveGenerator = new CheckMoveGenerator(this);
 	private EvaluationInterface evaluation = new Evaluation(this);
 	private SearchInterface search = new Search(this);
+	private MateFinder mateFinder = new MateFinder(this);
 
 	private long zobristHash;
 	private static final Random random = new Random(1234567890);
@@ -771,8 +774,11 @@ public class Board implements BoardInterface {
 	public void resetBoard() {
         setFENPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 		moveGenerator.resetMoveGenerator();
+		captureGenerator.resetCaptureGenerator();
+		checkMoveGenerator.resetCheckMoveGenerator();
 		evaluation.resetEvaluation();
 		search.resetSearch();
+		mateFinder.resetMateFinder();
 	}
 
 	private static long[] initializeZobrist() {
@@ -786,6 +792,42 @@ public class Board implements BoardInterface {
 			zobristKeys[64 * 6 + i] = 0;
 		}
 		return zobristKeys;
+	}
+
+
+	/**
+	 *
+	 * @param file : position of the to be checked square is
+	 * @param row : " "
+	 * @param toMove : who to move it is
+	 * @return 1 if the square is empty, 0 if the square is occupied by an enemy piece,
+	 *  -1 if the square is either not on the board or occupied by a friendly piece
+	 */
+	public int isFreeSquare(int file, int row, boolean toMove) {
+		byte isFree;
+		if (file < 0 || file > 7 || row < 0 || row > 7) {
+			isFree = -1;
+		} else {
+			byte squareValue = getSquare(file, row);
+			if (toMove) {
+				if (squareValue == 0) {
+					isFree = 1;
+				} else if (squareValue < 0) {
+					isFree = 0;
+				} else {
+					isFree = -1;
+				}
+			} else {
+				if (squareValue == 0) {
+					isFree = 1;
+				} else if (squareValue > 0) {
+					isFree = 0;
+				} else {
+					isFree = -1;
+				}
+			}
+		}
+		return isFree;
 	}
 
 	@Override
@@ -816,5 +858,18 @@ public class Board implements BoardInterface {
 	@Override
 	public void setBitboard(BitBoardInterface bitboard) {
 		this.bitboard = bitboard;
+	}
+
+	public MateFinder getMateFinder() {
+		return mateFinder;
+	}
+
+	@Override
+	public CaptureGeneratorInterface getCaptureGenerator() {
+		return captureGenerator;
+	}
+
+	public CheckMoveGeneratorInterface getCheckMoveGenerator() {
+		return checkMoveGenerator;
 	}
 }

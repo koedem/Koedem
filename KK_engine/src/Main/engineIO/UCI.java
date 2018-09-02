@@ -91,7 +91,7 @@ public final class UCI {
 			} else if (command.equals("find mate")) {
 				ThreadOrganization.findMate();
 			} else if (command.equals("print legal captures")) {
-				int[] captures = board.getMoveGenerator().collectCaptures(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT]);
+				int[] captures = board.getCaptureGenerator().collectCaptures(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT]);
 				if (captures[0] == 0) {
 					Logging.printLine("There are no legal captures.");
 					continue;
@@ -275,6 +275,9 @@ public final class UCI {
 					break;
 				case "moves":
 					board.getHashTable().clear();
+					for (int k = 0; k < ThreadOrganization.boards.length; k++) {
+						ThreadOrganization.boards[k].getHashTable().clear();
+					}
 					i++;
 					for (int j = 0; j < (parameters.length - i); j++) {
 						Node node = new Node(board, 0, 0, 0, board.getToMove());
