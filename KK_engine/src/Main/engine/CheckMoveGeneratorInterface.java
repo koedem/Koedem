@@ -13,5 +13,5 @@ public interface CheckMoveGeneratorInterface extends Serializable {
 
 	int[] collectCheckMoves(int[] storage, int[] checks, boolean toMove);
 
-	int[] collectPNSearchMoves(int[] storage, int[] checks, BoardInterface board, boolean toMove);
+	int[] collectPNSearchMoves(int[] storage, int[] checks, boolean toMove);
 }

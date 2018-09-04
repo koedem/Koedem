@@ -25,7 +25,7 @@ public class BitBoard implements BitBoardInterface {
 				}
 			}
 		}
-        attackBoard = new AttackBoard(this);
+        attackBoard = new AttackBoard(board, this);
 		this.board = board;
 	}
 	
@@ -185,5 +185,17 @@ public class BitBoard implements BitBoardInterface {
 
 	public void setAttackBoard(AttackBoard attackBoard) {
 		this.attackBoard = attackBoard;
+	}
+
+	public void resetBitBoard() {
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 7; j++) {
+				for (int k = 0; k < 10; k++) {
+					bitBoards[i][j][k] = 0;
+				}
+				pieceTypes[i][j] = 0;
+			}
+			allPieces[i] = 0;
+		}
 	}
 }

@@ -71,7 +71,7 @@ public class MateFinder implements Serializable {
 			if (aggressive) {
 				moves = board.getCheckMoveGenerator().collectCheckMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, toMove);
 			} else {
-				moves = board.getCheckMoveGenerator().collectPNSearchMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, board, toMove);
+				moves = board.getCheckMoveGenerator().collectPNSearchMoves(new int[MoveGenerator.MAX_MOVE_COUNT], moves, toMove);
 			}
 		}
 		

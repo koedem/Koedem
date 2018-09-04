@@ -22,4 +22,6 @@ public interface BitBoardInterface extends Serializable {
 	boolean move(int startSquare, int endSquare);
 
 	void printBitBoard();
+
+	void resetBitBoard();
 }

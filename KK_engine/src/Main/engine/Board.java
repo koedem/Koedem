@@ -156,7 +156,7 @@ public class Board implements BoardInterface {
 	    for (int i = 0; i < pieceAdvancement.length; i++) {
             pieceAdvancement[i] = 0;
         }
-        bitboard = new BitBoard(this);
+        bitboard.resetBitBoard();
 
 		String position = fen;
 		String[] positions = position.split(" ");

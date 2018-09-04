@@ -49,7 +49,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 		return storage;
 	}
 
-	public int[] collectPNSearchMoves(int[] storage, int[] checks, BoardInterface board, boolean toMove) {
+	public int[] collectPNSearchMoves(int[] storage, int[] checks, boolean toMove) {
 		int[] movesSize = new int[6];
 		storage = board.getMoveGenerator().collectMoves(toMove, storage, movesSize);
 		if (storage[0] == -1) {
