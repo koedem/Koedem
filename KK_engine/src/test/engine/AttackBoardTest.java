@@ -5,7 +5,6 @@ import Main.engine.Board;
 import Main.engine.AttackBoard;
 import Main.engine.BoardInterface;
 import Main.engine.MoveGenerator;
-import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +12,7 @@ public class AttackBoardTest {
 
     private BoardInterface board = new Board();
 
+    /*
 	@Test
 	@Ignore
 	public void pawnCaptureTables() {
@@ -186,20 +186,20 @@ public class AttackBoardTest {
 			}
 			System.out.println("\n\n\n");
 		}
-	}
+	}*/
 
 	@Test
 	public void correctBoards() {
         board = new Board("8/4kn2/4nn2/8/8/8/4NN2/4KN2 w - - 0 1");
 	    AttackBoard attack = board.getAttackBoard();
-	    attack.move(0, 2, 0, 0, 33);
-        attack.move(0, 2, 1, 0, 40);
-        attack.move(0, 2, 2, 0, 41);
-        attack.move(0, 6, 0, 0, 32);
-        attack.move(1, 2, 0, 0, 37);
-        attack.move(1, 2, 1, 0, 45);
-        attack.move(1, 2, 2, 0, 46);
-        attack.move(1, 6, 0, 0, 38);
+	    attack.move(0, 2, 0, 0, 33, false);
+        attack.move(0, 2, 1, 0, 40, false);
+        attack.move(0, 2, 2, 0, 41, false);
+        attack.move(0, 6, 0, 0, 32, false);
+        attack.move(1, 2, 0, 0, 37, false);
+        attack.move(1, 2, 1, 0, 45, false);
+        attack.move(1, 2, 2, 0, 46, false);
+        attack.move(1, 6, 0, 0, 38, false);
         int        attackSize = attack.moveGenerator(new int[256], true)[0];
         int        moveSize = board.getMoveGenerator().collectMoves(true, new int[MoveGenerator.MAX_MOVE_COUNT], new int[6])[0];
         Assertions.assertEquals(attackSize, moveSize);

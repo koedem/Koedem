@@ -85,8 +85,27 @@ public class AttackBoard implements Serializable {
             { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 } };
 
 	private byte[][][] pieceAttackCount = new byte[2][7][64];
-	
-	private long[] allPieces = { 0, 0 }; // 2 colours
+
+    /**
+     * The pseudo attack tables for the White ([0]) and Black ([1]) king squares. E.g. [0][3] contains the attack board
+     * if the White King was a Bishop etc.
+     */
+	private long[][] kingPieceBoards = { { 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0 } };
+
+    /**
+     * The attack table for all sliders (i.e. bishops, rooks and queens) of a side combined.
+     */
+	private long[] sliders = { 0, 0 };
+
+    /**
+     * The attack table for all non pawns of a side combined. [0] for White, [1] for Black non pawns.
+     */
+	private long[] nonPawns = { 0, 0 };
+
+    /**
+     * The attack table for all pieces of a side combined. [0] for White, [1] for Black pieces.
+     */
+	private long[] allPieces = { 0, 0 };
 
     private byte[][] allAttackCount = new byte[2][64];
 
@@ -111,18 +130,25 @@ public class AttackBoard implements Serializable {
      * @param endSquare 8 * file + row
      * @return Whether the move was successful
      */
-	public boolean move(int colour, int pieceType, int pieceIndex, int startSquare, int endSquare) {
+	public boolean move(int colour, int pieceType, int pieceIndex, int startSquare, int endSquare, boolean capture) {
 		boolean success = false;
+		long startBoard = 1L << startSquare;
+		if ((startBoard & sliders[0]) != 0) {
+
+        }
+        if ((startBoard & sliders[1]) != 0) {
+
+        }
 		if (pieceType == 1) {
 			success = pawnMove(colour, pieceIndex, startSquare, endSquare);
 		} else if (pieceType == 2) {
 			success = knightMove(colour, pieceIndex, startSquare, endSquare);
 		} else if (pieceType == 3) {
-			success = bishopMove(colour, pieceIndex, startSquare, endSquare);
+			success = bishopMove(colour, pieceIndex, startSquare, endSquare, capture);
 		} else if (pieceType == 4) {
-			success = rookMove(colour, pieceIndex, startSquare, endSquare);
+			success = rookMove(colour, pieceIndex, startSquare, endSquare, capture);
 		} else if (pieceType == 5) {
-			success = queenMove(colour, pieceIndex, startSquare, endSquare);
+			success = queenMove(colour, pieceIndex, startSquare, endSquare, capture);
 		} else if (pieceType == 6) {
 			success = kingMove(colour, pieceIndex, startSquare, endSquare);
 		} else {
@@ -155,16 +181,30 @@ public class AttackBoard implements Serializable {
 		return true;
 	}
 
-	private boolean rookMove(int colour, int pieceIndex, int startSquare, int endSquare) {
+	private boolean rookMove(int colour, int pieceIndex, int startSquare, int endSquare, boolean capture) {
 		long board = attackBoards[colour][4][pieceIndex];
 		int endFile = endSquare >> 3;
 		int endRow = (endSquare & 7);
 		if (((startSquare ^ endSquare) & 7) == 0) { // i.e. we move along a row
 			board &= NEGATED_ROOK_FILES[startSquare >> 3]; // we don't control the old file anymore
 			board = buildRookFileUp(endFile, endRow, buildRookFileDown(endFile, endRow, board)); // build the new file
+            if (capture) {
+                if (startSquare < endSquare) {
+                    board = buildRookRowUp(endFile, endRow, board);
+                } else {
+                    board = buildRookRowDown(endFile, endRow, board);
+                }
+            }
 		} else if (((startSquare ^ endSquare) >> 3) == 0) { // i.e. we move along a file
 			board &= NEGATED_ROOK_ROWS[startSquare & 7]; // we don't control the old row anymore
 			board = buildRookRowUp(endFile, endRow, buildRookRowDown(endFile, endRow, board)); // build the new row
+            if (capture) {
+                if (startSquare < endSquare) {
+                    board = buildRookFileUp(endFile, endRow, board);
+                } else {
+                    board = buildRookFileDown(endFile, endRow, board);
+                }
+            }
 		} else {
 			assert false;
 		}
@@ -185,16 +225,30 @@ public class AttackBoard implements Serializable {
 		return true;
 	}
 
-	private boolean bishopMove(int colour, int pieceIndex, int startSquare, int endSquare) { // TODO + endsquare
+	private boolean bishopMove(int colour, int pieceIndex, int startSquare, int endSquare, boolean capture) {
 		long board = attackBoards[colour][3][pieceIndex];
 		int endFile = endSquare >> 3;
 		int endRow = (endSquare & 7);
 		if (((startSquare - endSquare) % 9) == 0) { // i.e. we move up a diagonal; NOTE, a8-h1 also enters this branch however it doesn't matter
 			board &= NEGATED_DOWN_DIAGONALS[(startSquare >> 3) + (startSquare & 7)]; // we don't control the old down-diagonal anymore
 			board = buildDownDiagonalUp(endFile, endRow, buildDownDiagonalDown(endFile, endRow, board)); // build the new down diagonal
+            if (capture) {
+                if (startSquare < endSquare) {
+                    board = buildUpDiagonalUp(endFile, endRow, board);
+                } else {
+                    board = buildUpDiagonalDown(endFile, endRow, board);
+                }
+            }
 		} else if (((startSquare - endSquare) % 7) == 0) { // i.e. we move down a diagonal
 			board &= NEGATED_UP_DIAGONALS[7 + (startSquare >> 3) - (startSquare & 7)]; // we don't control the old up-diagonal anymore
 			board = buildUpDiagonalUp(endFile, endRow, buildUpDiagonalDown(endFile, endRow, board)); // build the new up diagonal
+            if (capture) {
+                if (startSquare < endSquare) {
+                    board = buildDownDiagonalUp(endFile, endRow, board);
+                } else {
+                    board = buildDownDiagonalDown(endFile, endRow, board);
+                }
+            }
 		} else {
 			assert false;
 		}
@@ -215,7 +269,7 @@ public class AttackBoard implements Serializable {
 		return true;
 	}
 	
-	private boolean queenMove(int colour, int pieceIndex, int startSquare, int endSquare) {
+	private boolean queenMove(int colour, int pieceIndex, int startSquare, int endSquare, boolean capture) {
 		long board = attackBoards[colour][5][pieceIndex];
 		int endFile = endSquare >> 3;
 		int endRow = (endSquare & 7);
@@ -227,6 +281,13 @@ public class AttackBoard implements Serializable {
 			board = buildDownDiagonalUp(endFile, endRow, buildDownDiagonalDown(endFile, endRow, board)); // build the new down diagonal
 			board = buildRookFileUp(endFile, endRow, buildRookFileDown(endFile, endRow, board)); // build the new file
 			board = buildRookRowUp(endFile, endRow, buildRookRowDown(endFile, endRow, board)); // build the new row
+            if (capture) {
+                if (startSquare < endSquare) {
+                    board = buildUpDiagonalUp(endFile, endRow, board);
+                } else {
+                    board = buildUpDiagonalDown(endFile, endRow, board);
+                }
+            }
 		} else if (((startSquare - endSquare) % 7) == 0) { // i.e. we move down a diagonal
 			board &= NEGATED_UP_DIAGONALS[7 + (startSquare >> 3) - (startSquare & 7)]; // we don't control the old up-diagonal anymore
 			board &= NEGATED_ROOK_FILES[startSquare >> 3]; // we don't control the old file anymore
@@ -235,6 +296,13 @@ public class AttackBoard implements Serializable {
 			board = buildUpDiagonalUp(endFile, endRow, buildUpDiagonalDown(endFile, endRow, board)); // build the new up diagonal
 			board = buildRookFileUp(endFile, endRow, buildRookFileDown(endFile, endRow, board)); // build the new file
 			board = buildRookRowUp(endFile, endRow, buildRookRowDown(endFile, endRow, board)); // build the new row
+            if (capture) {
+                if (startSquare < endSquare) {
+                    board = buildDownDiagonalUp(endFile, endRow, board);
+                } else {
+                    board = buildDownDiagonalDown(endFile, endRow, board);
+                }
+            }
 		} else if (((startSquare ^ endSquare) & 7) == 0) { // i.e. we move along a row
 			board &= NEGATED_UP_DIAGONALS[7 + (startSquare >> 3) - (startSquare & 7)]; // we don't control the old up-diagonal anymore
 			board &= NEGATED_DOWN_DIAGONALS[(startSquare >> 3) + (startSquare & 7)]; // we don't control the old down-diagonal anymore
@@ -243,6 +311,13 @@ public class AttackBoard implements Serializable {
 			board = buildUpDiagonalUp(endFile, endRow, buildUpDiagonalDown(endFile, endRow, board)); // build the new up diagonal
 			board = buildDownDiagonalUp(endFile, endRow, buildDownDiagonalDown(endFile, endRow, board)); // build the new down diagonal
 			board = buildRookFileUp(endFile, endRow, buildRookFileDown(endFile, endRow, board)); // build the new file
+            if (capture) {
+                if (startSquare < endSquare) {
+                    board = buildRookRowUp(endFile, endRow, board);
+                } else {
+                    board = buildRookRowDown(endFile, endRow, board);
+                }
+            }
 		} else if (((startSquare ^ endSquare) >> 3) == 0) { // i.e. we move along a file
 			board &= NEGATED_UP_DIAGONALS[7 + (startSquare >> 3) - (startSquare & 7)]; // we don't control the old up-diagonal anymore
 			board &= NEGATED_DOWN_DIAGONALS[(startSquare >> 3) + (startSquare & 7)]; // we don't control the old down-diagonal anymore
@@ -251,6 +326,13 @@ public class AttackBoard implements Serializable {
 			board = buildUpDiagonalUp(endFile, endRow, buildUpDiagonalDown(endFile, endRow, board)); // build the new up diagonal
 			board = buildDownDiagonalUp(endFile, endRow, buildDownDiagonalDown(endFile, endRow, board)); // build the new down diagonal
 			board = buildRookRowUp(endFile, endRow, buildRookRowDown(endFile, endRow, board)); // build the new row
+            if (capture) {
+                if (startSquare < endSquare) {
+                    board = buildRookFileUp(endFile, endRow, board);
+                } else {
+                    board = buildRookFileDown(endFile, endRow, board);
+                }
+            }
 		} else {
 			assert false;
 		}
@@ -338,22 +420,22 @@ public class AttackBoard implements Serializable {
 	}
 
 	private long buildDownDiagonalUp(int endFile, int endRow, long board) {
-		for (int row = endRow + 1, file = endFile - 1; row < 8 && file >= 0; row++, file--) { // move up the diagonal
-			board |= 1L << (file * 8 + row);
-			if (this.board.getSquare(file, row) != 0) {
-				break;
-			}
-		}
+        for (int row = endRow - 1, file = endFile + 1; row >= 0 && file < 8; row--, file++) { // move down the diagonal
+            board |= 1L << (file * 8 + row);
+            if (this.board.getSquare(file, row) != 0) {
+                break;
+            }
+        }
 		return board;
 	}
 
 	private long buildDownDiagonalDown(int endFile, int endRow, long board) {
-		for (int row = endRow - 1, file = endFile + 1; row >= 0 && file < 8; row--, file++) { // move down the diagonal
-			board |= 1L << (file * 8 + row);
-			if (this.board.getSquare(file, row) != 0) {
-				break;
-			}
-		}
+        for (int row = endRow + 1, file = endFile - 1; row < 8 && file >= 0; row++, file--) { // move up the diagonal
+            board |= 1L << (file * 8 + row);
+            if (this.board.getSquare(file, row) != 0) {
+                break;
+            }
+        }
 		return board;
 	}
 

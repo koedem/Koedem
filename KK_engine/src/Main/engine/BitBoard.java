@@ -43,7 +43,7 @@ public class BitBoard implements BitBoardInterface {
 								bitBoards[colour][piece][index] ^= bitBoardChange;
 								pieceTypes[colour][piece] ^= bitBoardChange;
 								allPieces[colour] ^= bitBoardChange;
-								success = board.getAttackBoard().move(colour, piece, index, startSquare, endSquare);
+								success = board.getAttackBoard().move(colour, piece, index, startSquare, endSquare, false); // TODO
 								break;
 							}
 						}
