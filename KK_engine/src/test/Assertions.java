@@ -2,6 +2,7 @@ package test;
 
 import Main.engine.Board;
 import Main.engine.BoardInterface;
+import Main.engine.MoveGenerator;
 
 /**
  * This class provides methods for assertion testing.
@@ -51,6 +52,13 @@ public final class Assertions {
 			}
 		}
 		return material == board.getMaterialCount();
+	}
+
+	public static boolean attackBoard(BoardInterface board) {
+		int attackSize = board.getAttackBoard().moveGenerator(new int[256], true)[0];
+		int moveSize = board.getMoveGenerator().collectMoves(true, new int[MoveGenerator.MAX_MOVE_COUNT], new int[6])[0];
+		org.junit.jupiter.api.Assertions.assertEquals(attackSize, moveSize);
+		return true;
 	}
 	
 	private Assertions() {

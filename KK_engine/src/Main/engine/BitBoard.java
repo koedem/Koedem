@@ -29,10 +29,13 @@ public class BitBoard implements BitBoardInterface {
 		this.board = board;
 	}
 	
-	public boolean move(int startSquare, int endSquare) {
+	public boolean move(int startSquare, int endSquare, boolean capture, int capturedPiece) {
 		long searchedBB = 1L << startSquare;
 		long bitBoardChange = searchedBB ^ (1L << endSquare); // XOR old square out, new square in (XOR o XOR = id)
 		boolean success = false;
+		if (capture) { // a capture happens, remove captured piece
+			remove(endSquare);
+		}
 		
 		for (int colour = 0; colour < bitBoards.length; colour++) {
 			if ((allPieces[colour] & searchedBB) != 0) {
@@ -40,10 +43,10 @@ public class BitBoard implements BitBoardInterface {
 					if ((pieceTypes[colour][piece] & searchedBB) != 0) {
 						for (int index = 0; index < bitBoards[colour][piece].length; index++) {
 							if ((bitBoards[colour][piece][index] & searchedBB) != 0) {
+								success = board.getAttackBoard().move(colour, piece, index, startSquare, endSquare, capture, capturedPiece != 0); // TODO
 								bitBoards[colour][piece][index] ^= bitBoardChange;
 								pieceTypes[colour][piece] ^= bitBoardChange;
 								allPieces[colour] ^= bitBoardChange;
-								success = board.getAttackBoard().move(colour, piece, index, startSquare, endSquare, false); // TODO
 								break;
 							}
 						}
@@ -52,6 +55,9 @@ public class BitBoard implements BitBoardInterface {
 				}
 				break;
 			}
+		}
+		if (capturedPiece != 0) { // a capture gets undone, put piece back on the board
+			add(capturedPiece > 0 ? capturedPiece : -capturedPiece, capturedPiece > 0 ? 0 : 1, startSquare);
 		}
 		return success;
 	}
@@ -85,14 +91,15 @@ public class BitBoard implements BitBoardInterface {
 
     /**
      *
-     * @param piece The piece type to be added.
-     * @param colour The colour of the piece to be added.
+     * @param piece The piece type to be added. Bigger than 0.
+     * @param colour 0 for White piece, 1 for Black piece.
      * @param square The square on which the piece gets added.
      */
 	public void add(int piece, int colour, int square) {
-        for (int i = 0; i < bitBoards[colour][piece].length; i++) {
-            if (bitBoards[colour][piece][i] == 0) {
-                setBitBoard(colour, piece, i, square);
+        for (int index = 0; index < bitBoards[colour][piece].length; index++) {
+            if (bitBoards[colour][piece][index] == 0) {
+                setBitBoard(colour, piece, index, square);
+                attackBoard.add(colour, piece, index, square);
                 break;
             }
         }
@@ -109,10 +116,12 @@ public class BitBoard implements BitBoardInterface {
 		return bitBoards[colour][piece][index];
 	}
 	
+	@Override
 	public long getPieceTypeBoard(int colour, int piece) {
 		return pieceTypes[colour][piece];
 	}
 	
+	@Override
 	public long getAllPieces(int colour) {
 		return allPieces[colour];
 	}
