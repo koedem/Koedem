@@ -75,6 +75,7 @@ public class BitBoard implements BitBoardInterface {
                     if ((pieceTypes[colour][piece] & searchedBB) != 0) {
                         for (int index = 0; index < bitBoards[colour][piece].length; index++) {
                             if ((bitBoards[colour][piece][index] & searchedBB) != 0) {
+                                attackBoard.remove(colour, piece, index);
                                 bitBoards[colour][piece][index] = 0;
                                 pieceTypes[colour][piece] ^= searchedBB; // XOR = XOR^-1
                                 allPieces[colour] ^= searchedBB;

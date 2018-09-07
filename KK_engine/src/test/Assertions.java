@@ -55,9 +55,15 @@ public final class Assertions {
 	}
 
 	public static boolean attackBoard(BoardInterface board) {
-		int attackSize = board.getAttackBoard().moveGenerator(new int[256], true)[0];
-		int moveSize = board.getMoveGenerator().collectMoves(true, new int[MoveGenerator.MAX_MOVE_COUNT], new int[6])[0];
-		org.junit.jupiter.api.Assertions.assertEquals(attackSize, moveSize);
+	    int[] attackMoves = board.getAttackBoard().moveGenerator(new int[256], true);
+		int attackSize = attackMoves[0];
+		int[] genMoves = board.getMoveGenerator().collectMoves(true, new int[MoveGenerator.MAX_MOVE_COUNT], new int[6]);
+		int moveSize = genMoves[0];
+		if (moveSize != -1) {
+            if (attackSize != moveSize) {
+                assert false;
+            }
+        }
 		return true;
 	}
 	

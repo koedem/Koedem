@@ -340,6 +340,9 @@ public class Search implements SearchInterface {
             }
             byte castlingRights = board.getCastlingRights();
             byte enPassant = board.getEnPassant();
+            if (capture == 0b00011010_00001100) {
+                int breakPoint = 0;
+            }
             board.makeMove(capture);
             int innerEval = -memoryEfficientQSearch(!toMove, -beta, -alpha, depthSoFar + 1);
             qNodes++;
