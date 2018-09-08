@@ -19,7 +19,7 @@ public interface BitBoardInterface extends Serializable {
 
 	void add(int piece, int colour, int square);
 
-	void remove(int square);
+	void remove(int square, boolean unblockSquare);
 
 	boolean move(int startSquare, int endSquare, boolean capture, int capturedPiece);
 

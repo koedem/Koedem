@@ -37,7 +37,13 @@ public interface BoardInterface extends Serializable {
 
 	byte getSquare(int file, int row);
 
-	byte getCastlingRights();
+	/**
+	 * Castling rights is a byte. Check for white King side castle with & 0x18 == 0x18, Q side & 0x30 == 0x30,
+	 * black K side 0x3 == 0x3, Q side 0x6 == 0x6.
+	 *
+	 * @return Which castlings are still possible.
+	 */
+	abstract byte getCastlingRights();
 
 	byte getEnPassant();
 

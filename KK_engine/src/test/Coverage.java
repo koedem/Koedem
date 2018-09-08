@@ -41,7 +41,8 @@ public class Coverage {
 
 	@Test
 	public void uci() {
-        ByteArrayInputStream in = new ByteArrayInputStream(("go depth 10").getBytes());
+		Main.engineIO.UCI.main(null);
+        /*ByteArrayInputStream in = new ByteArrayInputStream(("go depth 10").getBytes());
         System.setIn(in);
 	    String args[] = null;
 	    //try {

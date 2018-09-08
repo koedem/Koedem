@@ -762,9 +762,9 @@ public class AttackBoard implements Serializable {
 			if (queenPosition < startSquare) { // i.e. we move up from the startSquare
 				if ((queenPosition - startSquare) % 9 == 0) {
 					attackBoards[colour][5][index] = buildUpDiagonalUp(file, row, attackBoards[colour][5][index]);
-				} else if (((queenPosition ^ startSquare) & 7) == 0) { // we move along a file
+				} else if (((queenPosition ^ startSquare) & 7) == 0) { // we move along a row
 					attackBoards[colour][5][index] = buildRookRowUp(file, row, attackBoards[colour][5][index]);
-				} else if (((queenPosition ^ startSquare) >> 3) == 0) { // we move along a row
+				} else if (((queenPosition ^ startSquare) >> 3) == 0) { // we move along a file
 					attackBoards[colour][5][index] = buildRookFileUp(file, row, attackBoards[colour][5][index]);
 				} else if ((queenPosition - startSquare) % 7 == 0) {
                     attackBoards[colour][5][index] = buildDownDiagonalUp(file, row, attackBoards[colour][5][index]);
@@ -930,6 +930,15 @@ public class AttackBoard implements Serializable {
 		}
 	}
 
+	/**
+	 * Build up a rook file and store the reachable squares in the Bitboard board.
+	 * Example: for given square d4 this method will check the squares d5, d6, d7 and d8 and if reachable set the
+	 * corresponding bits in the given board and return it. The given square itself will not be checked.
+	 * @param endFile File of the square to be checked. Between 0 and 7.
+	 * @param endRow Row of the square to be checked. Between 0 and 7.
+	 * @param board the Bitboard to put the reachable squares in. The LSB corresponds to a1, the second-LSB a2 and so on.
+	 * @return the original Bitboard board with the reachable square-bits set to 1.
+	 */
 	private long buildRookFileUp(int endFile, int endRow, long board) {
 		for (int row = endRow + 1; row < 8; row++) { // move up through the file
 			board |= 1L << (endFile * 8 + row);
@@ -940,6 +949,16 @@ public class AttackBoard implements Serializable {
 		return board;
 	}
 
+
+	/**
+	 * Build down a rook file and store the reachable squares in the Bitboard board.
+	 * Example: for given square d4 this method will check the squares d3, d2 and d1 and if reachable set the
+	 * corresponding bits in the given board and return it. The given square itself will not be checked.
+	 * @param endFile File of the square to be checked. Between 0 and 7.
+	 * @param endRow Row of the square to be checked. Between 0 and 7.
+	 * @param board the Bitboard to put the reachable squares in. The LSB corresponds to a1, the second-LSB a2 and so on.
+	 * @return the original Bitboard board with the reachable square-bits set to 1.
+	 */
 	private long buildRookFileDown(int endFile, int endRow, long board) {
 		for (int row = endRow - 1; row >= 0; row--) { // move down through the file
             board |= 1L << (endFile * 8 + row);
@@ -1025,12 +1044,16 @@ public class AttackBoard implements Serializable {
 			case 6: kingAddition(colour, index, square);
 				break;
 		}
-		sliders[colour] = pieceTypes[colour][0] | pieceTypes[colour][3] | pieceTypes[colour][4] | pieceTypes[colour][5];
-		allPieces[colour] |= pieceTypes[colour][pieceTyp];
 		blockSquare(square);
+		sliders[0] = pieceTypes[0][0] | pieceTypes[0][3] | pieceTypes[0][4] | pieceTypes[0][5];
+		allPieces[0] = pieceTypes[0][1] | pieceTypes[0][2] | pieceTypes[0][3]
+		               | pieceTypes[0][4] | pieceTypes[0][5] | pieceTypes[0][6];
+		sliders[1] = pieceTypes[1][0] | pieceTypes[1][3] | pieceTypes[1][4] | pieceTypes[1][5];
+		allPieces[1] = pieceTypes[1][1] | pieceTypes[1][2] | pieceTypes[1][3]
+		               | pieceTypes[1][4] | pieceTypes[1][5] | pieceTypes[1][6];
 	}
 
-	void remove(int colour, int pieceTyp, int index) {
+	void remove(int colour, int pieceTyp, int index, boolean unblockSquare) {
 		attackBoards[colour][pieceTyp][index] = 0;
 		switch (pieceTyp) {
 			case 1:
@@ -1084,9 +1107,15 @@ public class AttackBoard implements Serializable {
                 pieceTypes[colour][6] = attackBoards[colour][6][index] = 0;
                 break;
 		}
-		sliders[colour] = pieceTypes[colour][0] | pieceTypes[colour][3] | pieceTypes[colour][4] | pieceTypes[colour][5];
-		allPieces[colour] = pieceTypes[colour][1] | pieceTypes[colour][2] | pieceTypes[colour][3]
-		                    | pieceTypes[colour][4] | pieceTypes[colour][5] | pieceTypes[colour][6];
+		if (unblockSquare) {
+			this.unblockSquare(Long.numberOfTrailingZeros(bitboard.getBitBoard(colour, pieceTyp, index)));
+		}
+		sliders[0] = pieceTypes[0][0] | pieceTypes[0][3] | pieceTypes[0][4] | pieceTypes[0][5];
+		allPieces[0] = pieceTypes[0][1] | pieceTypes[0][2] | pieceTypes[0][3]
+		               | pieceTypes[0][4] | pieceTypes[0][5] | pieceTypes[0][6];
+		sliders[1] = pieceTypes[1][0] | pieceTypes[1][3] | pieceTypes[1][4] | pieceTypes[1][5];
+		allPieces[1] = pieceTypes[1][1] | pieceTypes[1][2] | pieceTypes[1][3]
+		               | pieceTypes[1][4] | pieceTypes[1][5] | pieceTypes[1][6];
 	}
 
 	public int[] moveGenerator(int[] storage, boolean whoToMove) {
@@ -1117,7 +1146,7 @@ public class AttackBoard implements Serializable {
 		        } else {
 			        while (legalMoves != 0) {
 			            for (int promotion = 2; promotion <= 5; promotion++) {
-				            storage[++storage[0]] = (1 << 15) + (startSquare << 9) + (endSquare = Long.numberOfTrailingZeros(legalMoves) << 3) + promotion;
+				            storage[++storage[0]] = (1 << 15) + (startSquare << 9) + ((endSquare = Long.numberOfTrailingZeros(legalMoves)) << 3) + promotion;
 			            }
 			            legalMoves &= ~(1L << endSquare);
 			        }
@@ -1141,6 +1170,49 @@ public class AttackBoard implements Serializable {
 	            }
             }
         }
+
+        // castling code
+		if (board.getCastlingRights() != 0) {
+			if (whoToMove) {
+				if ((board.getCastlingRights() & 0x30) == 0x30) { // Q side castling
+					for (int index = 0; index < 10; index++) {
+						if (((0x1010101L << 8) & attackBoards[0][4][index]) == (0x1010101L << 8)) { // i.e. nothing between rook and king, castling possible
+							if (((0x101L << 24) & allPieces[1]) == 0) { // i.e. black can't capture on e1 or d1 -> castling actually legal
+								storage[++storage[0]] = (1 << 12) + (32 << 6) + 16; // note, still only pseudo legal; merely to match movegenerator
+							}
+						}
+					}
+				}
+				if ((board.getCastlingRights() & 0x18) == 0x18) { // K side castling
+					for (int index = 0; index < 10; index++) {
+						if (((0x10101L << 32) & attackBoards[0][4][index]) == (0x10101L << 32)) { // i.e. nothing between rook and king, castling possible
+							if (((0x101L << 32) & allPieces[1]) == 0) { // i.e. black can't capture on e1 or f1 -> castling actually legal
+								storage[++storage[0]] = (1 << 12) + (32 << 6) + 48;
+							}
+						}
+					}
+				}
+			} else {
+				if ((board.getCastlingRights() & 0x6) == 0x6) { // Q side castling
+					for (int index = 0; index < 10; index++) {
+						if (((0x1010101L << 15) & attackBoards[1][4][index]) == (0x1010101L << 15)) { // i.e. nothing between rook and king, castling possible
+							if (((0x101L << 31) & allPieces[0]) == 0) { // i.e. white can't capture on e8 or d8 -> castling actually legal
+								storage[++storage[0]] = (1 << 12) + (39 << 6) + 23; // note, still only pseudo legal; merely to match movegenerator
+							}
+						}
+					}
+				}
+				if ((board.getCastlingRights() & 0x3) == 0x3) { // K side castling
+					for (int index = 0; index < 10; index++) {
+						if (((0x10101L << 39) & attackBoards[1][4][index]) == (0x10101L << 39)) { // i.e. nothing between rook and king, castling possible
+							if (((0x101L << 39) & allPieces[0]) == 0) { // i.e. white can't capture on e8 or f8 -> castling actually legal
+								storage[++storage[0]] = (1 << 12) + (39 << 6) + 55;
+							}
+						}
+					}
+				}
+			}
+		}
         return storage;
     }
 }

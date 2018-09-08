@@ -34,7 +34,7 @@ public class BitBoard implements BitBoardInterface {
 		long bitBoardChange = searchedBB ^ (1L << endSquare); // XOR old square out, new square in (XOR o XOR = id)
 		boolean success = false;
 		if (capture) { // a capture happens, remove captured piece
-			remove(endSquare);
+			remove(endSquare, false);
 		}
 		
 		for (int colour = 0; colour < bitBoards.length; colour++) {
@@ -66,7 +66,7 @@ public class BitBoard implements BitBoardInterface {
      * TODO: return Attackboard
      * @param square
      */
-	public void remove(int square) {
+	public void remove(int square, boolean unblockSquare) {
         long searchedBB = 1L << square;
 
         for (int colour = 0; colour < bitBoards.length; colour++) {
@@ -75,7 +75,7 @@ public class BitBoard implements BitBoardInterface {
                     if ((pieceTypes[colour][piece] & searchedBB) != 0) {
                         for (int index = 0; index < bitBoards[colour][piece].length; index++) {
                             if ((bitBoards[colour][piece][index] & searchedBB) != 0) {
-                                attackBoard.remove(colour, piece, index);
+                                attackBoard.remove(colour, piece, index, unblockSquare);
                                 bitBoards[colour][piece][index] = 0;
                                 pieceTypes[colour][piece] ^= searchedBB; // XOR = XOR^-1
                                 allPieces[colour] ^= searchedBB;
