@@ -106,8 +106,6 @@ public class AttackBoard implements Serializable {
 	private long[][] pieceTypes = { { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 },
             { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0 } };
 
-	private byte[][][] pieceAttackCount = new byte[2][7][64];
-
     /**
      * The pseudo attack tables for the White ([0]) and Black ([1]) king squares. E.g. [0][3] contains the attack board
      * if the White King was a Bishop etc. Queens are not needed as they already are in the rook and bishop boards.
@@ -129,7 +127,12 @@ public class AttackBoard implements Serializable {
      */
 	private long[] allPieces = { 0, 0 };
 
-    private byte[][] allAttackCount = new byte[2][64];
+	/**
+	 * pieceAttackCount[x][y] contains the number of squares that all pieces of colour x and piece type y control.
+	 * Colour 0 for White, 1 for Black.
+	 * Piece type 0 for pawn moves, 1 for pawn captures, 2 for knight, 3 for bishop, 4 for rook, 5 for queen, 6 for king.
+	 */
+	private byte[][] pieceAttackCount = new byte[2][7];
 
     AttackBoard(BoardInterface board, BitBoardInterface bitboard) {
 		for (int colour = 0; colour < attackBoards.length; colour++) {
