@@ -16,35 +16,34 @@ import java.util.concurrent.Future;
 /**
  * 
  * @author Anon
- * 
+ * TODO ucinewgame after (none) bestmove leads to more (none)
  */
 public final class UCI {
 	
 	public static boolean uci = true;
-	
-	public static String logfile = "";
-    public static boolean shuttingDown = false;
+
+	public static boolean shuttingDown = false;
 
     private static int baseTime = 100;
 	private static int incTime = 2;
-	private static int minLeft = 20;
+	private static int     minLeft       = 20;
 											// For scenarios with possibly inaccurate system time we have backup:
-	private static int lowerKN_Bound = 0;   // We don't move before we searched lowerKN_Bound * timeLimit many nodes.
+	private static int     lowerKN_Bound = 0;   // We don't move before we searched lowerKN_Bound * timeLimit many nodes.
 											// Should be lower than kN/s
-	private static int upperKN_Bound = 500; // No matter what the timer says, when upperKN_Bound * timeLimit nodes
+	private static int     upperKN_Bound = 500; // No matter what the timer says, when upperKN_Bound * timeLimit nodes
 											// are exceeded we move. Should be higher than kN/s
-	private static int kingSafety = 10;
-	private static int dynamism = 10;
+	private static int     kingSafety    = 100;
+	private static int     dynamism      = 100;
+	public static  boolean logging       = true;
 
 	private static int threadCount = 1;
 	private static final int LOWER_THREAD_COUNT = 1;
 	private static final int UPPER_THREAD_COUNT = 5;
 
-	private static boolean threadFinished = false;
+	private static boolean threadFinished = true;
 
 	static String                  engineName          = "Koedem";
 	static BoardInterface                   board               = new Board();
-	private static String          lastPositionCommand = "";
 	private static Scanner         sc                  = new Scanner(System.in);
 	
 	public static void main(String[] args) {
@@ -59,7 +58,9 @@ public final class UCI {
 		Logging.printLine(engineName + " by Tom Marvolo.");
 		while (!command.equals("quit")) {
 			command = sc.nextLine();
-			Logging.printLine("info command received at milli: " + Long.toString(System.currentTimeMillis()));
+			if (logging) {
+				Logging.printLine("info command received at milli: " + Long.toString(System.currentTimeMillis()));
+			}
 			Logging.addToLogFile(">> " + command);
 			
 			if (command.equals("uci")) {
@@ -72,7 +73,6 @@ public final class UCI {
 				inputUCINewGame();
 			} else if (command.startsWith("position")) {
 				inputPosition(command);
-				lastPositionCommand = command;
 			} else if (command.contains("go")) {
 				inputGo(command);
 			} else if (command.equals("print")) {
@@ -220,39 +220,29 @@ public final class UCI {
 		Logging.printLine("option name MinTime type spin default 500 min 1 max 10000");
 		Logging.printLine("option name Lower_KN_searched_bound type spin default 0 min 0 max 1000");
 		Logging.printLine("option name Upper_KN_searched_bound type spin default 500 min 1 max 10000");
-		Logging.printLine("option name KingSafety type spin default 10 min 1 max 100");
-		Logging.printLine("option name Dynamism type spin default 10 min 1 max 100");
+		Logging.printLine("option name KingSafety type spin default 100 min 1 max 1000");
+		Logging.printLine("option name Dynamism type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Threads type spin default 1 min 1 max 5");
 		
 		Logging.printLine("uciok");
 	}
 	
 	private static void inputIsReady() {
+		while (!isThreadFinished()) {
+			threadFinished = true;
+			System.out.println("Thread not finished.");
+		}
+		try {
+			Thread.sleep(10);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		Logging.printLine("readyok");
 	}
 	
 	private static void inputPosition(String input) {
-		String command;
-		if (input.startsWith(lastPositionCommand)) {
-			command = input.substring(lastPositionCommand.length()); // if we previously had the same command start we don't need to set that up again
-			if (lastPositionCommand.contains("moves")) { // the only thing that changed is we have new moves; no need to go through the rest
-				String[] parameters = command.split(" ");
-				for (String parameter : parameters) {
-					if (!parameter.equals("")) {
-						Node node = new Node(board, 0, 0, 0, board.getToMove());
-						board.makeMove(parameter);
-						for (int i = 0; i < ThreadOrganization.boards.length; i++) {
-                            Node node1 = new Node(ThreadOrganization.boards[i], 0, 0, 0,
-                                    ThreadOrganization.boards[i].getToMove());
-						    ThreadOrganization.boards[i].makeMove(parameter);
-                        }
-					}
-				}
-				return;
-			}
-		} else {
-			command = input.substring(9);
-		}
+		String command = input.substring(9);
+
 		String[] parameters = command.split(" ");
 		for (int i = 0; i < parameters.length; i++) {
 			switch (parameters[i]) {
@@ -291,6 +281,10 @@ public final class UCI {
 					break;
 			}
 		}
+		board.setBestmove("");
+		for (int k = 0; k < ThreadOrganization.boards.length; k++) {
+			ThreadOrganization.boards[k].setBestmove("");
+		}
 	}
 	
 	private static void inputGo(String command) {
@@ -328,7 +322,9 @@ public final class UCI {
 					}
 				}
 			}
-			Logging.printLine("Trying to use " + searchTime + "ms + finishing current ply.");
+			if (logging) {
+				Logging.printLine("Trying to use " + searchTime + "ms + finishing current ply.");
+			}
 			ThreadOrganization.go(100, searchTime);
 		}
 	}

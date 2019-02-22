@@ -202,6 +202,8 @@ public class Board implements BoardInterface {
 		if (!(positions[3].equals("-"))) {
 			setEnPassant((byte) (Character.getNumericValue(positions[3].charAt(1) - 1) // a6 becomes 5
 					+ (Character.getNumericValue(positions[3].charAt(0)) - 10) * 8)); // + 0 * 8
+		} else {
+			setEnPassant((byte) -1);
 		}
 		setMoveNumber(Integer.parseInt(positions[positions.length - 1]));
 	}

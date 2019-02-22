@@ -36,7 +36,9 @@ public class Search implements SearchInterface {
 	
 	public int[] rootMax(boolean toMove, int depth, long time) {
 		Logging.printLine("");
-		Logging.printLine("Starting depth " + depth + ".");
+		if (UCI.logging) {
+			Logging.printLine("Starting depth " + depth + ".");
+		}
 		int alpha = -30000;
 		int beta = 30000;
 		int[] principleVariation = new int[depth + 1];

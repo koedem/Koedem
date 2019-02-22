@@ -99,7 +99,7 @@ public final class Evaluation implements EvaluationInterface {
 		activityEval += (KINGACTIVITYFULL * piecesLeft / 32 
 				+ KINGACTIVITYEMPTY * (32 - piecesLeft) / 32)  * (whiteSize[5] - blackSize[5]);
 		
-		activityEval = (activityEval * UCI.getDynamism()) / 10;
+		activityEval = (activityEval * UCI.getDynamism()) / 100;
 		return activityEval;
 	}
 
@@ -181,7 +181,7 @@ public final class Evaluation implements EvaluationInterface {
 				}
 			}
 		}
-		pieceSquares = (pieceSquares * UCI.getKingSafety()) / 10;
+		pieceSquares = (pieceSquares * UCI.getKingSafety()) / 100;
 		
 		if (board.getSquare(3, 3) == 1) {
 			pieceSquares += 10;

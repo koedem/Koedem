@@ -23,20 +23,24 @@ public class MultiThreadSearch implements SearchThreadInterface {
         int[] move = null;
         int[] movesSize = new int[6]; // unused
         while (!UCI.shuttingDown) {
-            synchronized (this) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+        	while (UCI.isThreadFinished()) {
+		        synchronized (this) {
+			        try {
+				        wait(1000);
+			        } catch (InterruptedException e) {
+				        e.printStackTrace();
+			        }
+		        }
+	        }
 
             long time = System.currentTimeMillis();
             board.getSearch().setNodes(0);
             board.getSearch().setAbortedNodes(0);
             board.getSearch().setQNodes(0);
             board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT], movesSize));
-            Logging.printLine("info search started at milli: " + System.currentTimeMillis());
+            if (UCI.logging) {
+            	Logging.printLine("info search started at milli: " + System.currentTimeMillis());
+            }
 
             for (int i = 1; i <= depth; i++) {
                 move = board.getSearch().rootMax(board.getToMove(), i, time);
@@ -56,6 +60,7 @@ public class MultiThreadSearch implements SearchThreadInterface {
                 }
             }
             assert move != null;
+	        UCI.setThreadFinished(true);
             if (board.getBestmove().equals("(none)")) {
                 Logging.printLine("bestmove (none)");
             } else {
