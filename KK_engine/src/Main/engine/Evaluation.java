@@ -16,21 +16,19 @@ public final class Evaluation implements EvaluationInterface {
 	private int[] blackSize = new int[6];
 	private int[] storage = new int[MoveGenerator.MAX_MOVE_COUNT];
 	private BoardInterface board;
-	
-	@SuppressWarnings("unused")
-	private static final int PAWNACTIVITYFULL = 0;
-	@SuppressWarnings("unused")
-	private static final int PAWNACTIVITYEMPTY = 0;
-	private static final int KNIGHTACTIVITYFULL = 3;
-	private static final int KNIGHTACTIVITYEMPTY = 3;
-	private static final int BISHOPACTIVITYFULL = 3;
-	private static final int BISHOPACTIVITYEMPTY = 3;
-	private static final int ROOKACTIVITYFULL = 0;
-	private static final int ROOKACTIVITYEMPTY = 4;
-	private static final int QUEENACTIVITYFULL = 0;
-	private static final int QUEENACTIVITYEMPTY = 2;
-	private static final int KINGACTIVITYFULL = -3;
-	private static final int KINGACTIVITYEMPTY = 1;
+
+	public static int PAWNACTIVITYFULL = 0;
+	public static int PAWNACTIVITYEMPTY = 0;
+	public static int KNIGHTACTIVITYFULL = 30;
+	public static int KNIGHTACTIVITYEMPTY = 30;
+	public static int BISHOPACTIVITYFULL = 30;
+	public static int BISHOPACTIVITYEMPTY = 30;
+	public static int ROOKACTIVITYFULL = 0;
+	public static int ROOKACTIVITYEMPTY = 40;
+	public static int QUEENACTIVITYFULL = 0;
+	public static int QUEENACTIVITYEMPTY = 20;
+	public static int KINGACTIVITYFULL = -30;
+	public static int KINGACTIVITYEMPTY = 10;
 
 	public Evaluation(BoardInterface board) {
 		this.board = board;
@@ -87,19 +85,14 @@ public final class Evaluation implements EvaluationInterface {
 	private int activityEval(BoardInterface board) {
 		int activityEval = 0;
 		int piecesLeft = board.getPiecesLeft();
-		//activityEval += PAWNACTIVITYFULL * (whiteSize[0] - blackSize[0]);
-		activityEval += (KNIGHTACTIVITYFULL * piecesLeft / 32 
-				+ KNIGHTACTIVITYEMPTY * (32 - piecesLeft) / 32)  * (whiteSize[1] - blackSize[1]);
-		activityEval += (BISHOPACTIVITYFULL * piecesLeft / 32 
-				+ BISHOPACTIVITYEMPTY * (32 - piecesLeft) / 32)  * (whiteSize[2] - blackSize[2]);
-		activityEval += (ROOKACTIVITYFULL * piecesLeft / 32 
-				+ ROOKACTIVITYEMPTY * (32 - piecesLeft) / 32)  * (whiteSize[3] - blackSize[3]);
-		activityEval += (QUEENACTIVITYFULL * piecesLeft / 32 
-				+ QUEENACTIVITYEMPTY * (32 - piecesLeft) / 32)  * (whiteSize[4] - blackSize[4]);
-		activityEval += (KINGACTIVITYFULL * piecesLeft / 32 
-				+ KINGACTIVITYEMPTY * (32 - piecesLeft) / 32)  * (whiteSize[5] - blackSize[5]);
+		activityEval += ((PAWNACTIVITYFULL * piecesLeft + PAWNACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[0] - blackSize[0])) / 32;
+		activityEval += ((KNIGHTACTIVITYFULL * piecesLeft + KNIGHTACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[1] - blackSize[1])) / 32;
+		activityEval += ((BISHOPACTIVITYFULL * piecesLeft + BISHOPACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[2] - blackSize[2])) / 32;
+		activityEval += ((ROOKACTIVITYFULL * piecesLeft + ROOKACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[3] - blackSize[3])) / 32;
+		activityEval += ((QUEENACTIVITYFULL * piecesLeft + QUEENACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[4] - blackSize[4])) / 32;
+		activityEval += ((KINGACTIVITYFULL * piecesLeft + KINGACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[5] - blackSize[5])) / 32;
 		
-		activityEval = (activityEval * UCI.getDynamism()) / 100;
+		activityEval = (activityEval * UCI.getDynamism()) / 1000;
 		return activityEval;
 	}
 
@@ -110,18 +103,17 @@ public final class Evaluation implements EvaluationInterface {
 	private int advancementEval() {
 		int advancementEval = 0;
 		int piecesLeft = board.getPiecesLeft();
-		advancementEval += (int) (board.getPieceAdvancement(1) * ((32.0 - piecesLeft) / 16.0));
-														// x2 on empty board, x1 on full board
+		advancementEval += (board.getPieceAdvancement(1) * (32 - piecesLeft)) / 16;
+														// x2 on empty board, x0 on full board
 		advancementEval += board.getPieceAdvancement(2) * 1; // always x1
-		advancementEval += (int) (board.getPieceAdvancement(4) * (32.0 - piecesLeft) / 32.0);
+		advancementEval += (board.getPieceAdvancement(4) * (32 - piecesLeft)) / 32;
 														// x1 on empty board, x0 on full board
 		if (board.getDangerToWhiteKing() + board.getDangerToBlackKing() > 32) {
 			advancementEval += board.getPieceAdvancement(6) * Math.abs(board.getPieceAdvancement(6)) 
 					* (32 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())); // TODO: change, danger is higher than piecesLeft
 												// full board ^2*(-16); Math.abs to not lose the sign of original number
 		} else {
-			advancementEval += (int) (board.getPieceAdvancement(6) 
-					* ((32.0 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())) / 8.0)); // empty board x2
+			advancementEval += (board.getPieceAdvancement(6) * (32 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing()))) / 8; // empty board x2
 		}
 		return advancementEval;
 	}

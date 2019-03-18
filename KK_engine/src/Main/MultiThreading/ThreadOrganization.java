@@ -28,14 +28,15 @@ public class ThreadOrganization {
 	public static void updateBoard(BoardInterface board) { // TODO
 		for (int i = 0; i < threadCount; i++) {
 			boards[i] = board.cloneBoard();
+			thread[i].setBoard(boards[i]);
 		}
 	}
 
 	public static void go(int depth, int timeLimit) {
         thread[0].setDepth(depth);
         thread[0].setTimeLimit(timeLimit);
-        UCI.setThreadFinished(false);
         synchronized (thread[0]) {
+	        UCI.setThreadFinished(false);
             thread[0].notify();
         }
         Thread.yield(); // give the cpu to the calculating thread
@@ -46,9 +47,9 @@ public class ThreadOrganization {
 	    thread[2].setDepth(20);
 	    thread[3].setDepth(30);
 	    thread[4].setDepth(20);
-	    UCI.setThreadFinished(false);
 	    for (int threadNumber = 1; threadNumber < 5; threadNumber++) {
 	        synchronized (thread[threadNumber]) {
+		        UCI.setThreadFinished(false);
                 thread[threadNumber].notify();
             }
         }

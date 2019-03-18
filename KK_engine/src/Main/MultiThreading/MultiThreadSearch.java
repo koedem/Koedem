@@ -23,10 +23,10 @@ public class MultiThreadSearch implements SearchThreadInterface {
         int[] move = null;
         int[] movesSize = new int[6]; // unused
         while (!UCI.shuttingDown) {
-        	while (UCI.isThreadFinished()) {
-		        synchronized (this) {
+        	synchronized (this) {
+        		while (UCI.isThreadFinished()) {
 			        try {
-				        wait(1000);
+				        wait();
 			        } catch (InterruptedException e) {
 				        e.printStackTrace();
 			        }

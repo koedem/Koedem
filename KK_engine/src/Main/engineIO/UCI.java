@@ -34,6 +34,7 @@ public final class UCI {
 											// are exceeded we move. Should be higher than kN/s
 	private static int     kingSafety    = 100;
 	private static int     dynamism      = 100;
+	private static int     ccTimePerMove = 1800000;
 	public static  boolean logging       = true;
 
 	private static int threadCount = 1;
@@ -208,6 +209,99 @@ public final class UCI {
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Threads'. Should be an integer.");
 				}
+				break;
+			case "CorrTimeSeconds":
+				try {
+					ccTimePerMove = Integer.parseInt(parameters[4]) * 1000;
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'CorrTimeSeconds'.");
+				}
+				break;
+
+			case "PawnActFull":
+				try {
+					Evaluation.PAWNACTIVITYFULL = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "PawnActEmpty":
+				try {
+					Evaluation.PAWNACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "KnightActFull":
+				try {
+					Evaluation.KNIGHTACTIVITYFULL = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "KnightActEmpty":
+				try {
+					Evaluation.KNIGHTACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "BishopActFull":
+				try {
+					Evaluation.BISHOPACTIVITYFULL = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "BishopActEmpty":
+				try {
+					Evaluation.BISHOPACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "RookActFull":
+				try {
+					Evaluation.ROOKACTIVITYFULL = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "RookActEmpty":
+				try {
+					Evaluation.ROOKACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "QueenActFull":
+				try {
+					Evaluation.QUEENACTIVITYFULL = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "QueenActEmpty":
+				try {
+					Evaluation.QUEENACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "KingActFull":
+				try {
+					Evaluation.KINGACTIVITYFULL = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
+			case "KingActEmpty":
+				try {
+					Evaluation.KINGACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'Dynamism'.");
+				}
+				break;
 		}
 	}
 
@@ -223,7 +317,21 @@ public final class UCI {
 		Logging.printLine("option name KingSafety type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Dynamism type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Threads type spin default 1 min 1 max 5");
-		
+		Logging.printLine("option name CorrTimeSeconds type spin default 1800 min 1 max 100000");
+
+		Logging.printLine("option name PawnActFull type spin default 0 min -100 max 1000");
+		Logging.printLine("option name PawnActEmpty type spin default 0 min -100 max 1000");
+		Logging.printLine("option name KnightActFull type spin default 30 min -100 max 1000");
+		Logging.printLine("option name KnightActEmpty type spin default 30 min -100 max 1000");
+		Logging.printLine("option name BishopActFull type spin default 30 min -100 max 1000");
+		Logging.printLine("option name BishopActEmpty type spin default 30 min -100 max 1000");
+		Logging.printLine("option name RookActFull type spin default 0 min -100 max 1000");
+		Logging.printLine("option name RookActEmpty type spin default 40 min -100 max 1000");
+		Logging.printLine("option name QueenActFull type spin default 0 min -100 max 1000");
+		Logging.printLine("option name QueenActEmpty type spin default 20 min -100 max 1000");
+		Logging.printLine("option name KingActFull type spin default -30 min -100 max 1000");
+		Logging.printLine("option name KingActEmpty type spin default 10 min -100 max 1000");
+
 		Logging.printLine("uciok");
 	}
 	
@@ -301,6 +409,9 @@ public final class UCI {
 				for (int i = 1; i < parameters.length; i++) {
 					if (parameters[i].equals("wtime")) {
 						searchTime += Integer.parseInt(parameters[i + 1]) / baseTime;
+						if (Integer.parseInt(parameters[i + 1]) == Integer.MAX_VALUE) { // workaround for lichess bug with Correspondence games
+							searchTime = ccTimePerMove;
+						}
 					} else if (parameters[i].equals("winc")) {
 						if (searchTime + Integer.parseInt(parameters[i + 1]) / incTime < searchTime * baseTime / minLeft) {
 							searchTime += Integer.parseInt(parameters[i + 1]) / incTime;
