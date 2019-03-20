@@ -33,6 +33,10 @@ public class MultiThreadSearch implements SearchThreadInterface {
 			        }
 		        }
 	        }
+	        if (hardTimeLimit == Integer.MAX_VALUE / 2) {
+	        	CorrespondenceOrganisation.getInstance().getLock();
+	        	Logging.printLine("Acquiring lock.");
+	        }
 
             long time = System.currentTimeMillis();
             board.getSearch().setNodes(0);
@@ -68,6 +72,10 @@ public class MultiThreadSearch implements SearchThreadInterface {
                 UCI.printEngineOutput("", move, board, board.getToMove(), time);
 
                 Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
+            }
+            if (hardTimeLimit == Integer.MAX_VALUE / 2) {
+	            CorrespondenceOrganisation.getInstance().returnLock();
+	            Logging.printLine("Returning lock.");
             }
         }
 	}

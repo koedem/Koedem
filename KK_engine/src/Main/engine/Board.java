@@ -153,6 +153,11 @@ public class Board implements BoardInterface {
 	    dangerToBlackKing = 0;
 	    dangerToWhiteKing = 0;
 	    piecesLeft = 0;
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				square[i][j] = 0;
+			}
+		}
 	    for (int i = 0; i < pieceAdvancement.length; i++) {
             pieceAdvancement[i] = 0;
         }

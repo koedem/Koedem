@@ -1218,4 +1218,22 @@ public class AttackBoard implements Serializable {
 		}
         return storage;
     }
+
+    void resetAttackBoard() {
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 7; j++) {
+				for (int k = 0; k < 10; k++) {
+					attackBoards[i][j][k] = 0;
+				}
+				pieceTypes[i][j] = 0;
+				pieceAttackCount[i][j] = 0;
+			}
+			for (int j = 0; j < 5; j++) {
+				kingPieceBoards[i][j] = 0;
+			}
+			sliders[i] = 0;
+			nonPawns[i] = 0;
+			allPieces[i] = 0;
+		}
+    }
 }

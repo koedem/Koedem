@@ -207,5 +207,6 @@ public class BitBoard implements BitBoardInterface {
 			}
 			allPieces[i] = 0;
 		}
+		attackBoard.resetAttackBoard();
 	}
 }

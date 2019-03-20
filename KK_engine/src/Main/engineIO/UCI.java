@@ -1,9 +1,6 @@
 package Main.engineIO;
 
-import Main.MultiThreading.MateFinderThread;
-import Main.MultiThreading.MultiThreadSearch;
-import Main.MultiThreading.NonLosingThread;
-import Main.MultiThreading.ThreadOrganization;
+import Main.MultiThreading.*;
 import Main.engine.*;
 
 import java.util.ArrayList;
@@ -34,7 +31,7 @@ public final class UCI {
 											// are exceeded we move. Should be higher than kN/s
 	private static int     kingSafety    = 100;
 	private static int     dynamism      = 100;
-	private static int     ccTimePerMove = 0;
+	private static int     ccTimePerMove = 1800000;
 	public static  boolean logging       = true;
 
 	private static int threadCount = 1;
@@ -48,6 +45,7 @@ public final class UCI {
 	private static Scanner         sc                  = new Scanner(System.in);
 	
 	public static void main(String[] args) {
+		CorrespondenceOrganisation.getInstance().setup();
 	    ThreadOrganization.setUp(board);
 		uciCommunication();
 		System.exit(0);
@@ -56,7 +54,7 @@ public final class UCI {
 	private static void uciCommunication() {
 		Logging.setup();
 		String command = "";
-		Logging.printLine(engineName + " by Tom Marvolo.");
+		Logging.printLine(engineName + " by Kolja Kühn.");
 		while (!command.equals("quit")) {
 			command = sc.nextLine();
 			if (logging) {
@@ -135,6 +133,7 @@ public final class UCI {
             }
 		}
 		shuttingDown = true;
+		CorrespondenceOrganisation.getInstance().shutDown();
 		Logging.close();
 	}
 
@@ -397,7 +396,7 @@ public final class UCI {
 	
 	private static void inputGo(String command) {
 		if (command.equals("go movetime 10000") && ccTimePerMove != 0) {
-			ThreadOrganization.go(100, ccTimePerMove, Integer.MAX_VALUE);
+			ThreadOrganization.go(100, ccTimePerMove, Integer.MAX_VALUE / 2);
 		} else if (command.contains("depth")) {
 			String[] parameters = command.split(" ");
 			int depth = Integer.parseInt(parameters[2]);
@@ -408,36 +407,19 @@ public final class UCI {
 			long hardTimeLimit = Integer.MAX_VALUE;
 			String[] parameters = command.split(" ");
 			int searchTime = 0;
-			if (board.getToMove()) {
-				for (int i = 1; i < parameters.length; i++) {
-					if (parameters[i].equals("wtime")) {
-						searchTime += Integer.parseInt(parameters[i + 1]) / baseTime;
-						if (Integer.parseInt(parameters[i + 1]) == Integer.MAX_VALUE) { // workaround for lichess bug with Correspondence games
-							searchTime = ccTimePerMove;
-						}
-						hardTimeLimit = searchTime * (baseTime * 9) / 10;
-					} else if (parameters[i].equals("winc")) {
-						if (searchTime + Integer.parseInt(parameters[i + 1]) / incTime < searchTime * baseTime / minLeft) {
-							searchTime += Integer.parseInt(parameters[i + 1]) / incTime;
-						} else {
-							searchTime *= baseTime / minLeft;
-						}
+
+			for (int i = 1; i < parameters.length; i++) {
+				if (board.getToMove() && parameters[i].equals("wtime") || !board.getToMove() && parameters[i].equals("btime")) {
+					searchTime += Integer.parseInt(parameters[i + 1]) / baseTime;
+					hardTimeLimit = searchTime * baseTime / 2;
+					if (Integer.parseInt(parameters[i + 1]) == Integer.MAX_VALUE) { // workaround for lichess bug with Correspondence games
+						searchTime = ccTimePerMove;
 					}
-				}
-			} else {
-				for (int i = 1; i < parameters.length; i++) {
-					if (parameters[i].equals("btime")) {
-						searchTime += Integer.parseInt(parameters[i + 1]) / baseTime;
-						if (Integer.parseInt(parameters[i + 1]) == Integer.MAX_VALUE) { // workaround for lichess bug with Correspondence games
-							searchTime = ccTimePerMove;
-						}
-						hardTimeLimit = (searchTime * baseTime) / 2;
-					} else if (parameters[i].equals("binc")) {
-						if (searchTime + Integer.parseInt(parameters[i + 1]) / incTime < searchTime * baseTime / minLeft) {
-							searchTime += Integer.parseInt(parameters[i + 1]) / incTime;
-						} else {
-							searchTime *= baseTime / minLeft;
-						}
+				} else if (board.getToMove() && parameters[i].equals("winc") || !board.getToMove() && parameters[i].equals("binc")) {
+					if (searchTime + Integer.parseInt(parameters[i + 1]) / incTime < searchTime * baseTime / minLeft) {
+						searchTime += Integer.parseInt(parameters[i + 1]) / incTime;
+					} else {
+						searchTime *= baseTime / minLeft;
 					}
 				}
 			}
