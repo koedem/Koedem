@@ -34,7 +34,7 @@ public final class UCI {
 											// are exceeded we move. Should be higher than kN/s
 	private static int     kingSafety    = 100;
 	private static int     dynamism      = 100;
-	private static int     ccTimePerMove = 1800000;
+	private static int     ccTimePerMove = 0;
 	public static  boolean logging       = true;
 
 	private static int threadCount = 1;
@@ -317,7 +317,7 @@ public final class UCI {
 		Logging.printLine("option name KingSafety type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Dynamism type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Threads type spin default 1 min 1 max 5");
-		Logging.printLine("option name CorrTimeSeconds type spin default 1800 min 1 max 100000");
+		Logging.printLine("option name CorrTimeSeconds type spin default 0 min 0 max 100000");
 
 		Logging.printLine("option name PawnActFull type spin default 0 min -100 max 1000");
 		Logging.printLine("option name PawnActEmpty type spin default 0 min -100 max 1000");
@@ -396,13 +396,16 @@ public final class UCI {
 	}
 	
 	private static void inputGo(String command) {
-		if (command.contains("depth")) {
+		if (command.equals("go movetime 10000") && ccTimePerMove != 0) {
+			ThreadOrganization.go(100, ccTimePerMove, Integer.MAX_VALUE);
+		} else if (command.contains("depth")) {
 			String[] parameters = command.split(" ");
 			int depth = Integer.parseInt(parameters[2]);
-			ThreadOrganization.go(depth, Integer.MAX_VALUE);
+			ThreadOrganization.go(depth, Integer.MAX_VALUE, Integer.MAX_VALUE);
 		} else if (command.contains("infinite")) {
-		    ThreadOrganization.go(100, Integer.MAX_VALUE);
+		    ThreadOrganization.go(100, Integer.MAX_VALUE, Integer.MAX_VALUE);
 		} else {
+			long hardTimeLimit = Integer.MAX_VALUE;
 			String[] parameters = command.split(" ");
 			int searchTime = 0;
 			if (board.getToMove()) {
@@ -412,6 +415,7 @@ public final class UCI {
 						if (Integer.parseInt(parameters[i + 1]) == Integer.MAX_VALUE) { // workaround for lichess bug with Correspondence games
 							searchTime = ccTimePerMove;
 						}
+						hardTimeLimit = searchTime * (baseTime * 9) / 10;
 					} else if (parameters[i].equals("winc")) {
 						if (searchTime + Integer.parseInt(parameters[i + 1]) / incTime < searchTime * baseTime / minLeft) {
 							searchTime += Integer.parseInt(parameters[i + 1]) / incTime;
@@ -424,6 +428,10 @@ public final class UCI {
 				for (int i = 1; i < parameters.length; i++) {
 					if (parameters[i].equals("btime")) {
 						searchTime += Integer.parseInt(parameters[i + 1]) / baseTime;
+						if (Integer.parseInt(parameters[i + 1]) == Integer.MAX_VALUE) { // workaround for lichess bug with Correspondence games
+							searchTime = ccTimePerMove;
+						}
+						hardTimeLimit = (searchTime * baseTime) / 2;
 					} else if (parameters[i].equals("binc")) {
 						if (searchTime + Integer.parseInt(parameters[i + 1]) / incTime < searchTime * baseTime / minLeft) {
 							searchTime += Integer.parseInt(parameters[i + 1]) / incTime;
@@ -436,7 +444,7 @@ public final class UCI {
 			if (logging) {
 				Logging.printLine("Trying to use " + searchTime + "ms + finishing current ply.");
 			}
-			ThreadOrganization.go(100, searchTime);
+			ThreadOrganization.go(100, searchTime, hardTimeLimit);
 		}
 	}
 	

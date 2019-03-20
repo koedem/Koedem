@@ -89,4 +89,9 @@ public class MateFinderThread implements SearchThreadInterface {
     public void setBoard(BoardInterface board) {
         this.board = board;
     }
+
+	@Override
+	public void setHardTimeLimit(long hardTimeLimit) {
+		// TODO implement
+	}
 }

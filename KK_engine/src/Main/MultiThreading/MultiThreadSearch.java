@@ -13,6 +13,7 @@ public class MultiThreadSearch implements SearchThreadInterface {
 	private BoardInterface   board;
     private int     depth;
     private long    timeLimit;
+    private long hardTimeLimit;
 	
 	public MultiThreadSearch(BoardInterface board, int threadNumber, boolean moveOrdering) {
         this.board = board;
@@ -43,7 +44,7 @@ public class MultiThreadSearch implements SearchThreadInterface {
             }
 
             for (int i = 1; i <= depth; i++) {
-                move = board.getSearch().rootMax(board.getToMove(), i, time);
+                move = board.getSearch().rootMax(board.getToMove(), i, time, hardTimeLimit);
 
                 if (Math.abs(move[move.length - 1]) > 9000) {
                     break;
@@ -85,5 +86,9 @@ public class MultiThreadSearch implements SearchThreadInterface {
 
     public void setBoard(BoardInterface board) {
         this.board = board;
+	}
+
+	public void setHardTimeLimit(long hardTimeLimit) {
+		this.hardTimeLimit = hardTimeLimit;
 	}
 }

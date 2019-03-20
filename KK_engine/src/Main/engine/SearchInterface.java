@@ -22,7 +22,7 @@ public interface SearchInterface extends Serializable {
 
 	long getNodes();
 
-	int[] rootMax(boolean toMove, int depth, long time);
+	int[] rootMax(boolean toMove, int depth, long time, long maxTime);
 
 	int[] negaMax(boolean toMove, int depth, int depthLeft, int alpha, int beta);
 

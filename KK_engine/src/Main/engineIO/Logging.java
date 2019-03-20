@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -12,7 +13,7 @@ public final class Logging {
 	private static boolean logging = true;
 	private static String directoryName = "Koedem-Logs";
 	private static File directory = new File(directoryName);
-	private static String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+	private static String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime()).concat("-" + ManagementFactory.getRuntimeMXBean().getName());
 	private static File logFile = new File(directoryName + File.separator + timeLog);
 	private static BufferedWriter writer = null;
 	

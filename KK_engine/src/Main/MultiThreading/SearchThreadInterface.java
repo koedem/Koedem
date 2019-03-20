@@ -11,4 +11,6 @@ public interface SearchThreadInterface extends Runnable {
     void setTimeLimit(int timeLimit);
 
     void setBoard(BoardInterface board);
+
+    void setHardTimeLimit(long hardTimeLimit);
 }

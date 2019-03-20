@@ -3,6 +3,7 @@ package Main.engine;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
+import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 
@@ -34,7 +35,7 @@ public class Search implements SearchInterface {
 		this.board = board;
 	}
 	
-	public int[] rootMax(boolean toMove, int depth, long time) {
+	public int[] rootMax(boolean toMove, int depth, long time, long maxTime) {
 		Logging.printLine("");
 		if (UCI.logging) {
 			Logging.printLine("Starting depth " + depth + ".");
@@ -87,7 +88,7 @@ public class Search implements SearchInterface {
 					innerPV[depth]++;
 				}
 			}
-			if (innerPV[depth] > principleVariation[depth]) {
+			if (innerPV[depth] > principleVariation[depth] && !UCI.isThreadFinished()) {
 				principleVariation = innerPV;
 				if (innerPV[depth] > alpha) {
 					alpha = principleVariation[depth];
@@ -105,7 +106,8 @@ public class Search implements SearchInterface {
 			}
 			board.setEnPassant(enPassant);
 			board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
-			if (UCI.isThreadFinished()) {
+			if (UCI.isThreadFinished() || System.currentTimeMillis() - time > maxTime) {
+				Logging.printLine("Search interrupted.");
 			    return principleVariation;
             }
 		}

@@ -32,9 +32,10 @@ public class ThreadOrganization {
 		}
 	}
 
-	public static void go(int depth, int timeLimit) {
+	public static void go(int depth, int timeLimit, long hardTimeLimit) {
         thread[0].setDepth(depth);
         thread[0].setTimeLimit(timeLimit);
+        thread[0].setHardTimeLimit(hardTimeLimit);
         synchronized (thread[0]) {
 	        UCI.setThreadFinished(false);
             thread[0].notify();
