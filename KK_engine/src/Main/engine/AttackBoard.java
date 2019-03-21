@@ -147,7 +147,7 @@ public class AttackBoard implements Serializable {
 	}
 
     /**
-     *
+     * TODO attackCount
      * @param colour 0 for white, 1 for black
      * @param pieceType 1-6 for pawn - king
      * @param pieceIndex Array-index in the bitboards
@@ -506,7 +506,9 @@ public class AttackBoard implements Serializable {
 	}
 
 	private void pawnMove(int colour, int pieceIndex, int endSquare) {
-		pieceTypes[colour][0] &= ~attackBoards[colour][0][pieceIndex]; // we can't move on the old squares anymore
+		if ((endSquare - colour) % 8 != 3 || (pieceTypes[colour][0] & bitboard.getBitBoard(colour, 1, pieceIndex)) == 0) {
+			pieceTypes[colour][0] &= ~attackBoards[colour][0][pieceIndex]; // we can't move on the old squares anymore
+		} // else : it was a double pawn and the pawn behind can still move there with a double step
 		pawnSquareAddition(colour, pieceIndex, endSquare);
 		pieceTypes[colour][0] |= attackBoards[colour][0][pieceIndex];
 
@@ -1032,6 +1034,13 @@ public class AttackBoard implements Serializable {
 		return board;
 	}
 
+	/**
+	 * TODO attackCount, tbd: pawnAddition, knightAddition bishopAddition, rookAddition, queenAddition, kingAddition, blockSquare
+	 * @param colour
+	 * @param pieceTyp
+	 * @param index
+	 * @param square
+	 */
 	void add(int colour, int pieceTyp, int index, int square) {
 		switch (pieceTyp) {
 			case 1: pawnAddition(colour, index, square);
@@ -1056,6 +1065,13 @@ public class AttackBoard implements Serializable {
 		               | pieceTypes[1][4] | pieceTypes[1][5] | pieceTypes[1][6];
 	}
 
+	/**
+	 * TODO attackCount
+	 * @param colour
+	 * @param pieceTyp
+	 * @param index
+	 * @param unblockSquare
+	 */
 	void remove(int colour, int pieceTyp, int index, boolean unblockSquare) {
 		attackBoards[colour][pieceTyp][index] = 0;
 		switch (pieceTyp) {
@@ -1245,14 +1261,20 @@ public class AttackBoard implements Serializable {
 		}
 		for (int i = 0; i < attackBoards.length; i++) {
 			for (int j = 2; j < attackBoards[i].length; j++) {
-				for (int k = 0; k < attackBoards[i][j].length; k++) {
+				for (int k = 0; k < 2; k++) { // most of the time we only have two pieces per piece type
 					pieceAttackCount[i][j] += Long.bitCount(attackBoards[i][j][k] & ~bitboard.getAllPieces(i));
 				}
+				if (pieceTypes[i + 4][j] != 0) { // this only is relevant when we have promoted pieces
+					for (int k = 2; k < attackBoards[i][j].length; k++) {
+						pieceAttackCount[i][j] += Long.bitCount(attackBoards[i][j][k] & ~bitboard.getAllPieces(i));
+					}
+				}
 			}
-			for (int k = 0 ; k < attackBoards[i][0].length; k++) {
-				pieceAttackCount[i][0] += Long.bitCount(attackBoards[i][0][k] & ~bitboard.getAllPieces(0) & ~bitboard.getAllPieces(1));
-			}
-			for (int k = 0 ; k < attackBoards[i][1].length; k++) {
+			// legal pawn moves
+			pieceAttackCount[i][0] += Long.bitCount(pieceTypes[i][0] & ~bitboard.getAllPieces(0) & ~bitboard.getAllPieces(1));
+			// squares to which pawns of the same colour can move, can't overlap
+
+			for (int k = 0 ; k < 8; k++) { // legal pawn captures
 				pieceAttackCount[i][1] += Long.bitCount(attackBoards[i][1][k] & bitboard.getAllPieces((i - 1) * (i - 1))); // i - 1 squared = the other colour
 			}
 		}

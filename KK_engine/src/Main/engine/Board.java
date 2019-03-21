@@ -211,6 +211,7 @@ public class Board implements BoardInterface {
 			setEnPassant((byte) -1);
 		}
 		setMoveNumber(Integer.parseInt(positions[positions.length - 1]));
+		attackBoard.generateAttackCount();
 	}
 
 	private void setCastlingRights(String castling) {

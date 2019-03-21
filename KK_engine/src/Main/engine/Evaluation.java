@@ -223,12 +223,13 @@ public final class Evaluation implements EvaluationInterface {
 		whiteSize = board.getMoveGenerator().activityEval(true, storage, whiteSize);
 		blackSize = board.getMoveGenerator().activityEval(false, storage, blackSize);
 
-		return whiteSize[0] == ab.getAttackCount(0, 0) + ab.getAttackCount(0, 1) && whiteSize[1] == ab.getAttackCount(0, 2)
+		assert whiteSize[0] == ab.getAttackCount(0, 0) + ab.getAttackCount(0, 1) && whiteSize[1] == ab.getAttackCount(0, 2)
 		       && whiteSize[2] == ab.getAttackCount(0, 3) && whiteSize[3] == ab.getAttackCount(0, 4)
-		       && whiteSize[4] == ab.getAttackCount(0, 5) && whiteSize[5] == ab.getAttackCount(0, 6)
-		       && blackSize[0] == ab.getAttackCount(1, 0) + ab.getAttackCount(1, 1) && blackSize[1] == ab.getAttackCount(1, 2)
+		       && whiteSize[4] == ab.getAttackCount(0, 5) && whiteSize[5] == ab.getAttackCount(0, 6);
+		assert blackSize[0] == ab.getAttackCount(1, 0) + ab.getAttackCount(1, 1) && blackSize[1] == ab.getAttackCount(1, 2)
 		       && blackSize[2] == ab.getAttackCount(1, 3) && blackSize[3] == ab.getAttackCount(1, 4)
 		       && blackSize[4] == ab.getAttackCount(1, 5) && blackSize[5] == ab.getAttackCount(1, 6);
+		return true;
 	}
 
 	/**
