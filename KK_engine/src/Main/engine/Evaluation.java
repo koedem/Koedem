@@ -12,8 +12,6 @@ import test.Assertions;
 public final class Evaluation implements EvaluationInterface {
 	
 	private static boolean materialOnly = false;
-	private int[] whiteSize = new int[6];
-	private int[] blackSize = new int[6];
 	private int[] storage = new int[MoveGenerator.MAX_MOVE_COUNT];
 	private BoardInterface board;
 
@@ -70,9 +68,6 @@ public final class Evaluation implements EvaluationInterface {
 			return -eval;
 		}
 		
-		whiteSize = board.getMoveGenerator().activityEval(true, storage, whiteSize);
-		blackSize = board.getMoveGenerator().activityEval(false, storage, blackSize);
-		
 		eval += activityEval(board);
 
 		if (!toMove) {
@@ -87,19 +82,15 @@ public final class Evaluation implements EvaluationInterface {
 		ab.generateAttackCount();
 		int activityEval = 0;
 		int piecesLeft = board.getPiecesLeft();
-		activityEval += ((PAWNACTIVITYFULL * piecesLeft + PAWNACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[0] - blackSize[0])) / 32;
-		activityEval += ((KNIGHTACTIVITYFULL * piecesLeft + KNIGHTACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[1] - blackSize[1])) / 32;
-		activityEval += ((BISHOPACTIVITYFULL * piecesLeft + BISHOPACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[2] - blackSize[2])) / 32;
-		activityEval += ((ROOKACTIVITYFULL * piecesLeft + ROOKACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[3] - blackSize[3])) / 32;
-		activityEval += ((QUEENACTIVITYFULL * piecesLeft + QUEENACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[4] - blackSize[4])) / 32;
-		activityEval += ((KINGACTIVITYFULL * piecesLeft + KINGACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[5] - blackSize[5])) / 32;
-		assert whiteSize[0] == ab.getAttackCount(0, 0) + ab.getAttackCount(0, 1) && whiteSize[1] == ab.getAttackCount(0, 2)
-		       && whiteSize[2] == ab.getAttackCount(0, 3) && whiteSize[3] == ab.getAttackCount(0, 4)
-		       && whiteSize[4] == ab.getAttackCount(0, 5) && whiteSize[5] == ab.getAttackCount(0, 6);
-		assert blackSize[0] == ab.getAttackCount(1, 0) + ab.getAttackCount(1, 1) && blackSize[1] == ab.getAttackCount(1, 2)
-		       && blackSize[2] == ab.getAttackCount(1, 3) && blackSize[3] == ab.getAttackCount(1, 4)
-		       && blackSize[4] == ab.getAttackCount(1, 5) && blackSize[5] == ab.getAttackCount(1, 6);
-		
+		activityEval += ((PAWNACTIVITYFULL * piecesLeft + PAWNACTIVITYEMPTY * (32 - piecesLeft))
+		                 * (ab.getAttackCount(0, 0) + ab.getAttackCount(0, 1) - ab.getAttackCount(1, 0) - ab.getAttackCount(1, 1))) / 32;
+		activityEval += ((KNIGHTACTIVITYFULL * piecesLeft + KNIGHTACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 2) - ab.getAttackCount(1, 2))) / 32;
+		activityEval += ((BISHOPACTIVITYFULL * piecesLeft + BISHOPACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 3) - ab.getAttackCount(1, 3))) / 32;
+		activityEval += ((ROOKACTIVITYFULL * piecesLeft + ROOKACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 4) - ab.getAttackCount(1, 4))) / 32;
+		activityEval += ((QUEENACTIVITYFULL * piecesLeft + QUEENACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 5) - ab.getAttackCount(1, 5))) / 32;
+		activityEval += ((KINGACTIVITYFULL * piecesLeft + KINGACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 6) - ab.getAttackCount(1, 6))) / 32;
+
+		assert correctActivityEval(ab);
 		activityEval = (activityEval * UCI.getDynamism()) / 1000;
 		return activityEval;
 	}
@@ -228,6 +219,20 @@ public final class Evaluation implements EvaluationInterface {
             }
         }
 		return true;
+	}
+
+	private boolean correctActivityEval(AttackBoard ab) {
+		int[] whiteSize = new int[6];
+		int[] blackSize = new int[6];
+		whiteSize = board.getMoveGenerator().activityEval(true, storage, whiteSize);
+		blackSize = board.getMoveGenerator().activityEval(false, storage, blackSize);
+
+		return whiteSize[0] == ab.getAttackCount(0, 0) + ab.getAttackCount(0, 1) && whiteSize[1] == ab.getAttackCount(0, 2)
+		       && whiteSize[2] == ab.getAttackCount(0, 3) && whiteSize[3] == ab.getAttackCount(0, 4)
+		       && whiteSize[4] == ab.getAttackCount(0, 5) && whiteSize[5] == ab.getAttackCount(0, 6)
+		       && blackSize[0] == ab.getAttackCount(1, 0) + ab.getAttackCount(1, 1) && blackSize[1] == ab.getAttackCount(1, 2)
+		       && blackSize[2] == ab.getAttackCount(1, 3) && blackSize[3] == ab.getAttackCount(1, 4)
+		       && blackSize[4] == ab.getAttackCount(1, 5) && blackSize[5] == ab.getAttackCount(1, 6);
 	}
 
 	/**
