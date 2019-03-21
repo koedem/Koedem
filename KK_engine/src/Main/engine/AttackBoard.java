@@ -549,7 +549,7 @@ public class AttackBoard implements Serializable {
 	private void pawnAdding(int colour, long squareBoard) {
 		for (int index = 0; index < attackBoards[colour][0].length; index++) {
 			if ((squareBoard & attackBoards[colour][0][index]) != 0) {
-				attackBoards[colour][0][index] |= squareBoard << 1; // we can now step one square further}
+				attackBoards[colour][0][index] |= colour == 0 ? squareBoard << 1 : squareBoard >> 1; // we can now step one square further}
 				pieceTypes[colour][0] |= attackBoards[colour][0][index];
 				break;
 			}
@@ -559,7 +559,7 @@ public class AttackBoard implements Serializable {
 	private void pawnRemoving(int colour, long squareBoard) {
 		for (int index = 0; index < attackBoards[colour][0].length; index++) {
 			if ((squareBoard & attackBoards[colour][0][index]) != 0) {
-				attackBoards[colour][0][index] &= ~(squareBoard << 1); // we can't step two anymore
+				attackBoards[colour][0][index] &= colour == 0 ? ~(squareBoard << 1) : ~(squareBoard >> 1); // we can't step two anymore
 				pieceTypes[colour][0] = attackBoards[colour][0][0] | attackBoards[colour][0][1] | attackBoards[colour][0][2] | attackBoards[colour][0][3] |
 				                        attackBoards[colour][0][4] | attackBoards[colour][0][5] | attackBoards[colour][0][6] | attackBoards[colour][0][7];
 				break;
@@ -1128,7 +1128,7 @@ public class AttackBoard implements Serializable {
         for (int index = 0; index < attackBoards[toMove][0].length; index++) { // do pawns separately
         	if ((legalMoves = attackBoards[toMove][0][index] & ~(bitboard.getAllPieces(0) | bitboard.getAllPieces(1))) != 0) {
         		startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index));
-        		if (whoToMove && (startSquare & 7) != 6) { // no promotion
+        		if (whoToMove && (startSquare & 7) != 6 || !whoToMove && (startSquare & 7) != 1) { // no promotion
 			        while (legalMoves != 0) {
 				        storage[++storage[0]] = (1 << 12) + (startSquare << 6) + (endSquare = Long.numberOfTrailingZeros(legalMoves));
 				        legalMoves &= ~(1L << endSquare);
@@ -1141,7 +1141,7 @@ public class AttackBoard implements Serializable {
 	        }
 	        if ((legalMoves = attackBoards[toMove][1][index] & bitboard.getAllPieces(whoToMove ? 1 : 0)) != 0) {
 		        startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index));
-		        if (whoToMove && (startSquare & 7) != 6) { // no promotion
+		        if (whoToMove && (startSquare & 7) != 6 || !whoToMove && (startSquare & 7) != 1) { // no promotion
 			        while (legalMoves != 0) {
 				        storage[++storage[0]] = (1 << 12) + (startSquare << 6) + (endSquare = Long.numberOfTrailingZeros(legalMoves));
 				        legalMoves &= ~(1L << endSquare);
@@ -1235,5 +1235,30 @@ public class AttackBoard implements Serializable {
 			nonPawns[i] = 0;
 			allPieces[i] = 0;
 		}
+    }
+
+    void generateAttackCount() {
+		for (int i = 0; i < pieceAttackCount.length; i++) {
+			for (int j = 0; j < pieceAttackCount[i].length; j++) {
+				pieceAttackCount[i][j] = 0;
+			}
+		}
+		for (int i = 0; i < attackBoards.length; i++) {
+			for (int j = 2; j < attackBoards[i].length; j++) {
+				for (int k = 0; k < attackBoards[i][j].length; k++) {
+					pieceAttackCount[i][j] += Long.bitCount(attackBoards[i][j][k] & ~bitboard.getAllPieces(i));
+				}
+			}
+			for (int k = 0 ; k < attackBoards[i][0].length; k++) {
+				pieceAttackCount[i][0] += Long.bitCount(attackBoards[i][0][k] & ~bitboard.getAllPieces(0) & ~bitboard.getAllPieces(1));
+			}
+			for (int k = 0 ; k < attackBoards[i][1].length; k++) {
+				pieceAttackCount[i][1] += Long.bitCount(attackBoards[i][1][k] & bitboard.getAllPieces((i - 1) * (i - 1))); // i - 1 squared = the other colour
+			}
+		}
+    }
+
+    int getAttackCount(int colour, int piece) {
+		return pieceAttackCount[colour][piece];
     }
 }
