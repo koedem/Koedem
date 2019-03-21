@@ -42,12 +42,8 @@ public final class Evaluation implements EvaluationInterface {
 
 		assert Assertions.advancement(board);
 		assert Assertions.materialCount(board);
-		//assert Evaluation.correctBitBoard(board);
+		assert correctBitBoard();
 		assert Assertions.attackBoard(board);
-        if (!correctBitBoard()) {
-            Logging.printLine("BitBoard-Error.");
-            System.exit(1);
-        }
 		
 		if (isMaterialOnly()) {
 			if (toMove) {
