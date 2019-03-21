@@ -115,7 +115,6 @@ public final class UCI {
 				board.getSearch().setNodes(0);
 			} else if (command.equals("q eval")) {
 			    Logging.printLine(Integer.toString(board.getSearch().memoryEfficientQSearch(board.getToMove(), -30000, 30000, 0)));
-
 			} else if (command.equals("evaluate")) {
 				Logging.printLine(Integer.toString(board.getEvaluation().evaluation(board.getToMove(), -30000)));
 			} else if (command.equals("Hashtable")) {
