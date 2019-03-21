@@ -15,18 +15,18 @@ public final class Evaluation implements EvaluationInterface {
 	private int[] storage = new int[MoveGenerator.MAX_MOVE_COUNT];
 	private BoardInterface board;
 
-	public static int PAWNACTIVITYFULL = 0;
-	public static int PAWNACTIVITYEMPTY = 0;
-	public static int KNIGHTACTIVITYFULL = 30;
-	public static int KNIGHTACTIVITYEMPTY = 30;
-	public static int BISHOPACTIVITYFULL = 30;
-	public static int BISHOPACTIVITYEMPTY = 30;
-	public static int ROOKACTIVITYFULL = 0;
-	public static int ROOKACTIVITYEMPTY = 40;
-	public static int QUEENACTIVITYFULL = 0;
-	public static int QUEENACTIVITYEMPTY = 20;
-	public static int KINGACTIVITYFULL = -30;
-	public static int KINGACTIVITYEMPTY = 10;
+	public static int PAWNACTIVITYFULL = 38;
+	public static int PAWNACTIVITYEMPTY = 10;
+	public static int KNIGHTACTIVITYFULL = 54;
+	public static int KNIGHTACTIVITYEMPTY = 33;
+	public static int BISHOPACTIVITYFULL = 36;
+	public static int BISHOPACTIVITYEMPTY = 59;
+	public static int ROOKACTIVITYFULL = 42;
+	public static int ROOKACTIVITYEMPTY = 18;
+	public static int QUEENACTIVITYFULL = 3;
+	public static int QUEENACTIVITYEMPTY = 73;
+	public static int KINGACTIVITYFULL = -22;
+	public static int KINGACTIVITYEMPTY = 44;
 
 	public Evaluation(BoardInterface board) {
 		this.board = board;

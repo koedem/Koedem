@@ -23,7 +23,7 @@ public final class UCI {
 
     private static int baseTime = 100;
 	private static int incTime = 2;
-	private static int     minLeft       = 20;
+	private static int     minLeft       = 30;
 											// For scenarios with possibly inaccurate system time we have backup:
 	private static int     lowerKN_Bound = 0;   // We don't move before we searched lowerKN_Bound * timeLimit many nodes.
 											// Should be lower than kN/s
@@ -310,7 +310,7 @@ public final class UCI {
 		
 		Logging.printLine("option name BaseTime type spin default 100 min 1 max 10000");
 		Logging.printLine("option name IncTime type spin default 5000 min 1 max 10000");
-		Logging.printLine("option name MinTime type spin default 500 min 1 max 10000");
+		Logging.printLine("option name MinTime type spin default 333 min 1 max 10000");
 		Logging.printLine("option name Lower_KN_searched_bound type spin default 0 min 0 max 1000");
 		Logging.printLine("option name Upper_KN_searched_bound type spin default 500 min 1 max 10000");
 		Logging.printLine("option name KingSafety type spin default 100 min 1 max 1000");
@@ -318,18 +318,18 @@ public final class UCI {
 		Logging.printLine("option name Threads type spin default 1 min 1 max 5");
 		Logging.printLine("option name CorrTimeSeconds type spin default 0 min 0 max 100000");
 
-		Logging.printLine("option name PawnActFull type spin default 0 min -100 max 1000");
-		Logging.printLine("option name PawnActEmpty type spin default 0 min -100 max 1000");
-		Logging.printLine("option name KnightActFull type spin default 30 min -100 max 1000");
-		Logging.printLine("option name KnightActEmpty type spin default 30 min -100 max 1000");
-		Logging.printLine("option name BishopActFull type spin default 30 min -100 max 1000");
-		Logging.printLine("option name BishopActEmpty type spin default 30 min -100 max 1000");
-		Logging.printLine("option name RookActFull type spin default 0 min -100 max 1000");
-		Logging.printLine("option name RookActEmpty type spin default 40 min -100 max 1000");
-		Logging.printLine("option name QueenActFull type spin default 0 min -100 max 1000");
-		Logging.printLine("option name QueenActEmpty type spin default 20 min -100 max 1000");
-		Logging.printLine("option name KingActFull type spin default -30 min -100 max 1000");
-		Logging.printLine("option name KingActEmpty type spin default 10 min -100 max 1000");
+		Logging.printLine("option name PawnActFull type spin default 38 min -100 max 1000");
+		Logging.printLine("option name PawnActEmpty type spin default 10 min -100 max 1000");
+		Logging.printLine("option name KnightActFull type spin default 54 min -100 max 1000");
+		Logging.printLine("option name KnightActEmpty type spin default 33 min -100 max 1000");
+		Logging.printLine("option name BishopActFull type spin default 36 min -100 max 1000");
+		Logging.printLine("option name BishopActEmpty type spin default 59 min -100 max 1000");
+		Logging.printLine("option name RookActFull type spin default 42 min -100 max 1000");
+		Logging.printLine("option name RookActEmpty type spin default 18 min -100 max 1000");
+		Logging.printLine("option name QueenActFull type spin default 3 min -100 max 1000");
+		Logging.printLine("option name QueenActEmpty type spin default 73 min -100 max 1000");
+		Logging.printLine("option name KingActFull type spin default -22 min -100 max 1000");
+		Logging.printLine("option name KingActEmpty type spin default 44 min -100 max 1000");
 
 		Logging.printLine("uciok");
 	}
