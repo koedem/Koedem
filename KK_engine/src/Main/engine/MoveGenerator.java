@@ -161,41 +161,39 @@ public class MoveGenerator implements MoveGeneratorInterface {
 
 				if (row == 4) {
 					if (startSquare - 7 == board.getEnPassant()) {
-						captures[1][++captures[1][0]] = (1 << 12) + (startSquare << 6) + (startSquare - 7);
-						movesSize[0]++;
+						captures[1][++captures[1][0]] = (1 << 12) + (startSquare << 6) + (startSquare - 7); // Not counting e.p. for activity eval doesn't make a
+																											// big difference and simplifies AttackBoard activity eval
 					} else if ((file * 8 + row) + 9 == board.getEnPassant()) {
-						captures[1][++captures[1][0]] = (1 << 12) + (startSquare << 6) + (startSquare + 9);
-						movesSize[0]++;
+						captures[1][++captures[1][0]] = (1 << 12) + (startSquare << 6) + (startSquare + 9); // Not counting e.p. for activity eval doesn't make a
+																											// big difference and simplifies AttackBoard activity eval
 					}
 				}
 			} else if (row == 6) { // promotion
 				if (board.getSquare(file, row + 1) == 0) {
+					movesSize[0]++; // only count once to simplify AttackBoard based activity eval
 					for (int piece = 5; piece > 1; piece--) { // TODO outsource variable?!
 						captures[piece][++captures[piece][0]] = (1 << 15) + (startSquare << 9) + ((startSquare + 1) << 3) + piece; // priority according to material "gain"
-						movesSize[0]++;
 					}
 				}
 				
 				if (file > 0 && (capturedPiece = board.getSquare(file - 1, row + 1)) < 0) {
+					movesSize[0]++; // only count once to simplify AttackBoard based activity eval
 					if (capturedPiece == -6) {
 						captures[0][0] = -1;
-						movesSize[0]++;
 					} else {
 						for (int piece = 5; piece > 1; piece--) {
 							captures[5][++captures[5][0]] = (1 << 15) + (startSquare << 9) + ((startSquare - 7) << 3) + piece; // capturing while promoting always best priority
-							movesSize[0]++;
 						}
 					}
 				}
 				
 				if (file < 7 && (capturedPiece = board.getSquare(file + 1, row + 1)) < 0) {
+					movesSize[0]++; // only count once to simplify AttackBoard based activity eval
 					if (capturedPiece == -6) {
 						captures[0][0] = -1;
-						movesSize[0]++;
 					} else {
 						for (int piece = 5; piece > 1; piece--) {
 							captures[5][++captures[5][0]] = (1 << 15) + (startSquare << 9) + ((startSquare + 9) << 3) + piece;
-							movesSize[0]++;
 						}
 					}
 				}
@@ -235,41 +233,39 @@ public class MoveGenerator implements MoveGeneratorInterface {
 
 				if (row == 3) {
 					if ((file * 8 + row) + 7 == board.getEnPassant()) {
-						captures[1][++captures[1][0]] = (1 << 12) + (startSquare << 6) + (startSquare + 7);
-						movesSize[0]++;
+						captures[1][++captures[1][0]] = (1 << 12) + (startSquare << 6) + (startSquare + 7); // Not counting e.p. for activity eval doesn't make a
+																											// big difference and simplifies AttackBoard activity eval
 					} else if ((file * 8 + row) - 9 == board.getEnPassant()) {
-						captures[1][++captures[1][0]] = (1 << 12) + (startSquare << 6) + (startSquare - 9);
-						movesSize[0]++;
+						captures[1][++captures[1][0]] = (1 << 12) + (startSquare << 6) + (startSquare - 9); // Not counting e.p. for activity eval doesn't make a
+																											// big difference and simplifies AttackBoard activity eval
 					}
 				}
 			} else if (row == 1) { // promotion
 				if (board.getSquare(file, row - 1) == 0) {
+					movesSize[0]++; // only count once to simplify AttackBoard based activity eval
 					for (int piece = 5; piece > 1; piece--) {
 						captures[piece][++captures[piece][0]] = (1 << 15) + (startSquare << 9) + ((startSquare - 1) << 3) + piece; // priority according to material gain
-						movesSize[0]++;
 					}
 				}
 				
 				if (file > 0 && (capturedPiece = board.getSquare(file - 1, row - 1)) > 0) {
+					movesSize[0]++; // only count once to simplify AttackBoard based activity eval
 					if (capturedPiece == 6) {
 						captures[0][0] = -1;
-						movesSize[0]++;
 					} else {
 						for (int piece = 5; piece > 1; piece--) {
 							captures[5][++captures[5][0]] = (1 << 15) + (startSquare << 9) + ((startSquare - 9) << 3) + piece; // always best priority for capture-promotion
-							movesSize[0]++;
 						}
 					}
 				}
 				
 				if (file < 7 && (capturedPiece = board.getSquare(file + 1, row - 1)) > 0) {
+					movesSize[0]++; // only count once to simplify AttackBoard based activity eval
 					if (capturedPiece == 6) {
 						captures[0][0] = -1;
-						movesSize[0]++;
 					} else {
 						for (int piece = 5; piece > 1; piece--) {
 							captures[5][++captures[5][0]] = (1 << 15) + (startSquare << 9) + ((startSquare + 7) << 3) + piece;
-							movesSize[0]++;
 						}
 					}
 				}
@@ -912,11 +908,11 @@ public class MoveGenerator implements MoveGeneratorInterface {
 				if ((board.getCastlingRights() & 0x18) == 0x18) {
 					if (board.getSquare(5, 0) == 0 && board.getSquare(6, 0) == 0) {
 						board.setSquare(5, 0, (byte) 6);
-						int castlingLegality[] = board.getCaptureGenerator().collectCaptures(false, castlingTestCaptures);
+						int[] castlingLegality = board.getCaptureGenerator().collectCaptures(false, castlingTestCaptures);
 						// TODO make this prettier; right now we don't check [6][0] for legality because we'll find out next move in case it wasn't
 						if (castlingLegality[0] != -1) {
-							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3);
-							movesSize[5]++;
+							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3); // adding castling moves to activity isn't super relevant
+																													 // removing that simplifies AttackBoard based activity
 						}
 						board.setSquare(5, 0, (byte) 0);
 					}
@@ -925,10 +921,10 @@ public class MoveGenerator implements MoveGeneratorInterface {
 				if (((board.getCastlingRights() & 0x30) == 0x30)) {
 					if (board.getSquare(3, 0) == 0 && board.getSquare(2, 0) == 0 && board.getSquare(1, 0) == 0) {
 						board.setSquare(3, 0, (byte) 6);
-						int castlingLegality[] = board.getCaptureGenerator().collectCaptures(false, castlingTestCaptures);
+						int[] castlingLegality = board.getCaptureGenerator().collectCaptures(false, castlingTestCaptures);
 						if (castlingLegality[0] != -1) {
-							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3);
-							movesSize[5]++;
+							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3); // adding castling moves to activity isn't super relevant
+																													 // removing that simplifies AttackBoard based activity
 						}
 						board.setSquare(3, 0, (byte) 0);
 					}
@@ -1053,8 +1049,8 @@ public class MoveGenerator implements MoveGeneratorInterface {
 						board.setSquare(5, 7, (byte) -6);
 						int[] castlingLegality = board.getCaptureGenerator().collectCaptures(true, castlingTestCaptures);
 						if (castlingLegality[0] != -1) {
-							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3);
-							movesSize[5]++;
+							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3); // adding castling moves to activity isn't super relevant
+																													 // removing that simplifies AttackBoard based activity
 						}
 						board.setSquare(5, 7, (byte) 0);
 					}
@@ -1065,8 +1061,8 @@ public class MoveGenerator implements MoveGeneratorInterface {
 						board.setSquare(3, 7, (byte) -6);
 						int[] castlingLegality = board.getCaptureGenerator().collectCaptures(true, castlingTestCaptures);
 						if (castlingLegality[0] != -1) {
-							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3);
-							movesSize[5]++;
+							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3); // adding castling moves to activity isn't super relevant
+																													 // removing that simplifies AttackBoard based activity
 						}
 						board.setSquare(3, 7, (byte) 0);
 					}

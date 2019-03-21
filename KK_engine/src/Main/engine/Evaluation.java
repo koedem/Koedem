@@ -93,10 +93,12 @@ public final class Evaluation implements EvaluationInterface {
 		activityEval += ((ROOKACTIVITYFULL * piecesLeft + ROOKACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[3] - blackSize[3])) / 32;
 		activityEval += ((QUEENACTIVITYFULL * piecesLeft + QUEENACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[4] - blackSize[4])) / 32;
 		activityEval += ((KINGACTIVITYFULL * piecesLeft + KINGACTIVITYEMPTY * (32 - piecesLeft))  * (whiteSize[5] - blackSize[5])) / 32;
-		assert whiteSize[1] == ab.getAttackCount(0, 2) && whiteSize[2] == ab.getAttackCount(0, 3)
-		       && whiteSize[3] == ab.getAttackCount(0, 4) && whiteSize[4] == ab.getAttackCount(0, 5);
-		assert blackSize[1] == ab.getAttackCount(1, 2) && blackSize[2] == ab.getAttackCount(1, 3)
-		       && blackSize[3] == ab.getAttackCount(1, 4) && blackSize[4] == ab.getAttackCount(1, 5);
+		assert whiteSize[0] == ab.getAttackCount(0, 0) + ab.getAttackCount(0, 1) && whiteSize[1] == ab.getAttackCount(0, 2)
+		       && whiteSize[2] == ab.getAttackCount(0, 3) && whiteSize[3] == ab.getAttackCount(0, 4)
+		       && whiteSize[4] == ab.getAttackCount(0, 5) && whiteSize[5] == ab.getAttackCount(0, 6);
+		assert blackSize[0] == ab.getAttackCount(1, 0) + ab.getAttackCount(1, 1) && blackSize[1] == ab.getAttackCount(1, 2)
+		       && blackSize[2] == ab.getAttackCount(1, 3) && blackSize[3] == ab.getAttackCount(1, 4)
+		       && blackSize[4] == ab.getAttackCount(1, 5) && blackSize[5] == ab.getAttackCount(1, 6);
 		
 		activityEval = (activityEval * UCI.getDynamism()) / 1000;
 		return activityEval;
