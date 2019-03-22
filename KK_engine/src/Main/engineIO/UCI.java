@@ -413,6 +413,7 @@ public final class UCI {
 					hardTimeLimit = searchTime * baseTime / 2;
 					if (Integer.parseInt(parameters[i + 1]) == Integer.MAX_VALUE) { // workaround for lichess bug with Correspondence games
 						searchTime = ccTimePerMove;
+						hardTimeLimit = Integer.MAX_VALUE / 2;
 					}
 				} else if (board.getToMove() && parameters[i].equals("winc") || !board.getToMove() && parameters[i].equals("binc")) {
 					if (searchTime + Integer.parseInt(parameters[i + 1]) / incTime < searchTime * baseTime / minLeft) {
@@ -423,7 +424,7 @@ public final class UCI {
 				}
 			}
 			if (logging) {
-				Logging.printLine("Trying to use " + searchTime + "ms + finishing current ply.");
+				Logging.printLine("Trying to use " + searchTime + "ms + finishing current ply or at most " + hardTimeLimit + "ms.");
 			}
 			ThreadOrganization.go(100, searchTime, hardTimeLimit);
 		}

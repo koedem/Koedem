@@ -34,32 +34,45 @@ public class CaptureGenerator implements CaptureGeneratorInterface {
 		BitBoardInterface bitboard = board.getBitboard();
 		if ((bitboard.getBitBoard(whoToMove ? 1 : 0, 6, 0) & board.getAttackBoard().getAllPieces()[toMove]) != 0) { // i.e. we can capture a king
 			allCaptures[0] = -1;
+			return allCaptures;
 		} else {
 			allCaptures[0] = 0;
+			if ((board.getAttackBoard().getAllPieces()[toMove] & bitboard.getAllPieces(whoToMove ? 1 : 0)) == 0) { // i.e. there's no legal captures
+				return allCaptures;
+			}
+			for (int i = 0; i < qSearchCaptures.length; i++) {
+				qSearchCaptures[i][0] = 0;
+			}
 			long       legalCaptures;
 			int        startSquare, endSquare = -1;
+			int capturedPieceValue = -1;
 			long[][][] attackBoards           = board.getAttackBoard().getAttackBoards();
-			for (int index = 0; index < 8; index++) { // do pawns separately
-				if ((legalCaptures = attackBoards[toMove][1][index] & bitboard.getAllPieces(whoToMove ? 1 : 0)) != 0) {
-					startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index));
-					if (whoToMove && (startSquare & 7) != 6 || !whoToMove && (startSquare & 7) != 1) { // no promotion
-						while (legalCaptures != 0) {
-							allCaptures[++allCaptures[0]] = (1 << 12) + (startSquare << 6) + (endSquare = Long.numberOfTrailingZeros(legalCaptures));
-							legalCaptures &= ~(1L << endSquare);
-						}
-					} else {
-						while (legalCaptures != 0) {
-							for (int promotion = 2; promotion <= 5; promotion++) {
-								allCaptures[++allCaptures[0]] = (1 << 15) + (startSquare << 9) + ((endSquare = Long.numberOfTrailingZeros(legalCaptures)) << 3) + promotion;
+			if ((board.getAttackBoard().getPieceTypes()[toMove][1] & bitboard.getAllPieces(whoToMove ? 1 : 0)) != 0) { // i.e. there are some pawn captures
+				for (int index = 0; index < 8; index++) {
+					if ((legalCaptures = attackBoards[toMove][1][index] & bitboard.getAllPieces(whoToMove ? 1 : 0)) != 0) {
+						startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index));
+						if (whoToMove && (startSquare & 7) != 6 || !whoToMove && (startSquare & 7) != 1) { // no promotion
+							while (legalCaptures != 0) {
+								endSquare = Long.numberOfTrailingZeros(legalCaptures);
+								capturedPieceValue = whoToMove ? -board.getSquare(endSquare / 8, endSquare % 8) : board.getSquare(endSquare / 8, endSquare % 8);
+								qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]] = (1 << 12) + (startSquare << 6) + (endSquare);
+								legalCaptures &= ~(1L << endSquare);
 							}
-							legalCaptures &= ~(1L << endSquare);
+						} else {
+							while (legalCaptures != 0) {
+								for (int promotion = 2; promotion <= 5; promotion++) {
+									qSearchCaptures[5][++qSearchCaptures[5][0]] =
+											(1 << 15) + (startSquare << 9) + ((endSquare = Long.numberOfTrailingZeros(legalCaptures)) << 3) + promotion;
+								}
+								legalCaptures &= ~(1L << endSquare);
+							}
 						}
 					}
-				}
-				if (board.getEnPassant() != 0 && (whoToMove && (board.getEnPassant() & 7) == 5 || !whoToMove && (board.getEnPassant() & 7) == 2)) {
-					if ((legalCaptures = (1L << board.getEnPassant()) & attackBoards[toMove][1][index]) != 0) {
-						allCaptures[++allCaptures[0]] = (1 << 12) + ((Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index))) << 6) + (endSquare =
-								Long.numberOfTrailingZeros(legalCaptures));
+					if (board.getEnPassant() != 0 && (whoToMove && (board.getEnPassant() & 7) == 5 || !whoToMove && (board.getEnPassant() & 7) == 2)) {
+						if ((legalCaptures = (1L << board.getEnPassant()) & attackBoards[toMove][1][index]) != 0) {
+							qSearchCaptures[1][++qSearchCaptures[1][0]] = (1 << 12) + ((Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index))) << 6)
+							                                              + (endSquare = Long.numberOfTrailingZeros(legalCaptures));
+						}
 					}
 				}
 			}
@@ -70,7 +83,9 @@ public class CaptureGenerator implements CaptureGeneratorInterface {
 						startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, piece, index));
 						legalCaptures = attackBoards[toMove][piece][index] & (bitboard.getAllPieces(whoToMove ? 1 : 0));
 						while (legalCaptures != 0) {
-							allCaptures[++allCaptures[0]] = (1 << 12) + (startSquare << 6) + (endSquare = Long.numberOfTrailingZeros(legalCaptures));
+							endSquare = Long.numberOfTrailingZeros(legalCaptures);
+							capturedPieceValue = whoToMove ? -board.getSquare(endSquare / 8, endSquare % 8) : board.getSquare(endSquare / 8, endSquare % 8);
+							qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]] = (1 << 12) + (startSquare << 6) + (endSquare);
 							legalCaptures &= ~(1L << endSquare);
 						}
 					}
@@ -80,7 +95,9 @@ public class CaptureGenerator implements CaptureGeneratorInterface {
 							startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, piece, index));
 							legalCaptures = attackBoards[toMove][piece][index] & (bitboard.getAllPieces(whoToMove ? 1 : 0));
 							while (legalCaptures != 0) {
-								allCaptures[++allCaptures[0]] = (1 << 12) + (startSquare << 6) + (endSquare = Long.numberOfTrailingZeros(legalCaptures));
+								endSquare = Long.numberOfTrailingZeros(legalCaptures);
+								capturedPieceValue = whoToMove ? -board.getSquare(endSquare / 8, endSquare % 8) : board.getSquare(endSquare / 8, endSquare % 8);
+								qSearchCaptures[capturedPieceValue][++qSearchCaptures[capturedPieceValue][0]] = (1 << 12) + (startSquare << 6) + (endSquare);
 								legalCaptures &= ~(1L << endSquare);
 							}
 						}
@@ -88,6 +105,12 @@ public class CaptureGenerator implements CaptureGeneratorInterface {
 				}
 			}
 		}
+		for (int piece = qSearchCaptures.length - 1; piece > 0; piece--) {
+			int destPos = allCaptures[0] + 1; // plus one because allCaptures[0] doesn't store moves
+			System.arraycopy(qSearchCaptures[piece], 1, allCaptures, destPos, qSearchCaptures[piece][0]);
+			allCaptures[0] += qSearchCaptures[piece][0];
+		}
+
 		return allCaptures;
 	}
 
