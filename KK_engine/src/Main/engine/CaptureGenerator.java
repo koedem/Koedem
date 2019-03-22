@@ -23,13 +23,80 @@ public class CaptureGenerator implements CaptureGeneratorInterface {
 
 	}
 
+	/**
+	 * This code works with the AttackBoard to quickly determine capture options.
+	 * @param whoToMove who to move it is. true = white, false = black.
+	 * @param allCaptures integer array to store captures in the usual move format in.
+	 * @return integer array containing all legal captures for toMove in the current position.
+	 */
+	public int[] collectCaptures(boolean whoToMove, int[] allCaptures) { // TODO sort captures according to material gain
+		int toMove = whoToMove ? 0 : 1;
+		BitBoardInterface bitboard = board.getBitboard();
+		if ((bitboard.getBitBoard(whoToMove ? 1 : 0, 6, 0) & board.getAttackBoard().getAllPieces()[toMove]) != 0) { // i.e. we can capture a king
+			allCaptures[0] = -1;
+		} else {
+			allCaptures[0] = 0;
+			long       legalCaptures;
+			int        startSquare, endSquare = -1;
+			long[][][] attackBoards           = board.getAttackBoard().getAttackBoards();
+			for (int index = 0; index < 8; index++) { // do pawns separately
+				if ((legalCaptures = attackBoards[toMove][1][index] & bitboard.getAllPieces(whoToMove ? 1 : 0)) != 0) {
+					startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index));
+					if (whoToMove && (startSquare & 7) != 6 || !whoToMove && (startSquare & 7) != 1) { // no promotion
+						while (legalCaptures != 0) {
+							allCaptures[++allCaptures[0]] = (1 << 12) + (startSquare << 6) + (endSquare = Long.numberOfTrailingZeros(legalCaptures));
+							legalCaptures &= ~(1L << endSquare);
+						}
+					} else {
+						while (legalCaptures != 0) {
+							for (int promotion = 2; promotion <= 5; promotion++) {
+								allCaptures[++allCaptures[0]] = (1 << 15) + (startSquare << 9) + ((endSquare = Long.numberOfTrailingZeros(legalCaptures)) << 3) + promotion;
+							}
+							legalCaptures &= ~(1L << endSquare);
+						}
+					}
+				}
+				if (board.getEnPassant() != 0 && (whoToMove && (board.getEnPassant() & 7) == 5 || !whoToMove && (board.getEnPassant() & 7) == 2)) {
+					if ((legalCaptures = (1L << board.getEnPassant()) & attackBoards[toMove][1][index]) != 0) {
+						allCaptures[++allCaptures[0]] = (1 << 12) + ((Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index))) << 6) + (endSquare =
+								Long.numberOfTrailingZeros(legalCaptures));
+					}
+				}
+			}
+
+			for (int piece = 2; piece < attackBoards[toMove].length; piece++) {
+				if ((board.getAttackBoard().getPieceTypes()[toMove][piece] & bitboard.getAllPieces(whoToMove ? 1 : 0)) != 0) { // i.e. there are some captures with that piece
+					for (int index = 0; index < 2; index++) {
+						startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, piece, index));
+						legalCaptures = attackBoards[toMove][piece][index] & (bitboard.getAllPieces(whoToMove ? 1 : 0));
+						while (legalCaptures != 0) {
+							allCaptures[++allCaptures[0]] = (1 << 12) + (startSquare << 6) + (endSquare = Long.numberOfTrailingZeros(legalCaptures));
+							legalCaptures &= ~(1L << endSquare);
+						}
+					}
+					if ((board.getAttackBoard().getPieceTypes()[toMove + 4][piece] & bitboard.getAllPieces(whoToMove ? 1 : 0)) != 0) {
+																																	// i.e. there are captures with promoted pieces
+						for (int index = 2; index < attackBoards[toMove][piece].length; index++) {
+							startSquare = Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, piece, index));
+							legalCaptures = attackBoards[toMove][piece][index] & (bitboard.getAllPieces(whoToMove ? 1 : 0));
+							while (legalCaptures != 0) {
+								allCaptures[++allCaptures[0]] = (1 << 12) + (startSquare << 6) + (endSquare = Long.numberOfTrailingZeros(legalCaptures));
+								legalCaptures &= ~(1L << endSquare);
+							}
+						}
+					}
+				}
+			}
+		}
+		return allCaptures;
+	}
 
 	/**
 	 *
 	 * @param toMove : Who to move it is.
 	 * @return ArrayList of Integers, containing all captures.
 	 */
-	public int[] collectCaptures(boolean toMove, int[] allCaptures) {
+	public int[] oldCollectCaptures(boolean toMove, int[] allCaptures) {
 		for (int piece = 0; piece < 6; piece++) {
 			qSearchCaptures[piece][0] = 0;
 		}

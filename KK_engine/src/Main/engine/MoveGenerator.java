@@ -905,28 +905,24 @@ public class MoveGenerator implements MoveGeneratorInterface {
 			}
 
 			if (file == 4 && row == 0) {
-				if ((board.getCastlingRights() & 0x18) == 0x18) {
-					if (board.getSquare(5, 0) == 0 && board.getSquare(6, 0) == 0) {
-						board.setSquare(5, 0, (byte) 6);
-						int[] castlingLegality = board.getCaptureGenerator().collectCaptures(false, castlingTestCaptures);
-						// TODO make this prettier; right now we don't check [6][0] for legality because we'll find out next move in case it wasn't
-						if (castlingLegality[0] != -1) {
-							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3); // adding castling moves to activity isn't super relevant
-																													 // removing that simplifies AttackBoard based activity
+				if ((board.getCastlingRights() & 0x30) == 0x30) { // Q side castling
+					for (int index = 0; index < 10; index++) {
+						if (((0x1010101L << 8) & board.getAttackBoard().getAttackBoards()[0][4][index]) == (0x1010101L << 8)) {
+																// i.e. nothing between rook and king, castling possible
+							if (((0x101L << 24) & board.getAttackBoard().getAllPieces()[1]) == 0) { // i.e. black can't capture on e1 or d1 -> castling actually legal
+								nonCaptures[++nonCaptures[0]] = (1 << 12) + (32 << 6) + 16; // note, still only pseudo legal; merely to match movegenerator
+							}
 						}
-						board.setSquare(5, 0, (byte) 0);
 					}
 				}
-
-				if (((board.getCastlingRights() & 0x30) == 0x30)) {
-					if (board.getSquare(3, 0) == 0 && board.getSquare(2, 0) == 0 && board.getSquare(1, 0) == 0) {
-						board.setSquare(3, 0, (byte) 6);
-						int[] castlingLegality = board.getCaptureGenerator().collectCaptures(false, castlingTestCaptures);
-						if (castlingLegality[0] != -1) {
-							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3); // adding castling moves to activity isn't super relevant
-																													 // removing that simplifies AttackBoard based activity
+				if ((board.getCastlingRights() & 0x18) == 0x18) { // K side castling
+					for (int index = 0; index < 10; index++) {
+						if (((0x10101L << 32) & board.getAttackBoard().getAttackBoards()[0][4][index]) == (0x10101L << 32)) {
+																// i.e. nothing between rook and king, castling possible
+							if (((0x101L << 32) & board.getAttackBoard().getAllPieces()[1]) == 0) { // i.e. black can't capture on e1 or f1 -> castling actually legal
+								nonCaptures[++nonCaptures[0]] = (1 << 12) + (32 << 6) + 48;
+							}
 						}
-						board.setSquare(3, 0, (byte) 0);
 					}
 				}
 			}
@@ -1044,27 +1040,24 @@ public class MoveGenerator implements MoveGeneratorInterface {
 			}
 
 			if (file == 4 && row == 7) {
-				if ((board.getCastlingRights() & 0x3) == 0x3) {
-					if (board.getSquare(5, 7) == 0 && board.getSquare(6, 7) == 0) {
-						board.setSquare(5, 7, (byte) -6);
-						int[] castlingLegality = board.getCaptureGenerator().collectCaptures(true, castlingTestCaptures);
-						if (castlingLegality[0] != -1) {
-							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare + (2 << 3); // adding castling moves to activity isn't super relevant
-																													 // removing that simplifies AttackBoard based activity
+				if ((board.getCastlingRights() & 0x6) == 0x6) { // Q side castling
+					for (int index = 0; index < 10; index++) {
+						if (((0x1010101L << 15) & board.getAttackBoard().getAttackBoards()[1][4][index]) == (0x1010101L << 15)) {
+																				// i.e. nothing between rook and king, castling possible
+							if (((0x101L << 31) & board.getAttackBoard().getAllPieces()[0]) == 0) { // i.e. white can't capture on e8 or d8 -> castling actually legal
+								nonCaptures[++nonCaptures[0]] = (1 << 12) + (39 << 6) + 23; // note, still only pseudo legal; merely to match movegenerator
+							}
 						}
-						board.setSquare(5, 7, (byte) 0);
 					}
 				}
-
-				if (((board.getCastlingRights() & 0x6) == 0x6)) {
-					if (board.getSquare(3, 7) == 0 && board.getSquare(2, 7) == 0 && board.getSquare(1, 7) == 0) {
-						board.setSquare(3, 7, (byte) -6);
-						int[] castlingLegality = board.getCaptureGenerator().collectCaptures(true, castlingTestCaptures);
-						if (castlingLegality[0] != -1) {
-							nonCaptures[++nonCaptures[0]] = (1 << 12) + (startSquare << 6) + startSquare - (2 << 3); // adding castling moves to activity isn't super relevant
-																													 // removing that simplifies AttackBoard based activity
+				if ((board.getCastlingRights() & 0x3) == 0x3) { // K side castling
+					for (int index = 0; index < 10; index++) {
+						if (((0x10101L << 39) & board.getAttackBoard().getAttackBoards()[1][4][index]) == (0x10101L << 39)) {
+																				// i.e. nothing between rook and king, castling possible
+							if (((0x101L << 39) & board.getAttackBoard().getAllPieces()[0]) == 0) { // i.e. white can't capture on e8 or f8 -> castling actually legal
+								nonCaptures[++nonCaptures[0]] = (1 << 12) + (39 << 6) + 55;
+							}
 						}
-						board.setSquare(3, 7, (byte) 0);
 					}
 				}
 			}

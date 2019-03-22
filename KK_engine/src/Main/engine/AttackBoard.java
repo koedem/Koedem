@@ -92,12 +92,20 @@ public class AttackBoard implements Serializable {
 		~(0x408102040800000L), ~(0x810204080000000L), ~(0x1020408000000000L), ~(0x2040800000000000L), ~(0x4080000000000000L), ~(0x8000000000000000L),
 	};
 
+	public long[][][] getAttackBoards() {
+		return attackBoards;
+	}
+
 	/**
 	 * Contains the squares controlled by individual pieces. [0] for White pieces, [1] for Black pieces.
 	 * [][0] for pawn moves, [][1] for pawn captures, [][2] for knight moves/captures etc.
 	 * At most 10 pieces per piece type and side. (first two for the starting pieces, rest for promoted pieces)
 	 */
 	private long[][][] attackBoards = new long[2][7][10];
+
+	public long[][] getPieceTypes() {
+		return pieceTypes;
+	}
 
 	/**
 	 * Contains the squares controlled by the piece types. [0][1] for White pawns, [0][2] for White knights, [1][1] for Black pawns etc.
@@ -122,7 +130,11 @@ public class AttackBoard implements Serializable {
      */
 	private long[] nonPawns = { 0, 0 };
 
-    /**
+	public long[] getAllPieces() {
+		return allPieces;
+	}
+
+	/**
      * The attack table for all pieces of a side combined. [0] for White, [1] for Black pieces.
      */
 	private long[] allPieces = { 0, 0 };
@@ -1173,8 +1185,8 @@ public class AttackBoard implements Serializable {
 	        }
 	        if (board.getEnPassant() != 0 && (whoToMove && (board.getEnPassant() & 7) == 5 || !whoToMove && (board.getEnPassant() & 7) == 2)) {
 	        	if ((legalMoves = (1L << board.getEnPassant()) & attackBoards[toMove][1][index]) != 0) {
-			        storage[++storage[0]] = (1 << 12) + (Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index) << 6) +
-			                                             (endSquare = Long.numberOfTrailingZeros(legalMoves)));
+			        storage[++storage[0]] = (1 << 12) + ((Long.numberOfTrailingZeros(bitboard.getBitBoard(toMove, 1, index))) << 6) +
+			                                             (endSquare = Long.numberOfTrailingZeros(legalMoves));
 		        }
 	        }
         }

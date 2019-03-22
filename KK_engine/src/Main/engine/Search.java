@@ -316,6 +316,9 @@ public class Search implements SearchInterface {
     public int memoryEfficientQSearch(boolean toMove, int alphaBound, int betaBound, int depthSoFar) {
         // IMPORTANT: If anything other than captures should be calculated in this method, the ArraySizes might need to be changed.
 
+	    if (depthSoFar == 30) { // i.e. only two kings left
+	    	return 0;
+	    }
         int alpha = alphaBound;
         int beta = betaBound;
         int eval = board.getEvaluation().evaluation(toMove, alpha);

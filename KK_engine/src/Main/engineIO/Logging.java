@@ -44,6 +44,7 @@ public final class Logging {
 		if (logging) {
 			try {
 				writer.write(line + "\n");
+				writer.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
