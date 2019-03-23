@@ -45,26 +45,26 @@ public class Search implements SearchInterface {
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
 		int[] moves = board.getRootMoves();
-		int bestMove = 1;
 		for (int moveIndex = 1; moveIndex <= moves[0]; moveIndex++) {
+			int move = moves[moveIndex];
 			if (System.currentTimeMillis() - time > 1000) {
 				Logging.printLine("info depth " + depth + " currmove " 
-						+ Transformation.numberToMove(moves[moveIndex]) + " currmovenumber " + (moveIndex));
+						+ Transformation.numberToMove(move) + " currmovenumber " + (moveIndex));
 			}
 			byte capturedPiece;
-			if (moves[moveIndex] < (1 << 13)) {
-				capturedPiece = board.getSquare((moves[moveIndex] / 8) % 8, moves[moveIndex] % 8);
+			if (move < (1 << 13)) {
+				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
 			} else {
-				capturedPiece = board.getSquare((moves[moveIndex] / 64) % 8, (moves[moveIndex] / 8) % 8);
+				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
 			}
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
-			board.makeMove(moves[moveIndex]);
+			board.makeMove(move);
 			int[] innerPV = new int[depth + 1];
 			if (depth > 1) {
-				innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha);
+				innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha); // TODO !toMove is confusing, as board.toMove changes upon moving but not this local variable
 				innerPV[depth] = -innerPV[depth];
-				innerPV[0] = moves[moveIndex];
+				innerPV[0] = move;
 				
 				//UserInteraction.printEngineOutput("Search move ", innerPV, board, time);
 				
@@ -73,7 +73,7 @@ public class Search implements SearchInterface {
 					principleVariation = innerPV;
 					
 					board.setEnPassant(enPassant);
-					board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
+					board.unmakeMove(move, capturedPiece, castlingRights);
 					return principleVariation;
 				} else if (innerPV[depth] < -9000) {
 					innerPV[depth]++;
@@ -81,7 +81,7 @@ public class Search implements SearchInterface {
 			} else if (depth == 1) {
 				int qsearch = -memoryEfficientQSearch(!toMove, -beta, -alpha, 0);
 				innerPV[depth] = qsearch;
-				innerPV[0] = moves[moveIndex];
+				innerPV[0] = move;
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
 				} else if (innerPV[depth] < -9000) {
@@ -93,7 +93,6 @@ public class Search implements SearchInterface {
 				if (innerPV[depth] > alpha) {
 					alpha = principleVariation[depth];
 				}
-				bestMove = moveIndex;
 				
 				if (depth != 1) {
 					if (moveIndex == 1) {
@@ -103,9 +102,14 @@ public class Search implements SearchInterface {
 						UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
 					}
 				}
+
+				for (int i = moveIndex; i > 1; i--) {
+					moves[i] = moves[i - 1];
+				}
+				moves[1] = move; // order best move to top
 			}
 			board.setEnPassant(enPassant);
-			board.unmakeMove(moves[moveIndex], capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights);
 			if (UCI.isThreadFinished() || System.currentTimeMillis() - time > maxTime) {
 				Logging.printLine("Search interrupted.");
 			    return principleVariation;
@@ -119,10 +123,6 @@ public class Search implements SearchInterface {
 				return principleVariation;
 			}
 		}
-		
-		int bestMoveText = moves[bestMove];
-		moves[bestMove] = moves[1];
-		moves[1] = bestMoveText; // order best move to top
 		
 		return principleVariation;
 	}

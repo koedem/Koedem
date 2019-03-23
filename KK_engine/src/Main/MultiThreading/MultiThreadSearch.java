@@ -2,6 +2,7 @@ package Main.MultiThreading;
 
 import Main.engine.BoardInterface;
 import Main.engine.MoveGenerator;
+import Main.engine.MoveOrdering;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
@@ -46,6 +47,7 @@ public class MultiThreadSearch implements SearchThreadInterface {
             if (UCI.logging) {
             	Logging.printLine("info search started at milli: " + System.currentTimeMillis());
             }
+	        MoveOrdering.getInstance().orderRootMoves(board);
 
             for (int i = 1; i <= depth; i++) {
                 move = board.getSearch().rootMax(board.getToMove(), i, time, hardTimeLimit);
