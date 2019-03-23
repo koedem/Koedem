@@ -27,11 +27,11 @@ public final class UCI {
 											// For scenarios with possibly inaccurate system time we have backup:
 	private static int     lowerKN_Bound = 0;   // We don't move before we searched lowerKN_Bound * timeLimit many nodes.
 											// Should be lower than kN/s
-	private static int     upperKN_Bound = 500; // No matter what the timer says, when upperKN_Bound * timeLimit nodes
+	private static int     upperKN_Bound = 1500; // No matter what the timer says, when upperKN_Bound * timeLimit nodes
 											// are exceeded we move. Should be higher than kN/s
 	private static int     kingSafety    = 100;
 	private static int     dynamism      = 100;
-	private static int     ccTimePerMove = 1800000;
+	private static int     ccTimePerMove = 10000;
 	public static  boolean logging       = true;
 
 	private static int threadCount = 1;
@@ -315,7 +315,7 @@ public final class UCI {
 		Logging.printLine("option name KingSafety type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Dynamism type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Threads type spin default 1 min 1 max 5");
-		Logging.printLine("option name CorrTimeSeconds type spin default 0 min 0 max 100000");
+		Logging.printLine("option name CorrTimeSeconds type spin default 10 min 0 max 100000");
 
 		Logging.printLine("option name PawnActFull type spin default 38 min -100 max 1000");
 		Logging.printLine("option name PawnActEmpty type spin default 10 min -100 max 1000");
