@@ -48,6 +48,9 @@ public class Search implements SearchInterface {
 		for (int moveIndex = 1; moveIndex <= moves[0]; moveIndex++) {
 			int move = moves[moveIndex];
 			if (System.currentTimeMillis() - time > 1000) {
+				Logging.printLine("info depth " + depth + " nodes " + board.getSearch().getNodes() + " nps "
+				                  + 1000 * board.getSearch().getNodes() / ((System.currentTimeMillis() - time) > 0 ? (System.currentTimeMillis() - time) : 1)
+				                  + " time " + (System.currentTimeMillis() - time));
 				Logging.printLine("info depth " + depth + " currmove " 
 						+ Transformation.numberToMove(move) + " currmovenumber " + (moveIndex));
 			}
@@ -89,24 +92,33 @@ public class Search implements SearchInterface {
 				}
 			}
 			if (innerPV[depth] > principleVariation[depth] && !UCI.isThreadFinished()) {
-				principleVariation = innerPV;
-				if (innerPV[depth] > alpha) {
-					alpha = principleVariation[depth];
-				}
-				
-				if (depth != 1) {
-					if (moveIndex == 1) {
-						UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time); 
-															// move on board not yet undone, thus !toMove
+				if (innerPV[depth] < beta) {
+					principleVariation = innerPV;
+					if (innerPV[depth] > alpha) {
+						alpha = principleVariation[depth];
+						beta = alpha + 1; // trying out null move pruning, if we fail high we need to set beta to a higher value
 					} else {
-						UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
+						int ignore = 0;
 					}
-				}
 
-				for (int i = moveIndex; i > 1; i--) {
-					moves[i] = moves[i - 1];
+					if (depth != 1) {
+						if (moveIndex == 1) {
+							UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time);
+							// move on board not yet undone, thus !toMove
+						} else {
+							UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
+						}
+					}
+
+					for (int i = moveIndex; i > 1; i--) {
+						moves[i] = moves[i - 1];
+					}
+					moves[1] = move; // order best move to top
+				} else {
+					beta = 30000;
+					moveIndex--;
+					Logging.printLine("Null window fail high.");
 				}
-				moves[1] = move; // order best move to top
 			}
 			board.setEnPassant(enPassant);
 			board.unmakeMove(move, capturedPiece, castlingRights);
