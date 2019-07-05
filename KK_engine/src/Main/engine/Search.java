@@ -48,8 +48,9 @@ public class Search implements SearchInterface {
 		for (int moveIndex = 1; moveIndex <= moves[0]; moveIndex++) {
 			int move = moves[moveIndex];
 			if (System.currentTimeMillis() - time > 1000) {
-				Logging.printLine("info depth " + depth + " nodes " + board.getSearch().getNodes() + " nps "
-				                  + 1000 * board.getSearch().getNodes() / ((System.currentTimeMillis() - time) > 0 ? (System.currentTimeMillis() - time) : 1)
+				Logging.printLine("info depth " + depth + " nodes " + (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) + " nps "
+				                  + 1000 * (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) / ((System.currentTimeMillis() - time) > 0 ?
+				                                                                                                   (System.currentTimeMillis() - time) : 1)
 				                  + " time " + (System.currentTimeMillis() - time));
 				Logging.printLine("info depth " + depth + " currmove " 
 						+ Transformation.numberToMove(move) + " currmovenumber " + (moveIndex));

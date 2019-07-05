@@ -57,8 +57,8 @@ public class MultiThreadSearch implements SearchThreadInterface {
                 }
 
                 if (System.currentTimeMillis() - time > timeLimit                   // We break if the time is up
-                        && board.getSearch().getNodes() > timeLimit * UCI.getLowerKN_Bound() // and we searched enough nodes.
-                        || board.getSearch().getNodes() > timeLimit * UCI.getUpperKN_Bound() // Or when we searched more than enough nodes.
+                        && (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) > timeLimit * UCI.getLowerKN_Bound() // and we searched enough nodes.
+                        || (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) > timeLimit * UCI.getUpperKN_Bound() // Or when we searched more than enough nodes.
                         || board.getBestmove().equals("(none)")) { // or there are no legal moves
                     break;
                 }

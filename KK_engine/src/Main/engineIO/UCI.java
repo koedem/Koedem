@@ -27,7 +27,7 @@ public final class UCI {
 											// For scenarios with possibly inaccurate system time we have backup:
 	private static int     lowerKN_Bound = 0;   // We don't move before we searched lowerKN_Bound * timeLimit many nodes.
 											// Should be lower than kN/s
-	private static int     upperKN_Bound = 1500; // No matter what the timer says, when upperKN_Bound * timeLimit nodes
+	private static int     upperKN_Bound = 2000; // No matter what the timer says, when upperKN_Bound * timeLimit nodes
 											// are exceeded we move. Should be higher than kN/s
 	private static int     kingSafety    = 100;
 	private static int     dynamism      = 100;
@@ -311,7 +311,7 @@ public final class UCI {
 		Logging.printLine("option name IncTime type spin default 5000 min 1 max 10000");
 		Logging.printLine("option name MinTime type spin default 333 min 1 max 10000");
 		Logging.printLine("option name Lower_KN_searched_bound type spin default 0 min 0 max 1000");
-		Logging.printLine("option name Upper_KN_searched_bound type spin default 500 min 1 max 10000");
+		Logging.printLine("option name Upper_KN_searched_bound type spin default 2000 min 1 max 10000");
 		Logging.printLine("option name KingSafety type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Dynamism type spin default 100 min 1 max 1000");
 		Logging.printLine("option name Threads type spin default 1 min 1 max 5");
@@ -446,7 +446,8 @@ public final class UCI {
 				pv.append(Transformation.numberToMove(move[i])).append(" ");
 			}
 			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes "
-			      + board.getSearch().getNodes() + " nps " + 1000 * board.getSearch().getNodes() / (timeUsed > 0 ? timeUsed : 1)
+			      + (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) + " nps " + 1000 * (board.getSearch().getNodes() + board.getSearch().getAbortedNodes())
+			                                                                                         / (timeUsed > 0 ? timeUsed : 1)
 			      + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
 		} else {
 			StringBuilder pv = new StringBuilder(praefix);
