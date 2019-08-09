@@ -3,7 +3,6 @@ package Main.engine;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
-import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 
@@ -75,7 +74,7 @@ public class Search implements SearchInterface {
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
 					principleVariation = innerPV;
-					
+
 					board.setEnPassant(enPassant);
 					board.unmakeMove(move, capturedPiece, castlingRights);
 					return principleVariation;
