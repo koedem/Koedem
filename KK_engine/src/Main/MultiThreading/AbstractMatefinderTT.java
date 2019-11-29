@@ -27,7 +27,7 @@ public abstract class AbstractMatefinderTT implements TranspositionTableInterfac
         long information;
         int position = (int) zobristHashOne & bitmask;
         for (int count = 0; count < 8; count += 2) {
-            if ((table[position << 3 + count] ^ (information = table[position << 3 + count + 1])) == zobristHashOne) {
+            if ((table[(position << 3) + count] ^ (information = table[(position << 3) + count + 1])) == zobristHashOne) {
                 return information;
             }
         }
@@ -39,14 +39,14 @@ public abstract class AbstractMatefinderTT implements TranspositionTableInterfac
         int position = (int) zobristHash & bitmask;
         long oldInformation;
         for (int count = 0; count < 8; count += 2) {
-            if (table[position << 3 + count] == 0) {
-                table[position << 3 + count] = zobristHash ^ information;
-                table[position << 3 + count + 1] = information;
+            if (table[(position << 3) + count] == 0) {
+                table[(position << 3) + count] = zobristHash ^ information;
+                table[(position << 3) + count + 1] = information;
                 return;
-            } else if ((table[position << 3 + count] ^ (oldInformation = table[position << 3 + count + 1])) == zobristHash) {
+            } else if ((table[(position << 3) + count] ^ (oldInformation = table[(position << 3) + count + 1])) == zobristHash) {
                 if ((oldInformation & 0xFFFF) == 0 && (((information & 0xFFFF) != 0) || (oldInformation & 0xFFFF0000L) < (information & 0xFFFF0000L))) {
-                    table[position << 3 + count] = zobristHash ^ information;
-                    table[position << 3 + count + 1] = information;
+                    table[(position << 3) + count] = zobristHash ^ information;
+                    table[(position << 3) + count + 1] = information;
                 } else {
                     Logging.printLine("Weird mate finder replacement behavior. Probably hash collision or race condition.");
                 }
@@ -54,17 +54,17 @@ public abstract class AbstractMatefinderTT implements TranspositionTableInterfac
             }
         }
 
-        if ((table[position << 3 + 7] & 0xFFFFFFFFL) < (information & 0xFFFFFFFFL)) { // our entry is more valuable
-            table[position << 3 + 6] = zobristHash ^ information;
-            table[position << 3 + 7] = information;
+        if ((table[(position << 3) + 7] & 0xFFFFFFFFL) < (information & 0xFFFFFFFFL)) { // our entry is more valuable
+            table[(position << 3) + 6] = zobristHash ^ information;
+            table[(position << 3) + 7] = information;
         }
-        for (int entry = 2; entry >= 0; entry--) {
-            if ((table[position << 3 + 2 * entry + 1] & 0xFFFFFFFFL) < (information & 0xFFFFFFFFL)) {
-                table[position << 3 + entry * 2 + 2] = table[position << 3 + entry * 2];
-                table[position << 3 + entry * 2 + 3] = table[position << 3 + entry * 2 + 1];
+        for (int entry = 2; entry >= 0; entry--) { // TODO why is this not in the if?
+            if ((table[(position << 3) + 2 * entry + 1] & 0xFFFFFFFFL) < (information & 0xFFFFFFFFL)) {
+                table[(position << 3) + entry * 2 + 2] = table[(position << 3) + entry * 2];
+                table[(position << 3) + entry * 2 + 3] = table[(position << 3) + entry * 2 + 1];
 
-                table[position << 3 + entry * 2] = zobristHash ^ information;
-                table[position << 3 + entry * 2 + 1] = information;
+                table[(position << 3) + entry * 2] = zobristHash ^ information;
+                table[(position << 3) + entry * 2 + 1] = information;
             } else {
                 break;
             }

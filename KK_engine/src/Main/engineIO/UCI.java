@@ -2,6 +2,7 @@ package Main.engineIO;
 
 import Main.MultiThreading.*;
 import Main.engine.*;
+import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -32,6 +33,7 @@ public final class UCI {
 	private static int     kingSafety    = 100;
 	private static int     dynamism      = 100;
 	private static int     ccTimePerMove = 10000;
+	private static int     ttSizeInMB = 256;
 	public static  boolean logging       = true;
 
 	private static int threadCount = 1;
@@ -43,6 +45,8 @@ public final class UCI {
 	static String                  engineName          = "Koedem";
 	static BoardInterface                   board               = new Board();
 	static Perft perft = new Perft(board);
+	public static SearchTT upperBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), false);
+	public static SearchTT lowerBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), true);
 	private static Scanner         sc                  = new Scanner(System.in);
 	
 	public static void main(String[] args) {
@@ -156,6 +160,15 @@ public final class UCI {
 	private static void inputSetOption(String command) {
 		String[] parameters = command.split(" ");
 		switch (parameters[2]) {
+			case "Hash":
+				try {
+					ttSizeInMB = Integer.parseInt(parameters[4]);
+					upperBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), false);
+					lowerBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), true);
+				} catch (NumberFormatException e) {
+					Logging.printLine("Illegal value for option 'BaseTime'.");
+				}
+				break;
 			case "BaseTime":
 				try {
 					baseTime = 10000 / Integer.parseInt(parameters[4]);
@@ -316,7 +329,8 @@ public final class UCI {
 	private static void inputUCI() {
 		Logging.printLine("id name " + engineName);
 		Logging.printLine("id author Tom Marvolo");
-		
+
+		Logging.printLine("option name Hash type spin default 256 min 1 max 16384");
 		Logging.printLine("option name BaseTime type spin default 100 min 1 max 10000");
 		Logging.printLine("option name IncTime type spin default 5000 min 1 max 10000");
 		Logging.printLine("option name MinTime type spin default 333 min 1 max 10000");
@@ -458,7 +472,7 @@ public final class UCI {
 			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes "
 			      + (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) + " nps " + 1000 * (board.getSearch().getNodes() + board.getSearch().getAbortedNodes())
 			                                                                                         / (timeUsed > 0 ? timeUsed : 1)
-			      + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
+			      + " hashfull " + lowerBoundsTable.getFill() + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
 		} else {
 			StringBuilder pv = new StringBuilder(praefix);
 			for (int j = 0; j < move.length - 1; j++) {

@@ -20,6 +20,7 @@ public class Search implements SearchInterface {
 	private int[][] capturesStorage = new int[30][MoveGenerator.MAX_MOVE_COUNT]; // 30 because thats max number of captures;
                                                                                 // TODO: Less than MAX_MOVE_COUNT
     private int[] utilityCaptures = new int[MoveGenerator.MAX_MOVE_COUNT];
+    private TTEntry entry = new TTEntry();
 
     private static int[] unused = new int[6];
 
@@ -50,7 +51,9 @@ public class Search implements SearchInterface {
 				Logging.printLine("info depth " + depth + " nodes " + (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) + " nps "
 				                  + 1000 * (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) / ((System.currentTimeMillis() - time) > 0 ?
 				                                                                                                   (System.currentTimeMillis() - time) : 1)
-				                  + " time " + (System.currentTimeMillis() - time));
+				                  + " hashfull " + UCI.lowerBoundsTable.getFill() + " time " + (System.currentTimeMillis() - time));
+				UCI.lowerBoundsTable.printStats();
+				//UCI.upperBoundsTable.printStats();
 				Logging.printLine("info depth " + depth + " currmove " 
 						+ Transformation.numberToMove(move) + " currmovenumber " + (moveIndex));
 			}
@@ -162,6 +165,19 @@ public class Search implements SearchInterface {
 			principleVariation[depth] = 0;
 			return principleVariation;
 		}
+
+		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
+			if (entry.getDepth() == depthLeft) { // TODO for now only for exact depth matches, in the future >=
+				if (entry.getEval() >= beta) { // we get a beta cutoff
+					principleVariation[depth] = beta;
+					return principleVariation;
+				}
+			} else {
+				System.out.println("Probably hash collision, depth is not what it should be.");
+				System.exit(1);
+			}
+		}
+
 		for (int index = 1; index <= moves[0]; index++) {
 			int move = moves[index];
 			if (depthLeft == 1) {
@@ -197,11 +213,11 @@ public class Search implements SearchInterface {
 				innerPV[depth - depthLeft] = move;
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
-					principleVariation = innerPV;
+					//principleVariation = innerPV;
 					
-					board.setEnPassant(enPassant);
-					board.unmakeMove(move, capturedPiece, castlingRights);
-					return principleVariation;
+					//board.setEnPassant(enPassant);
+					//board.unmakeMove(move, capturedPiece, castlingRights);
+					//return principleVariation;
 				} else if (innerPV[depth] < -9000) {
 					innerPV[depth]++;
 				}
@@ -225,6 +241,10 @@ public class Search implements SearchInterface {
 			board.unmakeMove(move, capturedPiece, castlingRights);
 			
 			if (principleVariation[depth] >= beta) {
+				entry.setEval(beta);
+				entry.setDepth(depthLeft);
+				entry.setMove(move);
+				UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
 				return principleVariation;
 			}
 			innerPV = null;
@@ -236,7 +256,6 @@ public class Search implements SearchInterface {
 			utilityCaptures = board.getCaptureGenerator().collectCaptures(!toMove, utilityCaptures);
 			if (utilityCaptures[0] != -1) { // stalemate detection
 				principleVariation[depth] = 0;
-				return principleVariation;
 			}
 		}
 		moves = null;
