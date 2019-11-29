@@ -290,6 +290,8 @@ public class Board implements BoardInterface {
 	 * p = promotion piece according to Transformation.stringToPiece
 	 * 
 	 * @param move The move to play.
+	 *
+	 * TODO rework control flow especially with castling
 	 */
 	public int makeMove(int move) {
 		int endSquare = 0; // will get changed to "true" endSquare
@@ -343,7 +345,7 @@ public class Board implements BoardInterface {
 				removeCastlingRights((byte) 0x1);
 			}
 			
-			if (startSquare == 32 && square[4][0] == 6) {
+			if (startSquare == 32 && square[4][0] == 6 && (endSquare == 48 || endSquare == 16)) {
 				if (endSquare == 48) {
 					square[6][0] = 6;
 					square[4][0] = 0;
@@ -353,9 +355,7 @@ public class Board implements BoardInterface {
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(56, true);
 					bitboard.add(4, 0, 40);
-					changeToMove();
-					return 0; // TODO change this behaviour
-				} else if (endSquare == 16) {
+				} else {
 					square[2][0] = 6;
 					square[4][0] = 0;
 					square[3][0] = 4; // rook move in castling
@@ -364,10 +364,8 @@ public class Board implements BoardInterface {
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(0, true);
 					bitboard.add(4, 0, 24);
-					changeToMove();
-					return 0; // TODO
 				}
-			} else if (startSquare == 39 && square[4][7] == -6) {
+			} else if (startSquare == 39 && square[4][7] == -6 && (endSquare == 55 || endSquare == 23)) {
 				if (endSquare == 55) {
 					square[6][7] = -6;
 					square[4][7] = 0;
@@ -377,9 +375,7 @@ public class Board implements BoardInterface {
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(63, true);
 					bitboard.add(4, 1, 47);
-					changeToMove();
-					return 0; // TODO
-				} else if (endSquare == 23) {
+				} else {
 					square[2][7] = -6;
 					square[4][7] = 0;
 					square[3][7] = -4; // rook move in castling
@@ -388,36 +384,32 @@ public class Board implements BoardInterface {
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(7, true);
 					bitboard.add(4, 1, 31);
-					changeToMove();
-					return 0; // TODO
 				}
-			}
-			
-			if (Math.abs(square[startSquare / 8][startSquare % 8]) == 1
-					&& endSquare == enPassant) {
-				piecesLeft--;
-				if (toMove) {
-					square[enPassant / 8][(enPassant % 8) - 1] = 0; // capture the pawn that is on the square before ep
-					materialCount += PAWNVALUE;
-					pieceAdvancement[1] -= 2 * ((enPassant % 8) - 1) - 7;
-					bitboard.remove(endSquare - 1, true);
-				} else {
-					square[enPassant / 8][(enPassant % 8) + 1] = 0;
-					materialCount -= PAWNVALUE;
-					pieceAdvancement[1] -= 2 * ((enPassant % 8) + 1) - 7;
-                    bitboard.remove(endSquare + 1, true);
+			} else {
+				if (Math.abs(square[startSquare / 8][startSquare % 8]) == 1 && endSquare == enPassant) {
+					piecesLeft--;
+					if (toMove) {
+						square[enPassant / 8][(enPassant % 8) - 1] = 0; // capture the pawn that is on the square before ep
+						materialCount += PAWNVALUE;
+						pieceAdvancement[1] -= 2 * ((enPassant % 8) - 1) - 7;
+						bitboard.remove(endSquare - 1, true);
+					} else {
+						square[enPassant / 8][(enPassant % 8) + 1] = 0;
+						materialCount -= PAWNVALUE;
+						pieceAdvancement[1] -= 2 * ((enPassant % 8) + 1) - 7;
+						bitboard.remove(endSquare + 1, true);
+					}
 				}
-			}
-			
-			square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8]; // the actual moving
-			square[startSquare / 8][startSquare % 8] = 0; // start square becomes empty
 
-			bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
-			
-			pieceAdvancement[Math.abs(square[endSquare / 8][endSquare % 8])] 
+				square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8]; // the actual moving
+				square[startSquare / 8][startSquare % 8] = 0; // start square becomes empty
+
+				bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
+			}
+			pieceAdvancement[Math.abs(square[endSquare / 8][endSquare % 8])]
 					+= 2 * ((endSquare % 8) - (startSquare % 8));
 																	// add the advancement change caused by the move
-			
+
 			setEnPassant((byte) -1); // remove old en passant values
 			
 			if (Math.abs(square[endSquare / 8][endSquare % 8]) == 1 && Math.abs(startSquare - endSquare) == 2) {

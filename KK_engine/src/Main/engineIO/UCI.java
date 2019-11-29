@@ -42,6 +42,7 @@ public final class UCI {
 
 	static String                  engineName          = "Koedem";
 	static BoardInterface                   board               = new Board();
+	static Perft perft = new Perft(board);
 	private static Scanner         sc                  = new Scanner(System.in);
 	
 	public static void main(String[] args) {
@@ -121,6 +122,15 @@ public final class UCI {
 				for (Node value : board.getHashTable().values()) {
 					value.print();
 				}
+			} else if (command.startsWith("perft")) {
+				int depth = Integer.parseInt(command.substring(6));
+				perft.basePerft(depth, false, false);
+			} else if (command.startsWith("detailed perft")) {
+				int depth = Integer.parseInt(command.substring(15));
+				perft.basePerft(depth, true, false);
+			} else if (command.startsWith("fast perft")) {
+				int depth = Integer.parseInt(command.substring(11));
+				perft.basePerft(depth, false, true);
 			} else if (command.equals("materialOnly on")) {
 				Evaluation.setMaterialOnly(true);
 			} else if (command.equals("materialOnly off")) {

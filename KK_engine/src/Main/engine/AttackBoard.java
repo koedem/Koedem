@@ -3,6 +3,7 @@ package Main.engine;
 import Main.engineIO.Logging;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class AttackBoard implements Serializable {
 
@@ -147,13 +148,12 @@ public class AttackBoard implements Serializable {
 	private byte[][] pieceAttackCount = new byte[2][7];
 
     AttackBoard(BoardInterface board, BitBoardInterface bitboard) {
-		for (int colour = 0; colour < attackBoards.length; colour++) {
-			for (int piece = 0; piece < attackBoards[colour].length; piece++) {
-				for (int pieceIndex = 0; pieceIndex < attackBoards[colour][piece].length; pieceIndex++) {
-					attackBoards[colour][piece][pieceIndex] = 0; // initialize empty board
-				}
-			}
-		}
+	    for (long[][] attackBoard : attackBoards) {
+		    for (long[] pieceBoards : attackBoard) {
+			    // initialize empty board
+			    Arrays.fill(pieceBoards, 0);
+		    }
+	    }
 		this.board = board;
 		this.bitboard = bitboard;
 	}
@@ -1290,6 +1290,10 @@ public class AttackBoard implements Serializable {
 				pieceAttackCount[i][1] += Long.bitCount(attackBoards[i][1][k] & bitboard.getAllPieces((i - 1) * (i - 1))); // i - 1 squared = the other colour
 			}
 		}
+    }
+
+    public boolean inCheck(boolean colour) {
+		return (allPieces[colour ? 1 : 0] & bitboard.getPieceTypeBoard(colour ? 0 : 1, 6)) != 0;
     }
 
     int getAttackCount(int colour, int piece) {
