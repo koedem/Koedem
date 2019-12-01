@@ -55,15 +55,6 @@ public final class Evaluation implements EvaluationInterface {
 		int eval = board.getMaterialCount();
 		eval += advancementEval();
 		eval += pieceSquareTables();
-		
-		if (toMove && eval + 100 < lowBound) { // TODO new activity eval can make more than 100cp difference
-			board.getSearch().incrementAbortedNodes();
-			return eval;
-		} else if (!toMove && -eval + 100 < lowBound) {
-			board.getSearch().incrementAbortedNodes();
-			return -eval;
-		}
-		
 		eval += activityEval(board);
 
 		if (!toMove) {
