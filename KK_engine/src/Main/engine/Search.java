@@ -169,8 +169,10 @@ public class Search implements SearchInterface {
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
 			if (entry.getDepth() == depthLeft) { // TODO for now only for exact depth matches, in the future >=
 				if (entry.getEval() >= beta) { // we get a beta cutoff
-					principleVariation[depth] = beta;
+					principleVariation[depth] = entry.getEval();
 					return principleVariation;
+				} else if (entry.getEval() > alpha) {
+					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
 			} else {
 				System.out.println("Probably hash collision, depth is not what it should be.");
@@ -241,7 +243,7 @@ public class Search implements SearchInterface {
 			board.unmakeMove(move, capturedPiece, castlingRights);
 			
 			if (principleVariation[depth] >= beta) {
-				entry.setEval(beta);
+				entry.setEval(principleVariation[depth]);
 				entry.setDepth(depthLeft);
 				entry.setMove(move);
 				UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
