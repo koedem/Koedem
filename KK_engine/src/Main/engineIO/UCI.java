@@ -34,7 +34,7 @@ public final class UCI {
 	private static int     dynamism      = 100;
 	private static int     ccTimePerMove = 10000;
 	private static int     ttSizeInMB = 256;
-	public static  boolean logging       = true;
+	public static  boolean logging       = false;
 
 	private static int threadCount = 1;
 	private static final int LOWER_THREAD_COUNT = 1;
@@ -50,7 +50,7 @@ public final class UCI {
 	private static Scanner         sc                  = new Scanner(System.in);
 	
 	public static void main(String[] args) {
-		CorrespondenceOrganisation.getInstance().setup();
+		//CorrespondenceOrganisation.getInstance().setup();
 	    ThreadOrganization.setUp(board);
 		uciCommunication();
 		System.exit(0);
@@ -163,8 +163,8 @@ public final class UCI {
 			case "Hash":
 				try {
 					ttSizeInMB = Integer.parseInt(parameters[4]);
-					upperBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), false);
-					lowerBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), true);
+					upperBoundsTable = new SearchTT(ttSizeInMB * (1L << 19), false);
+					lowerBoundsTable = new SearchTT(ttSizeInMB * (1L << 19), true);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'BaseTime'.");
 				}

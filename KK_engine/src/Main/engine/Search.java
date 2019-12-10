@@ -170,6 +170,7 @@ public class Search implements SearchInterface {
 			if (entry.getDepth() == depthLeft) { // TODO for now only for exact depth matches, in the future >=
 				if (entry.getEval() >= beta) { // we get a beta cutoff
 					principleVariation[depth] = entry.getEval();
+					nodes++;
 					return principleVariation;
 				} else if (entry.getEval() > alpha) {
 					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha
@@ -179,6 +180,23 @@ public class Search implements SearchInterface {
 				System.exit(1);
 			}
 		}
+
+		if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
+			if (entry.getDepth() == depthLeft) { // TODO for now only for exact depth matches, in the future >=
+				if (entry.getEval() <= alpha) { // we are worse than alpha so can't possibly improve the score
+					principleVariation[depth] = entry.getEval();
+					nodes++;
+					return principleVariation;
+				} else if (entry.getEval() < beta) {
+					beta = entry.getEval(); // we have at least this score proven so it becomes alpha
+				}
+			} else {
+				System.out.println("Probably hash collision, depth is not what it should be.");
+				System.exit(1);
+			}
+		}
+
+		int preAlpha = alpha;
 
 		for (int index = 1; index <= moves[0]; index++) {
 			int move = moves[index];
@@ -261,6 +279,17 @@ public class Search implements SearchInterface {
 			}
 		}
 		moves = null;
+		entry.setEval(principleVariation[depth]);
+		entry.setDepth(depthLeft);
+		entry.setMove(0);
+		UCI.upperBoundsTable.put(board.getZobristHash(), entry);
+
+		if (principleVariation[depth] > preAlpha) { // this is an exact score, so a lower bound too
+			entry.setEval(principleVariation[depth]);
+			entry.setDepth(depthLeft);
+			entry.setMove(principleVariation[depth - depthLeft]);
+			UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
+		}
 		return principleVariation;
 	}
 	
