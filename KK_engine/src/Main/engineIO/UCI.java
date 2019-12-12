@@ -34,7 +34,7 @@ public final class UCI {
 	private static int     dynamism      = 100;
 	private static int     ccTimePerMove = 10000;
 	private static int     ttSizeInMB = 256;
-	public static  boolean logging       = false;
+	public static  boolean logging       = true;
 
 	private static int threadCount = 1;
 	private static final int LOWER_THREAD_COUNT = 1;
@@ -50,7 +50,7 @@ public final class UCI {
 	private static Scanner         sc                  = new Scanner(System.in);
 	
 	public static void main(String[] args) {
-		//CorrespondenceOrganisation.getInstance().setup();
+		CorrespondenceOrganisation.getInstance().setup();
 	    ThreadOrganization.setUp(board);
 		uciCommunication();
 		System.exit(0);

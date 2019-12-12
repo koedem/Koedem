@@ -43,15 +43,18 @@ public class NonLosingThread implements SearchThreadInterface {
             board.getSearch().setNodes(0);
             board.getSearch().setAbortedNodes(0);
             board.getSearch().setQNodes(0);
-            int[] move = null;
+            int mateScore = 0;
             for (int i = 3; i < depth; i += 2) {
+            	if (!aggressive) {
+            		int debug = 0;
+	            }
                 if (logging) {
                     Logging.printLine("");
                     Logging.printLine(threadName + "Starting depth " + i + ". Time: "
                             + Transformation.timeUsedOutput(System.currentTimeMillis() - time));
                 }
 
-                move = board.getMateFinder().rootMateFinder(board.getToMove(), i, time, aggressive);
+                mateScore = board.getMateFinder().rootMateFinder(board.getToMove(), i, aggressive);
 
                 if (logging) {
                     Logging.printLine(threadName + "Non losing moves: " + board.getRootMoves()[0] + ". Nodes: "
@@ -61,14 +64,15 @@ public class NonLosingThread implements SearchThreadInterface {
                     }
                 }
 
-                if (move[move.length - 1] < 0) {
+                if (mateScore < 0) {
                     if (logging) {
-                        UCI.printEngineOutput(threadName, move, board, board.getToMove(), time);
+                        UCI.printEngineOutput(threadName, new int[]{mateScore}, board, board.getToMove(), time);
+                        ThreadOrganization.globalMateTT.printPV(board);
                     }
                     break;
                 }
             }
-            if (move != null && move[move.length - 1] < -9000) {
+            if (mateScore < 0) {
                 UCI.setThreadFinished(true);
             }
         }

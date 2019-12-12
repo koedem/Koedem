@@ -1,6 +1,10 @@
 package Main.MultiThreading;
 
+import Main.engine.Board;
+import Main.engine.BoardInterface;
+import Main.engine.MateTTEntry;
 import Main.engineIO.Logging;
+import Main.engineIO.Transformation;
 
 public abstract class AbstractMatefinderTT implements TranspositionTableInterface {
 
@@ -12,62 +16,56 @@ public abstract class AbstractMatefinderTT implements TranspositionTableInterfac
     private long[] table;
     private int bitmask;
 
+    private MateTTEntry probingEntry = new MateTTEntry();
+
     /**
      *
      * @param sizeInByte power of 2.
      */
-    public AbstractMatefinderTT(int sizeInByte) {
+    public AbstractMatefinderTT(long sizeInByte) {
         assert Long.highestOneBit(sizeInByte) > Long.highestOneBit(sizeInByte - 1);
-        table = new long[sizeInByte / 8];
-        bitmask = sizeInByte / 64 - 1;
+        int entries = (int) (sizeInByte / 8);
+        table = new long[entries];
+        bitmask = entries / 8 - 1;
     }
 
     @Override
-    public long get(long zobristHashOne, long zobristHashTwo) {
+    public MateTTEntry get(long zobristHash, MateTTEntry entry) {
         long information;
-        int position = (int) zobristHashOne & bitmask;
+        int position = (int) zobristHash & bitmask;
         for (int count = 0; count < 8; count += 2) {
-            if ((table[(position << 3) + count] ^ (information = table[(position << 3) + count + 1])) == zobristHashOne) {
-                return information;
+            if ((table[(position << 3) + count] ^ (information = table[(position << 3) + count + 1])) == zobristHash) {
+                entry.setAllInformation(information);
+                return entry;
             }
         }
-        return 0;
+        return null;
     }
 
     @Override
-    public void put(long zobristHash, long information) {
+    public void put(long zobristHash, MateTTEntry newEntry) {
         int position = (int) zobristHash & bitmask;
-        long oldInformation;
+        MateTTEntry oldEntry = get(zobristHash, probingEntry);
+        if (oldEntry != null) { // we already have this position so we merge the two to get the new entry
+            newEntry.merge(oldEntry);
+        }
+        long information = newEntry.getAllInformation();
+
         for (int count = 0; count < 8; count += 2) {
-            if (table[(position << 3) + count] == 0) {
+            if (table[(position << 3) + count] == 0 || (table[(position << 3) + count] ^ table[(position << 3) + count + 1]) == zobristHash) {
                 table[(position << 3) + count] = zobristHash ^ information;
                 table[(position << 3) + count + 1] = information;
-                return;
-            } else if ((table[(position << 3) + count] ^ (oldInformation = table[(position << 3) + count + 1])) == zobristHash) {
-                if ((oldInformation & 0xFFFF) == 0 && (((information & 0xFFFF) != 0) || (oldInformation & 0xFFFF0000L) < (information & 0xFFFF0000L))) {
-                    table[(position << 3) + count] = zobristHash ^ information;
-                    table[(position << 3) + count + 1] = information;
-                } else {
-                    Logging.printLine("Weird mate finder replacement behavior. Probably hash collision or race condition.");
-                }
-                return;
-            }
-        }
-
-        if ((table[(position << 3) + 7] & 0xFFFFFFFFL) < (information & 0xFFFFFFFFL)) { // our entry is more valuable
-            table[(position << 3) + 6] = zobristHash ^ information;
-            table[(position << 3) + 7] = information;
-        }
-        for (int entry = 2; entry >= 0; entry--) { // TODO why is this not in the if?
-            if ((table[(position << 3) + 2 * entry + 1] & 0xFFFFFFFFL) < (information & 0xFFFFFFFFL)) {
-                table[(position << 3) + entry * 2 + 2] = table[(position << 3) + entry * 2];
-                table[(position << 3) + entry * 2 + 3] = table[(position << 3) + entry * 2 + 1];
-
-                table[(position << 3) + entry * 2] = zobristHash ^ information;
-                table[(position << 3) + entry * 2 + 1] = information;
-            } else {
                 break;
             }
+        }
+    }
+
+    public void printPV(BoardInterface board) {
+        BoardInterface copy = board.cloneBoard();
+        MateTTEntry entry = new MateTTEntry();
+        while (ThreadOrganization.globalMateTT.get(copy.getZobristHash(), entry) != null && entry.getMove() != 0) {
+            Logging.printLine(Transformation.numberToMove(entry.getMove()));
+            copy.makeMove(entry.getMove());
         }
     }
 }

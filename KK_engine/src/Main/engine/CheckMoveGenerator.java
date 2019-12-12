@@ -6,6 +6,7 @@ package Main.engine;
 public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 
 	BoardInterface board;
+	private int[] movesSize = new int[6];
 
 	public CheckMoveGenerator(BoardInterface board) {
 		this.board = board;
@@ -17,7 +18,6 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 	}
 
 	public int[] collectAllPNMoves(int[] storage, boolean toMove) {
-		int[] movesSize = new int[6];
 		storage = board.getMoveGenerator().collectMoves(toMove, storage, movesSize);
 		if (storage[0] == -1) {
 			return storage;
@@ -34,7 +34,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-			if (inCheck()) {
+			if (board.getAttackBoard().inCheck(!board.getToMove())) {
 				if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 					// in case index is the last element we simply reduce the size by one to delete it
 					storage[index] = storage[storage[0]];
@@ -50,7 +50,6 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 	}
 
 	public int[] collectPNSearchMoves(int[] storage, int[] checks, boolean toMove) {
-		int[] movesSize = new int[6];
 		storage = board.getMoveGenerator().collectMoves(toMove, storage, movesSize);
 		if (storage[0] == -1) {
 			return storage;
@@ -67,7 +66,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-			if (inCheck()) {
+			if (board.getAttackBoard().inCheck(!board.getToMove())) {
 				if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 					// in case index is the last element we simply reduce the size by one to delete it
 					storage[index] = storage[storage[0]];
@@ -75,8 +74,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 				storage[0]--;
 				index--;
 			} else {
-				board.changeToMove();
-				if (inCheck()) {
+				if (board.getAttackBoard().inCheck(board.getToMove())) {
 					checks[++checks[0]] = move;
 					if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 						// in case index is the last element we simply reduce the size by one to delete it
@@ -85,7 +83,6 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 					storage[0]--;
 					index--;
 				}
-				board.changeToMove();
 			}
 			board.setEnPassant(enPassant);
 			board.unmakeMove(move, capturedPiece, castlingRights);
@@ -97,7 +94,6 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 	}
 
 	public int[] collectCheckMoves(int[] storage, int[] checks, boolean toMove) {
-		int[] movesSize = new int[6];
 		storage = board.getMoveGenerator().collectMoves(toMove, storage, movesSize);
 		checks[0] = 0;
 		if (storage[0] == -1) {
@@ -114,7 +110,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-			if (inCheck()) {
+			if (board.getAttackBoard().inCheck(!board.getToMove())) {
 				if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 					// in case index is the last element we simply reduce the size by one to delete it
 					storage[index] = storage[storage[0]];
@@ -122,8 +118,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 				storage[0]--;
 				index--;
 			} else {
-				board.changeToMove();
-				if (inCheck()) {
+				if (board.getAttackBoard().inCheck(board.getToMove())) {
 					checks[++checks[0]] = move;
 					if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 						// in case index is the last element we simply reduce the size by one to delete it
@@ -132,7 +127,6 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 					storage[0]--;
 					index--;
 				}
-				board.changeToMove();
 			}
 			board.setEnPassant(enPassant);
 			board.unmakeMove(move, capturedPiece, castlingRights);
@@ -141,12 +135,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 		return checks;
 	}
 
-	private boolean inCheck() {
-		boolean inCheck = false;
-		int[] captures = board.getCaptureGenerator().collectCaptures(board.getToMove(), new int[256]); // TODO why toMove and not !toMove ??
-		if (captures[0] == -1) {
-			inCheck = true;
-		}
-		return inCheck;
+	public boolean inCheck(boolean whiteInCheck) {
+		return board.getAttackBoard().inCheck(!whiteInCheck); // TODO why toMove and not !toMove ??
 	}
 }

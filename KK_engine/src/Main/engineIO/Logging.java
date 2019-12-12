@@ -10,7 +10,7 @@ import java.util.Calendar;
 
 public final class Logging {
 
-	private static boolean logging = false;
+	private static boolean logging = true; // TODO why is there another one of these in UCI?
 	private static String directoryName = "Koedem-Logs";
 	private static File directory = new File(directoryName);
 	private static String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime()).concat("-" + ManagementFactory.getRuntimeMXBean().getName());

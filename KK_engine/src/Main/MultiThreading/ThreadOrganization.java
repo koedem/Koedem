@@ -16,7 +16,7 @@ public class ThreadOrganization {
 	public static BoardInterface[] boards = new Board[5];
 	private static SearchThreadInterface[] thread = new SearchThreadInterface[5];
 
-	static TranspositionTableInterface[] globalTT = { new AggressiveMatefinderTT(65536), new NonAggressiveMatefinderTT(65536) };
+	public static TranspositionTableInterface globalMateTT = new AggressiveMatefinderTT(0x100000L);
 
     private static ExecutorService executor            = Executors.newFixedThreadPool(5);
 
@@ -44,10 +44,10 @@ public class ThreadOrganization {
     }
 
     public static void findMate() {
-	    thread[1].setDepth(30);
-	    thread[2].setDepth(20);
-	    thread[3].setDepth(30);
-	    thread[4].setDepth(20);
+	    thread[1].setDepth(40);
+	    thread[2].setDepth(40);
+	    thread[3].setDepth(40);
+	    thread[4].setDepth(40);
 	    for (int threadNumber = 1; threadNumber < 5; threadNumber++) {
 	        synchronized (thread[threadNumber]) {
 		        UCI.setThreadFinished(false);

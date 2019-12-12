@@ -9,7 +9,7 @@ public class CorrespondenceOrganisation {
 
 	private static CorrespondenceOrganisation instance = new CorrespondenceOrganisation();
 
-	private static boolean                    ccOn          = true;
+	private static boolean                    ccOn          = false;
 	private static String                     directoryName = "CC-Organisation";
 	private static File                       directory     = new File(directoryName);
 	private static String                     lockName      = "lockFile";
@@ -52,10 +52,12 @@ public class CorrespondenceOrganisation {
 	}
 
 	public void shutDown() {
-		try {
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (ccOn) {
+			try {
+				writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
