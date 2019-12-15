@@ -64,8 +64,7 @@ public class SearchTT {
                 oldEntry.setAllInformation(oldInformation);
                 if (oldEntry.getDepth() <= entry.getDepth()) {
                     if (oldEntry.getDepth() < entry.getDepth()) {
-                        System.out.println("Probably collision, storing position with wrong depth");
-                        System.exit(1); // TODO this is temporary
+                        Logging.printLine("Probably collision, storing position with wrong depth"); // TODO what do we do here?
                     }
                     if (lowBound ? oldEntry.getEval() < entry.getEval()
                                                                            : oldEntry.getEval() > entry.getEval()) {

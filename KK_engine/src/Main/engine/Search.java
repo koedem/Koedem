@@ -176,8 +176,8 @@ public class Search implements SearchInterface {
 					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
 			} else {
-				System.out.println("Probably hash collision, depth is not what it should be.");
-				System.exit(1);
+				Logging.printLine("Probably hash collision, depth is not what it should be. Search line 179, Position:");
+				board.printBoard();
 			}
 		}
 
@@ -191,8 +191,8 @@ public class Search implements SearchInterface {
 					beta = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
 			} else {
-				System.out.println("Probably hash collision, depth is not what it should be.");
-				System.exit(1);
+				Logging.printLine("Probably hash collision, depth is not what it should be. Search line 194, Position:");
+				board.printBoard();
 			}
 		}
 
