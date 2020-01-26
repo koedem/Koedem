@@ -26,6 +26,10 @@ public interface SearchInterface extends Serializable {
 
 	int[] negaMax(boolean toMove, int depth, int depthLeft, int alpha, int beta, long finishUntil);
 
+	int[] openWindowDepthOneSearch(boolean toMove, int depth, int alphaBound, int betaBound);
+
+	int nullWindowSearch(boolean toMove, int depth, int depthLeft, int scoreToBeat, long finishUntil);
+
 	long getAbortedNodes();
 
 	long getQNodes();
