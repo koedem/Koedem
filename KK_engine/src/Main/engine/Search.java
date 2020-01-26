@@ -293,31 +293,35 @@ public class Search implements SearchInterface {
 			
 			int[] innerPV;
 
-			if (depthLeft == 2) {
-				innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
-			} else {
-				innerPV = negaMax(!toMove, depth, depthLeft - 1, -beta, -alpha, finishUntil);
-			}
-			innerPV[depth] = -innerPV[depth];
-			innerPV[depth - depthLeft] = move;
-			if (innerPV[depth] > 9000) {
-				innerPV[depth]--;
-				//principleVariation = innerPV;
-
-				//board.setEnPassant(enPassant);
-				//board.unmakeMove(move, capturedPiece, castlingRights);
-				//return principleVariation;
-			} else if (innerPV[depth] < -9000) {
-				innerPV[depth]++;
-			}
-
-			if (innerPV[depth] > principleVariation[depth]) {
-				principleVariation = innerPV;
-				if (innerPV[depth] > alpha) {
-					alpha = principleVariation[depth];
+			if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
+			    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha - 1, finishUntil) > principleVariation[depth]) {
+				if (depthLeft == 2) {
+					innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
+				} else {
+					innerPV = negaMax(!toMove, depth, depthLeft - 1, -beta, -alpha, finishUntil);
 				}
-				bestMove = move;
+				innerPV[depth] = -innerPV[depth];
+				innerPV[depth - depthLeft] = move;
+				if (innerPV[depth] > 9000) {
+					innerPV[depth]--;
+					//principleVariation = innerPV;
+
+					//board.setEnPassant(enPassant);
+					//board.unmakeMove(move, capturedPiece, castlingRights);
+					//return principleVariation;
+				} else if (innerPV[depth] < -9000) {
+					innerPV[depth]++;
+				}
+
+				if (innerPV[depth] > principleVariation[depth]) {
+					principleVariation = innerPV;
+					if (innerPV[depth] > alpha) {
+						alpha = principleVariation[depth];
+					}
+					bestMove = move;
+				}
 			}
+
 			board.setEnPassant(enPassant);
 			board.unmakeMove(move, capturedPiece, castlingRights);
 
