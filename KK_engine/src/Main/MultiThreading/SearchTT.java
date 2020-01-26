@@ -4,6 +4,8 @@ import Main.engine.TTEntry;
 import Main.engineIO.Logging;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class SearchTT {
 
     /**
@@ -34,6 +36,18 @@ public class SearchTT {
         table = new long[size];
         bitmask = size / 8 - 1;
         this.lowBound = lowBound;
+    }
+
+    public void clearTT() {
+        Arrays.fill(table, 0);
+        oldEntry = new TTEntry();
+
+        ttHits = 0;
+        ttFill = 0;
+        ttOverwrites = 0;
+        ttImprovements = 0;
+
+        pseudoRandom = 0;
     }
 
     public TTEntry get(long zobristHashOne, TTEntry entry, int depth) {

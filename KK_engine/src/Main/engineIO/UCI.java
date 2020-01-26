@@ -155,6 +155,8 @@ public final class UCI {
 		for (int i = 0; i < ThreadOrganization.boards.length; i++) {
 		    ThreadOrganization.boards[i].resetBoard();
         }
+		upperBoundsTable.clearTT();
+		lowerBoundsTable.clearTT();
 	}
 
 	private static void inputSetOption(String command) {
@@ -473,6 +475,7 @@ public final class UCI {
 			      + (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) + " nps " + 1000 * (board.getSearch().getNodes() + board.getSearch().getAbortedNodes())
 			                                                                                         / (timeUsed > 0 ? timeUsed : 1)
 			      + " hashfull " + lowerBoundsTable.getFill() + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
+			Logging.printLine("Exact nodes: " + board.getSearch().getExactNodes());
 		} else {
 			StringBuilder pv = new StringBuilder(praefix);
 			for (int j = 0; j < move.length - 1; j++) {

@@ -19,8 +19,11 @@ public class Search implements SearchInterface {
 	private int[][] movesStorage = new int[101][MoveGenerator.MAX_MOVE_COUNT];
 	private int[][] capturesStorage = new int[30][MoveGenerator.MAX_MOVE_COUNT]; // 30 because thats max number of captures;
                                                                                 // TODO: Less than MAX_MOVE_COUNT
+	private int[][] ttMoves = new int[101][5];
+
     private int[] utilityCaptures = new int[MoveGenerator.MAX_MOVE_COUNT];
     private TTEntry entry = new TTEntry();
+    private static final int[] moveOrder = { 4, 3, 2, 1 };
 
     private static int[] unused = new int[6];
 
@@ -30,6 +33,8 @@ public class Search implements SearchInterface {
 	private long nodes = 0;
 	private long abortedNodes = 0;
 	private long qNodes = 0;
+
+	private long exactNodes = 0;
 
 	public Search(BoardInterface board) {
 		this.board = board;
@@ -68,7 +73,8 @@ public class Search implements SearchInterface {
 			board.makeMove(move);
 			int[] innerPV = new int[depth + 1];
 			if (depth > 1) {
-				innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha); // TODO !toMove is confusing, as board.toMove changes upon moving but not this local variable
+				innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha, time + maxTime); // TODO !toMove is confusing, as board.toMove changes upon moving but not this local
+				// variable
 				innerPV[depth] = -innerPV[depth];
 				innerPV[0] = move;
 				
@@ -94,7 +100,7 @@ public class Search implements SearchInterface {
 					innerPV[depth]++;
 				}
 			}
-			if (innerPV[depth] > principleVariation[depth] && !UCI.isThreadFinished()) {
+			if (innerPV[depth] > principleVariation[depth] && !UCI.isThreadFinished() && System.currentTimeMillis() - time < maxTime) {
 				if (innerPV[depth] < beta) {
 					principleVariation = innerPV;
 					if (innerPV[depth] > alpha) {
@@ -127,6 +133,9 @@ public class Search implements SearchInterface {
 			board.unmakeMove(move, capturedPiece, castlingRights);
 			if (UCI.isThreadFinished() || System.currentTimeMillis() - time > maxTime) {
 				Logging.printLine("Search interrupted.");
+				if (principleVariation[0] == 0) { // if we don't have a move yet use our best move ordering guess
+					principleVariation[0] = moves[1];  // i.e. last depths result
+				}
 			    return principleVariation;
             }
 		}
@@ -152,12 +161,17 @@ public class Search implements SearchInterface {
 	 * 
 	 * @return the principle variation we get for the position
 	 */
-	public int[] negaMax(boolean toMove, int depth, int depthLeft, int alphaBound, int betaBound) {
+	public int[] negaMax(boolean toMove, int depth, int depthLeft, int alphaBound, int betaBound, long finishUntil) {
 		int alpha = alphaBound;
 		int beta = betaBound;
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
 		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - depthLeft], unused);
+		ttMoves[depthLeft][0] = 4; // set array to full since we're going to fill it with tt moves
+		ttMoves[depthLeft][1] = 0;
+		ttMoves[depthLeft][2] = 0;
+		ttMoves[depthLeft][3] = 0;
+		ttMoves[depthLeft][4] = 0;
 		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
 			return principleVariation;
@@ -175,8 +189,9 @@ public class Search implements SearchInterface {
 				} else if (entry.getEval() > alpha) {
 					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
+				ttMoves[depthLeft][moveOrder[0]] = entry.getMove();
 			} else {
-				Logging.printLine("Probably hash collision, depth is not what it should be. Search line 179, Position:");
+				Logging.printLine("Probably hash collision, depth is not what it should be. Search lower bouds table, Position:");
 				board.printBoard();
 			}
 		}
@@ -190,13 +205,61 @@ public class Search implements SearchInterface {
 				} else if (entry.getEval() < beta) {
 					beta = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
+				ttMoves[depthLeft][moveOrder[1]] = entry.getMove();
 			} else {
-				Logging.printLine("Probably hash collision, depth is not what it should be. Search line 194, Position:");
+				Logging.printLine("Probably hash collision, depth is not what it should be. Search upper bounds table, Position:");
 				board.printBoard();
 			}
 		}
 
+		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft - 1) != null) { // use old depth entries
+			ttMoves[depthLeft][moveOrder[2]] = entry.getMove();                                           // for better initial move ordering
+		}
+
+		if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft - 1) != null) { // use old depth entries
+			ttMoves[depthLeft][moveOrder[3]] = entry.getMove();                                           // for better initial move ordering
+		}
+
+		for (int i = 1; i <= ttMoves[depthLeft][0]; i++) {
+			if (ttMoves[depthLeft][i] == 0) {
+				ttMoves[depthLeft][0]--;
+				for (int j = i; j <= ttMoves[depthLeft][0]; j++) { // ttMove[0] already got reduced here
+					ttMoves[depthLeft][j] = ttMoves[depthLeft][j + 1];
+				}
+				i--;
+			}
+		}
+
+		for (int i = 1; i <= ttMoves[depthLeft][0]; i++) {
+			for (int j = i + 1; j <= ttMoves[depthLeft][0]; j++) {
+				if (ttMoves[depthLeft][i] == ttMoves[depthLeft][j]) {
+					ttMoves[depthLeft][0]--;
+					for (int k = j; k <= ttMoves[depthLeft][0]; k++) {
+						ttMoves[depthLeft][k] = ttMoves[depthLeft][k + 1];
+					}
+					j--;
+				}
+			}
+		}
+
+		if (ttMoves[depthLeft][0] >= 3) {
+			int a = 0;
+		}
+
+		for (int move = 1; move <= ttMoves[depthLeft][0]; move++) {
+			for (int i = 1; i <= moves[0]; i++) {
+				if (moves[i] == ttMoves[depthLeft][move]) {
+					for (int j = i; j > 1; j--) { // reorder moves to put TT move to top
+						moves[j] = moves[j - 1];
+					}
+					moves[1] = ttMoves[depthLeft][move];
+					break;
+				}
+			}
+		}
+
 		int preAlpha = alpha;
+		int bestMove = 0;
 
 		for (int index = 1; index <= moves[0]; index++) {
 			int move = moves[index];
@@ -228,7 +291,7 @@ public class Search implements SearchInterface {
 			
 			int[] innerPV = new int[depth + 1];
 			if (depthLeft > 1) {
-				innerPV = negaMax(!toMove, depth, depthLeft - 1, -beta, -alpha);
+				innerPV = negaMax(!toMove, depth, depthLeft - 1, -beta, -alpha, finishUntil);
 				innerPV[depth] = -innerPV[depth];
 				innerPV[depth - depthLeft] = move;
 				if (innerPV[depth] > 9000) {
@@ -256,9 +319,14 @@ public class Search implements SearchInterface {
 				if (innerPV[depth] > alpha) {
 					alpha = principleVariation[depth];
 				}
+				bestMove = move;
 			}
 			board.setEnPassant(enPassant);
 			board.unmakeMove(move, capturedPiece, castlingRights);
+
+			if (System.currentTimeMillis() > finishUntil) { // if we exceeded the maximum allotted time we return
+				return principleVariation;
+			}
 			
 			if (principleVariation[depth] >= beta) {
 				entry.setEval(principleVariation[depth]);
@@ -281,14 +349,15 @@ public class Search implements SearchInterface {
 		moves = null;
 		entry.setEval(principleVariation[depth]);
 		entry.setDepth(depthLeft);
-		entry.setMove(0);
+		entry.setMove(bestMove);
 		UCI.upperBoundsTable.put(board.getZobristHash(), entry);
 
 		if (principleVariation[depth] > preAlpha) { // this is an exact score, so a lower bound too
 			entry.setEval(principleVariation[depth]);
 			entry.setDepth(depthLeft);
-			entry.setMove(principleVariation[depth - depthLeft]);
+			entry.setMove(bestMove);
 			UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
+			exactNodes++;
 		}
 		return principleVariation;
 	}
@@ -478,5 +547,9 @@ public class Search implements SearchInterface {
 
 	public void incrementQNodes() {
 		qNodes++;
+	}
+
+	public long getExactNodes() {
+		return exactNodes;
 	}
 }

@@ -25,7 +25,7 @@ public class TTEntry implements Serializable {
 	public void setMove(int move) {
 		this.move = move;
 		allInformation &= 0xFFFFFF0000FFFFFFL;
-		allInformation |= move << 24;
+		allInformation |= ((long) move) << 24;
 	}
 
 	public void setEval(int eval) {

@@ -24,7 +24,7 @@ public interface SearchInterface extends Serializable {
 
 	int[] rootMax(boolean toMove, int depth, long time, long maxTime);
 
-	int[] negaMax(boolean toMove, int depth, int depthLeft, int alpha, int beta);
+	int[] negaMax(boolean toMove, int depth, int depthLeft, int alpha, int beta, long finishUntil);
 
 	long getAbortedNodes();
 
@@ -33,4 +33,6 @@ public interface SearchInterface extends Serializable {
 	ArrayList<Integer> qSearch(boolean toMove, int alpha, int beta, int depthSoFar);
 
 	int memoryEfficientQSearch(boolean toMove, int alpha, int beta, int depthSoFar);
+
+	long getExactNodes();
 }
