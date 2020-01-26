@@ -41,6 +41,11 @@ public class Search implements SearchInterface {
 	}
 	
 	public int[] rootMax(boolean toMove, int depth, long time, long maxTime) {
+		if (depth == 1) {
+			Logging.printLine("Error, search should have entered depthOneSearch but did not.");
+			System.exit(1);
+		}
+
 		Logging.printLine("");
 		if (UCI.logging) {
 			Logging.printLine("Starting depth " + depth + ".");
@@ -71,72 +76,62 @@ public class Search implements SearchInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-			int[] innerPV = new int[depth + 1];
-			if (depth > 1) {
-				if (beta == alpha + 1) { // this is a null window
-					innerPV[depth] = -nullWindowSearch(!toMove, depth, depth - 1, -beta, time + maxTime);
-				} else {
-					if (depth == 2) {
-						innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
-					} else {
-						innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha, time + maxTime); // TODO !toMove is confusing, as board.toMove changes upon moving but not this local
-					}
-					// variable
-					innerPV[depth] = -innerPV[depth];
-					innerPV[0] = move;
+			int[] innerPV;
 
-					//UserInteraction.printEngineOutput("Search move ", innerPV, board, time);
-
-					if (innerPV[depth] > 9000) {
-						innerPV[depth]--;
-						principleVariation = innerPV;
-
-						board.setEnPassant(enPassant);
-						board.unmakeMove(move, capturedPiece, castlingRights);
-						return principleVariation;
-					} else if (innerPV[depth] < -9000) {
-						innerPV[depth]++;
-					}
+			if (moveIndex == 1 || // i.e. we make a full window search for the first move or after null window fail high
+			    -nullWindowSearch(!toMove, depth, depth - 1, -alpha - 1, time + maxTime) > principleVariation[depth]) {
+				if (moveIndex != 1) {
+					Logging.printLine("Null window fail high.");
 				}
-			} else if (depth == 1) {
-				int qsearch = -memoryEfficientQSearch(!toMove, -beta, -alpha, 0);
-				innerPV[depth] = qsearch;
+
+				if (depth == 2) {
+					innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
+				} else { // TODO !toMove is confusing, as board.toMove changes upon moving but not this local variable
+					innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha, time + maxTime);
+				}
+
+				innerPV[depth] = -innerPV[depth];
 				innerPV[0] = move;
+
+				//UserInteraction.printEngineOutput("Search move ", innerPV, board, time);
+
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
+					principleVariation = innerPV;
+
+					board.setEnPassant(enPassant);
+					board.unmakeMove(move, capturedPiece, castlingRights);
+					return principleVariation;
 				} else if (innerPV[depth] < -9000) {
 					innerPV[depth]++;
 				}
-			}
-			if (innerPV[depth] > principleVariation[depth] && !UCI.isThreadFinished() && System.currentTimeMillis() - time < maxTime) {
-				if (innerPV[depth] < beta) {
+
+				if (innerPV[depth] > principleVariation[depth] && !UCI.isThreadFinished() && System.currentTimeMillis() - time < maxTime) {
 					principleVariation = innerPV;
 					if (innerPV[depth] > alpha) {
 						alpha = principleVariation[depth];
-						beta = alpha + 1; // trying out null move pruning, if we fail high we need to set beta to a higher value
 					} else {
 						int ignore = 0;
 					}
 
-					if (depth != 1) {
-						if (moveIndex == 1) {
-							UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time);
-							// move on board not yet undone, thus !toMove
-						} else {
-							UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
-						}
+					if (moveIndex == 1) {
+						UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time);
+						// move on board not yet undone, thus !toMove
+					} else {
+						UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
 					}
 
 					for (int i = moveIndex; i > 1; i--) {
 						moves[i] = moves[i - 1];
 					}
 					moves[1] = move; // order best move to top
-				} else {
-					beta = 30000;
-					moveIndex--;
-					Logging.printLine("Null window fail high.");
+
+
+				} else if (innerPV[depth] <= principleVariation[depth]) {
+					int error = 0;
 				}
 			}
+
 			board.setEnPassant(enPassant);
 			board.unmakeMove(move, capturedPiece, castlingRights);
 			if (UCI.isThreadFinished() || System.currentTimeMillis() - time > maxTime) {

@@ -49,7 +49,7 @@ public class MultiThreadSearch implements SearchThreadInterface {
             }
 	        MoveOrdering.getInstance().orderRootMoves(board);
 
-            for (int i = 1; i <= depth; i++) {
+            for (int i = 2; i <= depth; i++) { // our root ordering already does a depth 1 search essentially
                 move = board.getSearch().rootMax(board.getToMove(), i, time, hardTimeLimit);
 
                 if (Math.abs(move[move.length - 1]) > 9000) {
