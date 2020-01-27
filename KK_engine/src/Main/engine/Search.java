@@ -93,8 +93,6 @@ public class Search implements SearchInterface {
 				innerPV[depth] = -innerPV[depth];
 				innerPV[0] = move;
 
-				//UserInteraction.printEngineOutput("Search move ", innerPV, board, time);
-
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
 					principleVariation = innerPV;
@@ -106,7 +104,7 @@ public class Search implements SearchInterface {
 					innerPV[depth]++;
 				}
 
-				if (innerPV[depth] > principleVariation[depth] && !UCI.isThreadFinished() && System.currentTimeMillis() - time < maxTime) {
+				if (!UCI.isThreadFinished() && System.currentTimeMillis() - time < maxTime) {
 					principleVariation = innerPV;
 					if (innerPV[depth] > alpha) {
 						alpha = principleVariation[depth];
@@ -125,10 +123,6 @@ public class Search implements SearchInterface {
 						moves[i] = moves[i - 1];
 					}
 					moves[1] = move; // order best move to top
-
-
-				} else if (innerPV[depth] <= principleVariation[depth]) {
-					int error = 0;
 				}
 			}
 
@@ -304,11 +298,6 @@ public class Search implements SearchInterface {
 				innerPV[depth - depthLeft] = move;
 				if (innerPV[depth] > 9000) {
 					innerPV[depth]--;
-					//principleVariation = innerPV;
-
-					//board.setEnPassant(enPassant);
-					//board.unmakeMove(move, capturedPiece, castlingRights);
-					//return principleVariation;
 				} else if (innerPV[depth] < -9000) {
 					innerPV[depth]++;
 				}
@@ -645,11 +634,6 @@ public class Search implements SearchInterface {
 				innerEval = -innerEval;
 				if (innerEval > 9000) {
 					innerEval--;
-					//principleVariation = innerEval;
-
-					//board.setEnPassant(enPassant);
-					//board.unmakeMove(move, capturedPiece, castlingRights);
-					//return principleVariation;
 				} else if (innerEval < -9000) {
 					innerEval++;
 				}
@@ -663,9 +647,6 @@ public class Search implements SearchInterface {
 			}
 			if (innerEval > eval) {
 				eval = innerEval;
-				//if (innerEval > alpha) {
-				//	alpha = innerEval;
-				//}
 				bestMove = move;
 			}
 			board.setEnPassant(enPassant);
