@@ -16,7 +16,7 @@ public class Board implements BoardInterface {
 	private SearchInterface search = new Search(this);
 	private MateFinder mateFinder = new MateFinder(this);
 
-	private long zobristHash;
+	private long zobristHash; // TODO why is this not incremental?
 	private static final Random random = new Random(1234567890);
 	private static final long[] zobristKeys = initializeZobrist();
 	private static final long blackToMove = random.nextLong();

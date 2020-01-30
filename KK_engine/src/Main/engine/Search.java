@@ -7,7 +7,7 @@ import Main.engineIO.UCI;
 import java.util.ArrayList;
 
 /**
- * 
+ * TODO put more impossible cases into assertions
  * @author Anon
  *
  */
@@ -138,8 +138,8 @@ public class Search implements SearchInterface {
 		}
 		if (principleVariation[depth] == -9999) {
             board.setBestmove("(none)");
-			utilityCaptures = board.getCaptureGenerator().collectCaptures(!toMove, utilityCaptures);
-			if (utilityCaptures[0] != -1) { // stalemate detection
+
+			if (!board.getAttackBoard().inCheck(toMove)) { // stalemate detection
 				principleVariation[depth] = 0;
 				return principleVariation;
 			}
@@ -331,9 +331,8 @@ public class Search implements SearchInterface {
             }
 		}
 		if (principleVariation[depth] == -9999) {
-			utilityCaptures = board.getCaptureGenerator().collectCaptures(!toMove, utilityCaptures);
-			if (utilityCaptures[0] != -1) { // stalemate detection
-				principleVariation[depth] = 0;
+			if (!board.getAttackBoard().inCheck(toMove)) { // stalemate detection
+				principleVariation[depth] = 0; // TODO this interaction with possibly earlier cutoff is weird (see qsearch early cutoff)
 			}
 		}
 		moves = null;
@@ -483,8 +482,7 @@ public class Search implements SearchInterface {
 			}
 		}
 		if (principleVariation[depth] == -9999) {
-			utilityCaptures = board.getCaptureGenerator().collectCaptures(!toMove, utilityCaptures);
-			if (utilityCaptures[0] != -1) { // stalemate detection
+			if (!board.getAttackBoard().inCheck(toMove)) { // stalemate detection
 				principleVariation[depth] = 0;
 			}
 		}
@@ -616,6 +614,12 @@ public class Search implements SearchInterface {
 				int a = 0;
 			} else if (depthLeft == 7) {
 				int a = 0;
+			} else if (depthLeft == 8) {
+				int a = 0;
+			} else if (depthLeft == 9) {
+				int a = 0;
+			} else if (depthLeft == 10) {
+				int a = 0;
 			}
 
 			byte capturedPiece;
@@ -668,8 +672,7 @@ public class Search implements SearchInterface {
 			}
 		}
 		if (eval == -9999) {
-			utilityCaptures = board.getCaptureGenerator().collectCaptures(!toMove, utilityCaptures);
-			if (utilityCaptures[0] != -1) { // stalemate detection
+			if (!board.getAttackBoard().inCheck(toMove)) { // stalemate detection TODO use incheck in other situtations, e.g. check detection
 				eval = 0;
 			}
 		}
@@ -679,14 +682,12 @@ public class Search implements SearchInterface {
 		entry.setMove(bestMove);
 		UCI.upperBoundsTable.put(board.getZobristHash(), entry);
 
-		if (eval > scoreToBeat) { // this is an exact score, so a lower bound too
+		if (eval > scoreToBeat) { // this is an exact score, so a lower bound too, this can e.g. happen if stalemate
 			entry.setEval(eval);
 			entry.setDepth(depthLeft);
 			entry.setMove(bestMove);
 			UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
 			exactNodes++;
-			Logging.printLine("NW-search gave exact score.");
-			System.exit(1); // this is impossible
 		}
 		return eval;
 	}
@@ -776,6 +777,10 @@ public class Search implements SearchInterface {
     public int memoryEfficientQSearch(boolean toMove, int alphaBound, int betaBound, int depthSoFar) {
         // IMPORTANT: If anything other than captures should be calculated in this method, the ArraySizes might need to be changed.
 
+	    if (board.getAttackBoard().inCheck(!toMove)) {
+	    	return 10000;
+	    }
+
 	    if (depthSoFar == 30) { // i.e. only two kings left
 	    	return 0;
 	    }
@@ -794,9 +799,6 @@ public class Search implements SearchInterface {
             return eval;
         }
         capturesStorage[depthSoFar] = board.getCaptureGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);
-        if (capturesStorage[depthSoFar][0] == -1) {
-            return 10000;
-        }
         for (int i = 1; i <= capturesStorage[depthSoFar][0]; i++) {
             int capture = capturesStorage[depthSoFar][i];
             byte capturedPiece;

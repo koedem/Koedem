@@ -36,6 +36,7 @@ public class SearchTT {
         table = new long[size];
         bitmask = size / 8 - 1;
         this.lowBound = lowBound;
+        //ByteBuffer.allocateDirect(size); // TODO wip
     }
 
     public void clearTT() {
