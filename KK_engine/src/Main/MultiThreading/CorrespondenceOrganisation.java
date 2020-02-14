@@ -36,18 +36,22 @@ public class CorrespondenceOrganisation {
 	}
 
 	public void getLock() {
-		try {
-			lock = reader.getChannel().lock();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (ccOn) {
+			try {
+				lock = reader.getChannel().lock();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	public void returnLock() {
-		try {
-			lock.release();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (ccOn) {
+			try {
+				lock.release();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

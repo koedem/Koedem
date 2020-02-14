@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 /**
  * TODO put more impossible cases into assertions
+ * TODO zugzwang pawn endgame position gave strange line, debuging needed (White repeating moves and Black playing Ka7)
  * @author Anon
  *
  */
