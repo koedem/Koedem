@@ -10,4 +10,6 @@ public interface EvaluationInterface extends Serializable {
 	void resetEvaluation();
 
 	int evaluation(boolean toMove, int lowBound);
+
+	int fullPST();
 }

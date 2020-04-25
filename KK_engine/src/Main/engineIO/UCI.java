@@ -2,14 +2,9 @@ package Main.engineIO;
 
 import Main.MultiThreading.*;
 import Main.engine.*;
-import sun.rmi.runtime.Log;
 
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * 
@@ -243,88 +238,95 @@ public final class UCI {
 
 			case "PawnActFull":
 				try {
-					Evaluation.PAWNACTIVITYFULL = Integer.parseInt(parameters[4]);
+					Evaluation.PAWN_ACTIVITY_FULL = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "PawnActEmpty":
 				try {
-					Evaluation.PAWNACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+					Evaluation.PAWN_ACTIVITY_EMPTY = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "KnightActFull":
 				try {
-					Evaluation.KNIGHTACTIVITYFULL = Integer.parseInt(parameters[4]);
+					Evaluation.KNIGHT_ACTIVITY_FULL = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "KnightActEmpty":
 				try {
-					Evaluation.KNIGHTACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+					Evaluation.KNIGHT_ACTIVITY_EMPTY = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "BishopActFull":
 				try {
-					Evaluation.BISHOPACTIVITYFULL = Integer.parseInt(parameters[4]);
+					Evaluation.BISHOP_ACTIVITY_FULL = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "BishopActEmpty":
 				try {
-					Evaluation.BISHOPACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+					Evaluation.BISHOP_ACTIVITY_EMPTY = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "RookActFull":
 				try {
-					Evaluation.ROOKACTIVITYFULL = Integer.parseInt(parameters[4]);
+					Evaluation.ROOK_ACTIVITY_FULL = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "RookActEmpty":
 				try {
-					Evaluation.ROOKACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+					Evaluation.ROOK_ACTIVITY_EMPTY = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "QueenActFull":
 				try {
-					Evaluation.QUEENACTIVITYFULL = Integer.parseInt(parameters[4]);
+					Evaluation.QUEEN_ACTIVITY_FULL = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "QueenActEmpty":
 				try {
-					Evaluation.QUEENACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+					Evaluation.QUEEN_ACTIVITY_EMPTY = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "KingActFull":
 				try {
-					Evaluation.KINGACTIVITYFULL = Integer.parseInt(parameters[4]);
+					Evaluation.KING_ACTIVITY_FULL = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
 			case "KingActEmpty":
 				try {
-					Evaluation.KINGACTIVITYEMPTY = Integer.parseInt(parameters[4]);
+					Evaluation.KING_ACTIVITY_EMPTY = Integer.parseInt(parameters[4]);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'Dynamism'.");
 				}
 				break;
+			default:
+				if (parameters[2].startsWith("PST_")) {
+					int colour = parameters[2].charAt(4) == 'W' ? 0 : 1;
+					int piece = Transformation.stringToPiece(parameters[2].charAt(5));
+					int square = Transformation.squareToNumber(parameters[2].substring(6, 8));
+					Evaluation.PIECE_SQUARE_TABLES[colour][piece][square] = Integer.parseInt(parameters[4]);
+				}
 		}
 	}
 

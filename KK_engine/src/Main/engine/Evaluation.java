@@ -1,32 +1,20 @@
 package Main.engine;
 
+import Main.Utility.Constants;
 import Main.engineIO.Logging;
 import Main.engineIO.UCI;
 import test.Assertions;
 
 /**
- * 
+ *
  * @author Anon
  *
  */
 public final class Evaluation implements EvaluationInterface {
-	
-	private static boolean materialOnly = false;
-	private int[] storage = new int[MoveGenerator.MAX_MOVE_COUNT];
-	private BoardInterface board;
 
-	public static int PAWNACTIVITYFULL = 38;
-	public static int PAWNACTIVITYEMPTY = 10;
-	public static int KNIGHTACTIVITYFULL = 54;
-	public static int KNIGHTACTIVITYEMPTY = 33;
-	public static int BISHOPACTIVITYFULL = 36;
-	public static int BISHOPACTIVITYEMPTY = 59;
-	public static int ROOKACTIVITYFULL = 42;
-	public static int ROOKACTIVITYEMPTY = 18;
-	public static int QUEENACTIVITYFULL = 3;
-	public static int QUEENACTIVITYEMPTY = 73;
-	public static int KINGACTIVITYFULL = -22;
-	public static int KINGACTIVITYEMPTY = 44;
+	private static boolean materialOnly = false;
+	private final int[] storage = new int[MoveGenerator.MAX_MOVE_COUNT];
+	private final BoardInterface board;
 
 	public Evaluation(BoardInterface board) {
 		this.board = board;
@@ -44,7 +32,7 @@ public final class Evaluation implements EvaluationInterface {
 		assert Assertions.materialCount(board);
 		assert correctBitBoard();
 		assert Assertions.attackBoard(board);
-		
+
 		if (isMaterialOnly()) {
 			if (toMove) {
 				return board.getMaterialCount();
@@ -53,9 +41,14 @@ public final class Evaluation implements EvaluationInterface {
 			}
 		}
 		int eval = board.getMaterialCount();
+		eval += board.getPieceSquareTable();
 		eval += advancementEval();
 		eval += pieceSquareTables();
 		eval += activityEval(board);
+
+		/*if (board.getPieceSquareTable() != fullPST()) {
+			board.printBoard(); System.exit(1);
+		}*/
 
 		if (!toMove) {
 			eval = (short) -eval;
@@ -63,19 +56,19 @@ public final class Evaluation implements EvaluationInterface {
 		board.getSearch().incrementNodes();
 		return eval;
 	}
-	
+
 	private int activityEval(BoardInterface board) {
 		AttackBoard ab = board.getAttackBoard();
 		ab.generateAttackCount();
 		int activityEval = 0;
 		int piecesLeft = board.getPiecesLeft();
-		activityEval += ((PAWNACTIVITYFULL * piecesLeft + PAWNACTIVITYEMPTY * (32 - piecesLeft))
+		activityEval += ((PAWN_ACTIVITY_FULL * piecesLeft + PAWN_ACTIVITY_EMPTY * (32 - piecesLeft)) // TODO smarter way to count mid / endgame than just pieces left
 		                 * (ab.getAttackCount(0, 0) + ab.getAttackCount(0, 1) - ab.getAttackCount(1, 0) - ab.getAttackCount(1, 1))) / 32;
-		activityEval += ((KNIGHTACTIVITYFULL * piecesLeft + KNIGHTACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 2) - ab.getAttackCount(1, 2))) / 32;
-		activityEval += ((BISHOPACTIVITYFULL * piecesLeft + BISHOPACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 3) - ab.getAttackCount(1, 3))) / 32;
-		activityEval += ((ROOKACTIVITYFULL * piecesLeft + ROOKACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 4) - ab.getAttackCount(1, 4))) / 32;
-		activityEval += ((QUEENACTIVITYFULL * piecesLeft + QUEENACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 5) - ab.getAttackCount(1, 5))) / 32;
-		activityEval += ((KINGACTIVITYFULL * piecesLeft + KINGACTIVITYEMPTY * (32 - piecesLeft))  * (ab.getAttackCount(0, 6) - ab.getAttackCount(1, 6))) / 32;
+		activityEval += ((KNIGHT_ACTIVITY_FULL * piecesLeft + KNIGHT_ACTIVITY_EMPTY * (32 - piecesLeft)) * (ab.getAttackCount(0, 2) - ab.getAttackCount(1, 2))) / 32;
+		activityEval += ((BISHOP_ACTIVITY_FULL * piecesLeft + BISHOP_ACTIVITY_EMPTY * (32 - piecesLeft)) * (ab.getAttackCount(0, 3) - ab.getAttackCount(1, 3))) / 32;
+		activityEval += ((ROOK_ACTIVITY_FULL * piecesLeft + ROOK_ACTIVITY_EMPTY * (32 - piecesLeft)) * (ab.getAttackCount(0, 4) - ab.getAttackCount(1, 4))) / 32;
+		activityEval += ((QUEEN_ACTIVITY_FULL * piecesLeft + QUEEN_ACTIVITY_EMPTY * (32 - piecesLeft)) * (ab.getAttackCount(0, 5) - ab.getAttackCount(1, 5))) / 32;
+		activityEval += ((KING_ACTIVITY_FULL * piecesLeft + KING_ACTIVITY_EMPTY * (32 - piecesLeft)) * (ab.getAttackCount(0, 6) - ab.getAttackCount(1, 6))) / 32;
 
 		assert correctActivityEval(ab);
 		activityEval = (activityEval * UCI.getDynamism()) / 1000;
@@ -95,7 +88,7 @@ public final class Evaluation implements EvaluationInterface {
 		advancementEval += (board.getPieceAdvancement(4) * (32 - piecesLeft)) / 32;
 														// x1 on empty board, x0 on full board
 		if (board.getDangerToWhiteKing() + board.getDangerToBlackKing() > 32) {
-			advancementEval += board.getPieceAdvancement(6) * Math.abs(board.getPieceAdvancement(6)) 
+			advancementEval += board.getPieceAdvancement(6) * Math.abs(board.getPieceAdvancement(6))
 					* (32 - (board.getDangerToWhiteKing() + board.getDangerToBlackKing())); // TODO: change, danger is higher than piecesLeft
 												// full board ^2*(-16); Math.abs to not lose the sign of original number
 		} else {
@@ -103,34 +96,34 @@ public final class Evaluation implements EvaluationInterface {
 		}
 		return advancementEval;
 	}
-	
+
 	private int pieceSquareTables() {
 		int pieceSquares = 0;
-		
+
 		if (board.getDangerToWhiteKing() + board.getDangerToBlackKing() > 40) {
 			if (board.getSquare(3, 0) == 6 || board.getSquare(4, 0) == 6 || board.getSquare(5, 0) == 6
 					|| board.getSquare(3, 1) == 6 || board.getSquare(4, 1) == 6 || board.getSquare(5, 1) == 6) {
 				pieceSquares -= (board.getDangerToWhiteKing() - 20) * 2;
 			}
-			
+
 			if (board.getSquare(3, 7) == -6 || board.getSquare(4, 7) == -6 || board.getSquare(5, 7) == -6
 					|| board.getSquare(3, 6) == -6 || board.getSquare(4, 6) == -6 || board.getSquare(5, 6) == -6) {
 				pieceSquares += (board.getDangerToBlackKing() - 20) * 2;
 			}
-			
-			
-			if (board.getSquare(6, 0) == 6 || board.getSquare(7, 0) == 6 || board.getSquare(6, 1) == 6 
+
+
+			if (board.getSquare(6, 0) == 6 || board.getSquare(7, 0) == 6 || board.getSquare(6, 1) == 6
 					|| board.getSquare(7, 1) == 6) {
-				if (board.getSquare(5, 1) == 1 && board.getSquare(6, 1) == 1 
+				if (board.getSquare(5, 1) == 1 && board.getSquare(6, 1) == 1
 						&& (board.getSquare(7, 1) == 1 || board.getSquare(7, 2) == 1)) {
 					pieceSquares += (board.getDangerToWhiteKing() - 15);
-				} else if (board.getSquare(5, 1) == 1 && board.getSquare(6, 1) == 3 
+				} else if (board.getSquare(5, 1) == 1 && board.getSquare(6, 1) == 3
 						&& board.getSquare(6, 2) == 1 && board.getSquare(7, 1) == 1) {
 					pieceSquares += (board.getDangerToWhiteKing() - 15) * 2;
-				} else if (board.getSquare(6, 1) != 1 && board.getSquare(6, 2) != 1 
+				} else if (board.getSquare(6, 1) != 1 && board.getSquare(6, 2) != 1
 						&& (board.getSquare(7, 1) == 1 || board.getSquare(7, 2) == 1)) {
 					pieceSquares -= (board.getDangerToWhiteKing() - 15) * 3;
-				} else if (board.getSquare(6, 1) != 1 && board.getSquare(6, 2) != 1 && board.getSquare(7, 1) != 1 
+				} else if (board.getSquare(6, 1) != 1 && board.getSquare(6, 2) != 1 && board.getSquare(7, 1) != 1
 						&& board.getSquare(7, 2) != 1) {
 					pieceSquares -= (board.getDangerToWhiteKing() - 15) * 6;
 				}
@@ -138,19 +131,19 @@ public final class Evaluation implements EvaluationInterface {
 					pieceSquares += (board.getDangerToWhiteKing() - 15);
 				}
 			}
-			
-			if (board.getSquare(6, 7) == -6 || board.getSquare(7, 7) == -6 || board.getSquare(6, 6) == -6 
+
+			if (board.getSquare(6, 7) == -6 || board.getSquare(7, 7) == -6 || board.getSquare(6, 6) == -6
 					|| board.getSquare(7, 6) == -6) {
-				if (board.getSquare(5, 6) == -1 && board.getSquare(6, 6) == -1 
+				if (board.getSquare(5, 6) == -1 && board.getSquare(6, 6) == -1
 						&& (board.getSquare(7, 6) == -1 || board.getSquare(7, 5) == -1)) {
 					pieceSquares -= (board.getDangerToBlackKing() - 15);
-				} else if (board.getSquare(5, 6) == -1 && board.getSquare(6, 6) == -3 
+				} else if (board.getSquare(5, 6) == -1 && board.getSquare(6, 6) == -3
 						&& board.getSquare(6, 5) == -1 && board.getSquare(7, 6) == -1) {
 					pieceSquares -= (board.getDangerToBlackKing() - 15) * 2;
-				} else if (board.getSquare(6, 6) != -1 && board.getSquare(6, 5) != -1 
+				} else if (board.getSquare(6, 6) != -1 && board.getSquare(6, 5) != -1
 						&& (board.getSquare(7, 6) == -1 || board.getSquare(7, 5) == -1)) {
 					pieceSquares += (board.getDangerToBlackKing() - 15) * 3;
-				} else if (board.getSquare(6, 6) != -1 && board.getSquare(6, 5) != -1 && board.getSquare(7, 6) != -1 
+				} else if (board.getSquare(6, 6) != -1 && board.getSquare(6, 5) != -1 && board.getSquare(7, 6) != -1
 						&& board.getSquare(7, 5) != -1) {
 					pieceSquares += (board.getDangerToBlackKing() - 15) * 6;
 				}
@@ -160,7 +153,7 @@ public final class Evaluation implements EvaluationInterface {
 			}
 		}
 		pieceSquares = (pieceSquares * UCI.getKingSafety()) / 100;
-		
+
 		if (board.getSquare(3, 3) == 1) {
 			pieceSquares += 10;
 		}
@@ -173,7 +166,7 @@ public final class Evaluation implements EvaluationInterface {
 		if (board.getSquare(4, 4) == -1) {
 			pieceSquares -= 10;
 		}
-		
+
 		if (board.getPiecesLeft() > 25) {
 			if (board.getSquare(3, 0) != 5) {
 				pieceSquares -= (board.getPiecesLeft() - 25);
@@ -182,7 +175,7 @@ public final class Evaluation implements EvaluationInterface {
 				pieceSquares += (board.getPiecesLeft() - 25);
 			}
 		}
-		
+
 		return pieceSquares;
 	}
 
@@ -192,6 +185,21 @@ public final class Evaluation implements EvaluationInterface {
 
 	public static void setMaterialOnly(boolean materialOnly) {
 		Evaluation.materialOnly = materialOnly;
+	}
+
+	public int fullPST() {
+		int pst = 0;
+		int piece = 0;
+		for (int square = 0; square < 64; square++) {
+			if ((piece = board.getSquare(square / 8, square % 8)) != 0) {
+				if (piece > 0) {
+					pst += PIECE_SQUARE_TABLES[Constants.WHITE][piece][square];
+				} else {
+					pst += PIECE_SQUARE_TABLES[Constants.BLACK][-piece][square];
+				}
+			}
+		}
+		return pst;
 	}
 
 	private boolean correctBitBoard() {
@@ -229,4 +237,130 @@ public final class Evaluation implements EvaluationInterface {
 	public void resetEvaluation() {
 
 	}
+
+	public static int PAWN_ACTIVITY_FULL    = 38;
+	public static int PAWN_ACTIVITY_EMPTY   = 10;
+	public static int KNIGHT_ACTIVITY_FULL  = 54;
+	public static int KNIGHT_ACTIVITY_EMPTY = 33;
+	public static int BISHOP_ACTIVITY_FULL  = 36;
+	public static int BISHOP_ACTIVITY_EMPTY = 59;
+	public static int ROOK_ACTIVITY_FULL    = 42;
+	public static int ROOK_ACTIVITY_EMPTY   = 18;
+	public static int QUEEN_ACTIVITY_FULL   = 3;
+	public static int QUEEN_ACTIVITY_EMPTY  = 73;
+	public static int KING_ACTIVITY_FULL    = -22;
+	public static int KING_ACTIVITY_EMPTY   = 44;
+
+	/**
+	 * Indexed by colour, piece type, file, rank.
+	 */
+	public static int[][][] PIECE_SQUARE_TABLES = { { new int[64],
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // White Pawn a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // White Knight a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // White Bishop a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // White Rook a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // White Queen a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // White King a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 } },
+
+	                                                { new int[64],
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // Black Pawn a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // Black Knight a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // Black Bishop a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // Black Rook a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // Black Queen a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 },
+
+	                                                  { 0, 0, 0, 0, 0, 0, 0, 0, // Black King a1 to h8
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0,
+	                                                    0, 0, 0, 0, 0, 0, 0, 0 } } };
 }

@@ -104,4 +104,8 @@ public interface BoardInterface extends Serializable {
 	void resetBoard();
 
 	int isFreeSquare(int file, int row, boolean toMove);
+
+	int getPieceSquareTable();
+
+	void setPieceSquareTable(int pst);
 }
