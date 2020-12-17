@@ -1,6 +1,5 @@
 package Main.MultiThreading;
 
-import Main.engine.Board;
 import Main.engine.BoardInterface;
 import Main.engine.MateTTEntry;
 import Main.engineIO.Logging;
@@ -63,9 +62,11 @@ public abstract class AbstractMatefinderTT implements TranspositionTableInterfac
     public void printPV(BoardInterface board) {
         BoardInterface copy = board.cloneBoard();
         MateTTEntry entry = new MateTTEntry();
+        StringBuilder str = new StringBuilder();
         while (ThreadOrganization.globalMateTT.get(copy.getZobristHash(), entry) != null && entry.getMove() != 0) {
-            Logging.printLine(Transformation.numberToMove(entry.getMove()));
+            str.append(Transformation.numberToMove(entry.getMove())).append(" ");
             copy.makeMove(entry.getMove());
         }
+        Logging.printLine(str.toString());
     }
 }

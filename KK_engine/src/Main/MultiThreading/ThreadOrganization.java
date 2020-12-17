@@ -16,7 +16,7 @@ public class ThreadOrganization {
 	public static BoardInterface[] boards = new Board[5];
 	private static SearchThreadInterface[] thread = new SearchThreadInterface[5];
 
-	public static TranspositionTableInterface globalMateTT = new AggressiveMatefinderTT(0x100000L);
+	public static TranspositionTableInterface globalMateTT = new AggressiveMatefinderTT(0x100000000L);
 
     private static ExecutorService executor            = Executors.newFixedThreadPool(5);
 

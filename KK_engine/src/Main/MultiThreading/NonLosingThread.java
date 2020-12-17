@@ -1,13 +1,10 @@
 package Main.MultiThreading;
 
 import Main.engine.BoardInterface;
-import Main.engine.MateFinder;
 import Main.engine.MoveGenerator;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
-
-import java.util.concurrent.Callable;
 
 public class NonLosingThread implements SearchThreadInterface {
 	private BoardInterface   board;
@@ -59,9 +56,11 @@ public class NonLosingThread implements SearchThreadInterface {
                 if (logging) {
                     Logging.printLine(threadName + "Non losing moves: " + board.getRootMoves()[0] + ". Nodes: "
                             + Transformation.nodeCountOutput(board.getSearch().getNodes()));
+                    StringBuilder str = new StringBuilder();
                     for (int index = 1; index <= board.getRootMoves()[0]; index++) {
-                        Logging.printLine(Transformation.numberToMove(board.getRootMoves()[index]) + " ");
+                        str.append(Transformation.numberToMove(board.getRootMoves()[index])).append(", ");
                     }
+	                Logging.printLine(str.toString());
                 }
 
                 if (mateScore < 0) {
