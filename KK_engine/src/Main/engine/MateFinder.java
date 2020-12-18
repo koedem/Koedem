@@ -115,7 +115,7 @@ public class MateFinder implements Serializable {
 		if (depthLeft % 2 == 1) {
 			moves = board.getCheckMoveGenerator().collectAllPNMoves(moves, toMove);
 		} else {
-			if (aggressive) {
+			if (aggressive || depthLeft == 2) { // the last move has to be a check for it to be checkmate
 				moves = board.getCheckMoveGenerator().collectCheckMoves(movesStorage[1][depth - depthLeft], moves, toMove);
 			} else {
 				moves = board.getCheckMoveGenerator().collectPNSearchMoves(movesStorage[1][depth - depthLeft], moves, toMove);
