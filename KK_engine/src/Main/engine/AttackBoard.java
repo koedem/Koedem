@@ -1292,8 +1292,8 @@ public class AttackBoard implements Serializable {
 		}
     }
 
-    public boolean inCheck(boolean colour) {
-		return (allPieces[colour ? 1 : 0] & bitboard.getPieceTypeBoard(colour ? 0 : 1, 6)) != 0;
+    public boolean inCheck(boolean white) {
+		return (allPieces[white ? 1 : 0] & bitboard.getPieceTypeBoard(white ? 0 : 1, 6)) != 0;
     }
 
     int getAttackCount(int colour, int piece) {

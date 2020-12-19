@@ -34,7 +34,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-			if (board.getAttackBoard().inCheck(!board.getToMove())) {
+			if (board.getAttackBoard().inCheck(!board.getToMove())) { // we make a move, are we in check afterwards? We're not to move anymore so negation
 				if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 					// in case index is the last element we simply reduce the size by one to delete it
 					storage[index] = storage[storage[0]];
@@ -66,7 +66,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-			if (board.getAttackBoard().inCheck(!board.getToMove())) {
+			if (board.getAttackBoard().inCheck(!board.getToMove())) { // are we in check after moving? In that case remove the move
 				if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 					// in case index is the last element we simply reduce the size by one to delete it
 					storage[index] = storage[storage[0]];
@@ -74,7 +74,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 				storage[0]--;
 				index--;
 			} else {
-				if (board.getAttackBoard().inCheck(board.getToMove())) {
+				if (board.getAttackBoard().inCheck(board.getToMove())) { // is the opponent in check after our move? In that case add to checks
 					checks[++checks[0]] = move;
 					if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 						// in case index is the last element we simply reduce the size by one to delete it
@@ -110,7 +110,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-			if (board.getAttackBoard().inCheck(!board.getToMove())) {
+			if (board.getAttackBoard().inCheck(!board.getToMove())) { // are we in check after moving? In that case delete that move
 				if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 					// in case index is the last element we simply reduce the size by one to delete it
 					storage[index] = storage[storage[0]];
@@ -118,7 +118,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 				storage[0]--;
 				index--;
 			} else {
-				if (board.getAttackBoard().inCheck(board.getToMove())) {
+				if (board.getAttackBoard().inCheck(board.getToMove())) { // is the opponent in check after our move? Then add to checks
 					checks[++checks[0]] = move;
 					if (index < storage[0]) { // "delete" entry index by overwriting it with previous last element;
 						// in case index is the last element we simply reduce the size by one to delete it
@@ -133,9 +133,5 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 			board.addCastlingRights(castlingRights);
 		}
 		return checks;
-	}
-
-	public boolean inCheck(boolean whiteInCheck) {
-		return board.getAttackBoard().inCheck(!whiteInCheck); // TODO why toMove and not !toMove ??
 	}
 }
