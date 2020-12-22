@@ -41,7 +41,7 @@ public class NonLosingThread implements SearchThreadInterface {
             board.getSearch().setAbortedNodes(0);
             board.getSearch().setQNodes(0);
             int mateScore = 0;
-            for (int i = 3; i < depth; i += 2) {
+            for (int i = 1; i < depth; i ++) {
             	if (!aggressive) {
             		int debug = 0;
 	            }
@@ -51,7 +51,7 @@ public class NonLosingThread implements SearchThreadInterface {
                             + Transformation.timeUsedOutput(System.currentTimeMillis() - time));
                 }
 
-                mateScore = board.getMateFinder().rootMateFinder(board.getToMove(), i, aggressive);
+                mateScore = board.getMateFinder().rootMateFinder(i, aggressive);
 
                 if (logging) {
                     Logging.printLine(threadName + "Non losing moves: " + board.getRootMoves()[0] + ". Nodes: "

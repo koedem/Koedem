@@ -19,9 +19,9 @@ public class MateFinder implements Serializable {
 		}
 	}
 
-	public int rootMateFinder(boolean toMove, int depth, boolean aggressive) {
+	public int rootMateFinder(int depth, boolean aggressive) {
 		MateTTEntry entry = new MateTTEntry();
-		int mateScore = -100;
+		int mateScore = -50;
 		int[] moves = board.getRootMoves();
 		int bestMoveIndex = 1;
 		int bestMove = 0;
@@ -37,15 +37,13 @@ public class MateFinder implements Serializable {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-			int innerEval = -100;
+			int innerEval;
 
-			innerEval = mateFinder(!toMove, depth, depth - 1, aggressive);
+			innerEval = mateFinder(true, depth, depth, aggressive ? 4 : 1, aggressive);
 			innerEval = -innerEval;
 			//UserInteraction.printEngineOutput("NonLosing Search move ", innerPV, board, time);
-			if (innerEval < 0) {
-				innerEval++;
-			} else if (innerEval > 0) {
-				innerEval--;
+			if (innerEval > 0) { // TODO we probably don't want this to ever happen
+				innerEval = 0;
 			}
 
 			if (innerEval > mateScore) {
@@ -80,52 +78,53 @@ public class MateFinder implements Serializable {
 	}
 
 	/**
-	 *
-	 * @param toMove
-	 * @param depth
-	 * @param depthLeft if even we try to win, if odd we only need to not lose
-	 * @param aggressive
-	 * @return
+	 * @param attacker true if the player currently to move tries to win, false otherwise.
+	 * @param depth The total depth in full moves to be calculated. I.e. depth 3 looks 6 (!) half moves deep.
+	 * @param depthLeft The remaining depth in full moves to be calculated. I.e. depthLeft 3 means 6 (!) more half moves will be calculated.
+	 * @param quietMoveDepthCost The cost of making a quiet move in depth. E.g. if set to 1, checks are treated the same as non checks.
+	 *                           If set to a high value, e.g. 100, then only checks are looked at (unless depth > 100).
+	 * @param narrow In case there are multiple mate searches going on on the same transposition table, this denotes this search as narrow or not.
+	 * @return The number of moves to achieve checkmate, or 0 if none exists.
 	 */
-	public int mateFinder(boolean toMove, int depth, int depthLeft, boolean aggressive) {
+	public int mateFinder(boolean attacker, int depth, int depthLeft, int quietMoveDepthCost, boolean narrow) {
 		MateTTEntry entry = entries[depth - depthLeft];
 		if (board.getZobristHash() == -8197142223296564155L || board.getSearch().getNodes() >= 998750) {
 			int debug = 0;
 		}
 		if (ThreadOrganization.globalMateTT.get(board.getZobristHash(), entry) != null) {
-			if (entry.getMateScore() != 0) {
+			if (entry.getMateScore() != 0) { // any kind of mate score can immediately be returned
 				return entry.getMateScore();
 			}
-			if (depthLeft % 2 == 0) {
-				if (entry.getFullDepth() >= depthLeft) {
+			if (attacker) { // no mate score was found so it's a draw according to the entry
+				if (entry.getFullDepth() >= depthLeft) { // check if we have enough depth to return that draw
 					return 0;
-				} else if (aggressive && entry.getAggressiveDepth() >= depthLeft) {
+				} else if (narrow && entry.getAggressiveDepth() >= depthLeft) {
 					return 0;
 				}
 			} else {
 				if (entry.getFullLosingDepth() >= depthLeft) {
 					return 0;
-				} else if (aggressive && entry.getAggressiveLosingDepth() >= depthLeft) {
+				} else if (narrow && entry.getAggressiveLosingDepth() >= depthLeft) {
 					return 0;
 				}
 			}
 		}
-		int mateScore = -100;
-		int[] moves = movesStorage[0][depth - depthLeft];
-		if (depthLeft % 2 == 1) {
-			moves = board.getCheckMoveGenerator().collectAllPNMoves(moves, toMove);
+		int mateScore = -50; // the worst score possible is being mated in 1
+		int[] moves = movesStorage[0][2 * (depth - depthLeft) + (attacker ? 0 : 1)];
+		if (!attacker) {
+			moves = board.getCheckMoveGenerator().collectAllPNMoves(moves, board.getToMove());
 		} else {
-			if (aggressive || depthLeft == 2) { // the last move has to be a check for it to be checkmate
-				moves = board.getCheckMoveGenerator().collectCheckMoves(movesStorage[1][depth - depthLeft], moves, toMove);
+			if (depthLeft <= quietMoveDepthCost) { // the last move has to be a check for it to be checkmate; check if we don't have enough depth for a quiet move PLUS then a check
+				moves = board.getCheckMoveGenerator().collectCheckMoves(movesStorage[1][depth - depthLeft], moves, board.getToMove()); // TODO why is moveStorage[1] a full array of arrays?
 			} else {
-				moves = board.getCheckMoveGenerator().collectPNSearchMoves(movesStorage[1][depth - depthLeft], moves, toMove);
+				moves = board.getCheckMoveGenerator().collectPNSearchMoves(movesStorage[1][depth - depthLeft], moves, board.getToMove());
 			}
 		}
 		
-		if (moves[0] == -1) {
-			mateScore = 100;
+		if (moves[0] == -1) { // TODO can this happen?
+			mateScore = 50;
 			return mateScore;
-		} else if (depthLeft % 2 == 0 && moves[0] == 0) {
+		} else if (attacker && moves[0] == 0) {
 			mateScore = 0;
 			return mateScore;
 		}
@@ -143,19 +142,20 @@ public class MateFinder implements Serializable {
 			byte enPassant = board.getEnPassant();
 			long zobrist = board.getZobristHash();
 			board.makeMove(move);
-			int innerEval = -100;
-			if (depthLeft > 1) {
-				innerEval = mateFinder(!toMove, depth, depthLeft - 1, aggressive);
+			int innerEval = -50;
+			if (depthLeft >= 1) {
+				int innerDepthLeft = attacker ? depthLeft - (board.getAttackBoard().inCheck(board.getToMove()) ? 1 : quietMoveDepthCost) : depthLeft;
+				// if it's a check subtract 1, otherwise the cost of a quiet move; or 0 if we're not the attacker
+				innerEval = mateFinder(!attacker, depth, innerDepthLeft, quietMoveDepthCost, narrow);
 				innerEval = -innerEval;
-				if (innerEval < 0) {
-					innerEval++;
-				} else if (innerEval > 0) {
-					innerEval--;
+				if (innerEval > 0) {
+					innerEval--; // if we have a mate in n we have to increment that when backing up
 				}
-			} else if (depthLeft == 1) {
+			} else if (depthLeft == 0) {
+				assert !attacker;
 				innerEval = 0;
 				if (board.getAttackBoard().inCheck(!board.getToMove())) {
-					innerEval = -100;
+					innerEval = -50;
 				}
 			}
 			if (innerEval > mateScore) {
@@ -169,27 +169,12 @@ public class MateFinder implements Serializable {
 				assert false;
 			}
 
-			entry.setMateScore(mateScore);
-			entry.setMove(bestMove);
-			if (depthLeft % 2 == 1 && mateScore >= 0) {
-				entry.setAggressiveDepth(0); // we're trying to not lose here so we
-				entry.setFullDepth(0); // don't know anything about trying to win
-				if (aggressive) {
-					entry.setAggressiveLosingDepth(depthLeft);
-					entry.setFullLosingDepth(0);
-				} else {
-					entry.setAggressiveLosingDepth(0);
-					entry.setFullLosingDepth(depthLeft);
-				}
-				ThreadOrganization.globalMateTT.put(board.getZobristHash(), entry);
-				break;
-			} else if (mateScore > 0) {
-				ThreadOrganization.globalMateTT.put(board.getZobristHash(), entry);
+			if (!attacker && mateScore >= 0 || mateScore > 0) {
 				break;
 			}
 		}
-		if (mateScore == -100) {
-			int[] captures = board.getCaptureGenerator().collectCaptures(!toMove, new int[256]);
+		if (mateScore == -50) {
+			int[] captures = board.getCaptureGenerator().collectCaptures(!board.getToMove(), new int[256]); // TODO is this just a bad inCheck call?
 			if (captures[0] != -1) { // stalemate
 				mateScore = 0;
 				entry.setFullDepth(255);
@@ -206,22 +191,36 @@ public class MateFinder implements Serializable {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			throw new RuntimeException();
+			throw new RuntimeException(); // TODO fix this nonsense
 		}
-		entry.setMateScore(mateScore);
+
 		entry.setMove(bestMove);
-		if (depthLeft % 2 == 0 && mateScore <= 0) {
+
+		if (attacker) {
 			entry.setAggressiveLosingDepth(0); // we're trying to win here so we
 			entry.setFullLosingDepth(0); // don't know anything about trying not to lose
-			if (aggressive) {
-				entry.setAggressiveDepth(depthLeft);
+			int entryDepth = depthLeft < quietMoveDepthCost && mateScore < 0 ? quietMoveDepthCost : depthLeft;
+			entry.setMateScore(Math.max(mateScore, 0));
+
+			entry.setAggressiveDepth(entryDepth);
+			if (narrow) {
 				entry.setFullDepth(0);
 			} else {
-				entry.setAggressiveDepth(0);
-				entry.setFullDepth(depthLeft);
+				entry.setFullDepth(entryDepth);
 			}
 			ThreadOrganization.globalMateTT.put(board.getZobristHash(), entry);
-		} else if (mateScore < 0) {
+		} else {
+			entry.setAggressiveDepth(0); // we're trying to not lose here so we
+			entry.setFullDepth(0); // don't know anything about trying to win
+			int entryDepth = depthLeft < quietMoveDepthCost && mateScore > 0 ? quietMoveDepthCost : depthLeft;
+			entry.setMateScore(Math.min(mateScore, 0));
+
+			entry.setAggressiveLosingDepth(entryDepth);
+			if (narrow) {
+				entry.setFullLosingDepth(0);
+			} else {
+				entry.setFullLosingDepth(entryDepth);
+			}
 			ThreadOrganization.globalMateTT.put(board.getZobristHash(), entry);
 		}
 		return mateScore;

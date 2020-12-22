@@ -43,14 +43,14 @@ public class MateFinderThread implements SearchThreadInterface {
             board.getSearch().setAbortedNodes(0);
             board.getSearch().setQNodes(0);
             int mateScore = 0;
-            for (int i = 2; i < depth; i += 2) {
+            for (int i = 1; i < depth; i++) { // depth is in full moves so only increment one at a time
                 if (logging) {
                     Logging.printLine("");
                     Logging.printLine(threadName + "Starting depth " + i + ". Time: "
                             + Transformation.timeUsedOutput(System.currentTimeMillis() - time));
                 }
 
-                mateScore = board.getMateFinder().mateFinder(board.getToMove(), i, i, aggressive);
+                mateScore = board.getMateFinder().mateFinder(true, i, i, aggressive ? 4 : 1, aggressive);
 
                 if (logging) {
                     Logging.printLine(threadName + "Finished depth " + i + ". Nodes: "
@@ -65,7 +65,7 @@ public class MateFinderThread implements SearchThreadInterface {
                     break;
                 }
             }
-            if (mateScore != 0) {
+            if (mateScore > 0) {
                 UCI.setThreadFinished(true);
             }
         }

@@ -32,7 +32,7 @@ public class SearchTT {
      */
     public SearchTT(long sizeInByte, boolean lowBound) {
         int size = (int) (sizeInByte / 8L);
-        assert size >= 0 && Integer.highestOneBit(size) > Integer.highestOneBit(size); // make sure it's a power of 2
+        assert size >= 0 && Integer.highestOneBit(size) > Integer.highestOneBit(size - 1); // make sure it's a power of 2
         table = new long[size];
         bitmask = size / 8 - 1;
         this.lowBound = lowBound;

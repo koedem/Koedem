@@ -44,10 +44,10 @@ public class ThreadOrganization {
     }
 
     public static void findMate() {
-	    thread[1].setDepth(40);
-	    thread[2].setDepth(40);
-	    thread[3].setDepth(40);
-	    thread[4].setDepth(40);
+	    thread[1].setDepth(60);
+	    thread[2].setDepth(20);
+	    thread[3].setDepth(60);
+	    thread[4].setDepth(20);
 	    for (int threadNumber = 1; threadNumber < 5; threadNumber++) {
 	        synchronized (thread[threadNumber]) {
 		        UCI.setThreadFinished(false);
