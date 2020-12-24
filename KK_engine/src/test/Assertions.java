@@ -3,6 +3,7 @@ package test;
 import Main.engine.Board;
 import Main.engine.BoardInterface;
 import Main.engine.MoveGenerator;
+import Main.engineIO.Logging;
 
 import java.util.Arrays;
 
@@ -68,6 +69,14 @@ public final class Assertions {
                 assert false;
             }
         }
+		return true;
+	}
+
+	public static boolean correctPSTs(BoardInterface board) {
+		if (board.getPieceSquareTable() != board.getEvaluation().fullPST()) {
+			Logging.printLine("Error: Incorrect PST.");
+			board.printBoard(); System.exit(1);
+		}
 		return true;
 	}
 	
