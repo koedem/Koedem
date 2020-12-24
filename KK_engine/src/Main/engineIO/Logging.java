@@ -13,19 +13,15 @@ public final class Logging {
 	private static String directoryName = "Koedem-Logs";
 	private static File directory = new File(directoryName);
 	private static String timeLog = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime()).concat("-" + ManagementFactory.getRuntimeMXBean().getName());
-	private static File logFile = new File(directoryName + File.separator + timeLog);
+	private static File logFile = new File(directoryName + File.separator + "Logfile" + timeLog);
 	private static BufferedWriter writer = null;
 	
 	public static void setup() {
 		if (UCI.logging) {
-			/*try {
-				System.out.println("Logfile at " + logFile.getCanonicalPath());
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}*/
 			try {
 				directory.mkdir();
 				writer = new BufferedWriter(new FileWriter(logFile));
+				System.out.println("Logfile at " + logFile.getCanonicalPath());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
