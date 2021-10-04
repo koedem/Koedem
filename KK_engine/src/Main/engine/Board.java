@@ -608,8 +608,13 @@ public class Board implements BoardInterface {
 			
 			square[startSquare / 8][startSquare % 8] = square[endSquare / 8][endSquare % 8]; // actual moving
 			square[endSquare / 8][endSquare % 8] = capturedPiece; // put captured piece back on its square
-            boolean success = bitboard.move(endSquare, startSquare, false, capturedPiece);
-            assert success;
+
+			if (startSquare != endSquare) {
+				boolean success = bitboard.move(endSquare, startSquare, false, capturedPiece);
+				assert success;
+			} else {
+				bitboard.add(Math.abs(capturedPiece), (capturedPiece > 0) ? 0 : 1, startSquare);
+			}
 			if (movedPieceType == 1 && endSquare == enPassant) {
 				
 											// a pawn moving and ending on the en passant square ALWAYS means capture

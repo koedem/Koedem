@@ -23,6 +23,18 @@ public class CaptureGenerator implements CaptureGeneratorInterface {
 
 	}
 
+	public int[] collectShootingMoves(boolean whoToMove, int[] shootingMoves) {
+		shootingMoves[0] = 0;
+
+		long shotPiecesBitSet = board.getAttackBoard().getAllPieces()[whoToMove ? 0 : 1] & board.getBitboard().getAllPieces(whoToMove ? 1 : 0);
+		while (shotPiecesBitSet != 0) {
+			int endSquare = Long.numberOfTrailingZeros(shotPiecesBitSet);
+			shootingMoves[++shootingMoves[0]] = (1 << 12) + (endSquare << 6) + (endSquare);
+			shotPiecesBitSet &= ~(1L << endSquare);
+		}
+		return shootingMoves;
+	}
+
 	/**
 	 * This code works with the AttackBoard to quickly determine capture options.
 	 * @param whoToMove who to move it is. true = white, false = black.
@@ -37,6 +49,7 @@ public class CaptureGenerator implements CaptureGeneratorInterface {
 			return allCaptures;
 		} else {
 			allCaptures[0] = 0;
+			//collectShootingMoves(whoToMove, allCaptures);
 			if ((board.getAttackBoard().getAllPieces()[toMove] & bitboard.getAllPieces(whoToMove ? 1 : 0)) == 0) { // i.e. there's no legal captures
 				return allCaptures;
 			}

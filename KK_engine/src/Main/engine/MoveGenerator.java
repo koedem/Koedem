@@ -54,14 +54,7 @@ public class MoveGenerator implements MoveGeneratorInterface {
 		}
 		nonCaptures[0] = 0;
 
-		shotPieces[0] = 0;
-
-		long shotPiecesBitSet = board.getAttackBoard().getAllPieces()[toMove ? 0 : 1] & board.getBitboard().getAllPieces(toMove ? 1 : 0);
-		for (int i = 0; i < 64; i++) {
-			if ((shotPiecesBitSet & (1L << i)) != 0) {
-				shotPieces[shotPieces[0]++] = i * 65;
-			}
-		}
+		board.getCaptureGenerator().collectShootingMoves(toMove, shotPieces);
 
 		byte startSquare = 0;
 

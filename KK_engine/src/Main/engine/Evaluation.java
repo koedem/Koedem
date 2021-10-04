@@ -38,6 +38,7 @@ public final class Evaluation implements EvaluationInterface {
 		assert Assertions.attackBoard(board);
 		assert Assertions.correctPSTs(board);
 
+		board.getSearch().incrementNodes();
 		if (isMaterialOnly()) {
 			if (toMove) {
 				return board.getMaterialCount();
@@ -54,7 +55,6 @@ public final class Evaluation implements EvaluationInterface {
 		if (!toMove) {
 			eval = (short) -eval;
 		}
-		board.getSearch().incrementNodes();
 		return eval;
 	}
 
