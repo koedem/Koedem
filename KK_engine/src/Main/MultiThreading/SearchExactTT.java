@@ -8,23 +8,6 @@ import java.util.Arrays;
 
 public class SearchExactTT extends SearchTT {
 
-    /**
-     * Scheme: Table is split into cells of 8 longs, each cell is split into 4 entries, each entry consisting of a
-     * Zobrist hash long and an information long created in the SearchTT object.
-     * The hashing long gets XORed with the information to provide a race condition free access.
-     */
-    private long[] table;
-    private int bitmask;
-    private boolean lowBound;
-
-    private TTEntry oldEntry = new TTEntry();
-
-    private long ttHits = 0;
-    private long ttFill = 0;
-    private long ttOverwrites = 0;
-    private long ttImprovements = 0;
-
-    private int pseudoRandom = 0;
 
     /**
      * @param sizeInByte power of 2.
