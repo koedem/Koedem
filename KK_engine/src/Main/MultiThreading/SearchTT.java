@@ -16,18 +16,18 @@ public class SearchTT implements SearchTTInterface {
 	 * Zobrist hash long and an information long created in the SearchTT object.
 	 * The hashing long gets XORed with the information to provide a race condition free access.
 	 */
-	private long[] table;
-	private int bitmask;
-	private boolean lowBound;
+	protected long[] table;
+	protected int bitmask;
+	protected boolean lowBound;
 
-	private TTEntry oldEntry = new TTEntry();
+	protected TTEntry oldEntry = new TTEntry();
 
-	private long ttHits = 0;
-	private long ttFill = 0;
-	private long ttOverwrites = 0;
-	private long ttImprovements = 0;
+	protected long ttHits = 0;
+	protected long ttFill = 0;
+	protected long ttOverwrites = 0;
+	protected long ttImprovements = 0;
 
-	private int pseudoRandom = 0;
+	protected int pseudoRandom = 0;
 
 	/**
 	 *
