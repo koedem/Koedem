@@ -430,9 +430,13 @@ public class Board implements BoardInterface {
 				}
 
 				square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8]; // the actual moving
-				square[startSquare / 8][startSquare % 8] = 0; // start square becomes empty
+				square[startSquare / 8][startSquare % 8] = 0; // start square becomes empty; this naturally works for shooting moves too
 
-				bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
+				if (startSquare != endSquare) {
+					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
+				} else {
+					bitboard.remove(startSquare, true);
+				}
 			}
 			pieceAdvancement[movingPieceType] += 2 * ((endSquare % 8) - (startSquare % 8)); // add the advancement change caused by the move
 			pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.WHITE : Constants.BLACK][movingPieceType][endSquare]

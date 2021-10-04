@@ -24,6 +24,11 @@ public class MoveGenerator implements MoveGeneratorInterface {
 	 */
 	private final int[][] captures = new int[6][64]; // hopefully at max 64 captures for a single captured piece type; captures[0] isn't used
 
+	/**
+	 * Array to put shot pieces in. shotPieces[0] stores the number of actual moves, move format is pieceSquare * 65
+	 */
+	private final int[] shotPieces = new int[32];
+
     /**
      * Array to put non-capture moves in. nonCaptures[0] stores the number of non capture moves.
      */
@@ -48,6 +53,15 @@ public class MoveGenerator implements MoveGeneratorInterface {
 			captures[piece][0] = 0;
 		}
 		nonCaptures[0] = 0;
+
+		shotPieces[0] = 0;
+
+		long shotPiecesBitSet = board.getAttackBoard().getAllPieces()[toMove ? 0 : 1] & board.getBitboard().getAllPieces(toMove ? 1 : 0);
+		for (int i = 0; i < 64; i++) {
+			if ((shotPiecesBitSet & (1L << i)) != 0) {
+				shotPieces[shotPieces[0]++] = i * 65;
+			}
+		}
 
 		byte startSquare = 0;
 
@@ -106,6 +120,8 @@ public class MoveGenerator implements MoveGeneratorInterface {
 			allMoves[0] = -1;
 		} else {
 			allMoves[0] = 0;
+			System.arraycopy(shotPieces, 1, allMoves, allMoves[0] + 1, shotPieces[0]);
+			allMoves[0] += shotPieces[0];
 			for (int piece = captures.length - 1; piece > 0; piece--) {
 				int destPos = allMoves[0] + 1; // plus one because allMoves[0] doesn't store a move (oversimplified)
 				System.arraycopy(captures[piece], 1, allMoves, destPos, captures[piece][0]);
