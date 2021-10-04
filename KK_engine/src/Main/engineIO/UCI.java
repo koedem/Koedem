@@ -37,12 +37,12 @@ public final class UCI {
 
 	private static boolean threadFinished = true;
 
-	static String                  engineName          = "Koedem";
-	static BoardInterface                   board               = new Board();
-	static Perft perft = new Perft(board);
-	public static SearchTT upperBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), false);
-	public static SearchTT lowerBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), true);
-	private static Scanner         sc                  = new Scanner(System.in);
+	static         String            engineName       = "Koedem";
+	static         BoardInterface    board            = new Board();
+	static         Perft             perft            = new Perft(board);
+	public static  SearchTTInterface upperBoundsTable = new SearchExactTT(ttSizeInMB * (1 << 19), false);
+	public static  SearchTTInterface lowerBoundsTable = new SearchExactTT(ttSizeInMB * (1 << 19), true);
+	private static Scanner           sc               = new Scanner(System.in);
 	
 	public static void main(String[] args) {
 		CorrespondenceOrganisation.getInstance().setup();
@@ -160,8 +160,8 @@ public final class UCI {
 			case "Hash":
 				try {
 					ttSizeInMB = Integer.parseInt(parameters[4]);
-					upperBoundsTable = new SearchTT(ttSizeInMB * (1L << 19), false);
-					lowerBoundsTable = new SearchTT(ttSizeInMB * (1L << 19), true);
+					upperBoundsTable = new SearchExactTT(ttSizeInMB * (1L << 19), false);
+					lowerBoundsTable = new SearchExactTT(ttSizeInMB * (1L << 19), true);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'BaseTime'.");
 				}
