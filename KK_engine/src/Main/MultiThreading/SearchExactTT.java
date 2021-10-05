@@ -46,18 +46,16 @@ public class SearchExactTT extends SearchTT {
                 return;
             } else if ((table[(position << 3) + count] ^ (oldInformation = table[(position << 3) + count + 1])) == depthHash) {
                 oldEntry.setAllInformation(oldInformation);
-                if (oldEntry.getDepth() <= entry.getDepth()) {
-                    if (oldEntry.getDepth() < entry.getDepth()) {
-                        Logging.printLine("Probably collision, storing position with wrong depth"); // TODO what do we do here?
-                    }
-                    if (lowBound ? oldEntry.getEval() < entry.getEval()
-                                                                           : oldEntry.getEval() > entry.getEval()) {
-                        // if we're storing lower bounds we want the eval to go up, otherwise we want it to go down
-                        table[(position << 3) + count] = depthHash ^ entry.getAllInformation();
-                        table[(position << 3) + count + 1] = entry.getAllInformation();
-                        ttImprovements++;
-                    }
+
+                if (oldEntry.getDepth() != entry.getDepth()) { // this should not happen since depth is stored in the hash key; unless some hash collision
+                    Logging.printLine("Probably collision, storing position with wrong depth"); // TODO what do we do here?
                 }
+                assert  (lowBound ? oldEntry.getEval() < entry.getEval() : oldEntry.getEval() > entry.getEval());
+                // if this would not hold, we would have gotten a cutoff before already instead of having to search
+
+                table[(position << 3) + count] = depthHash ^ entry.getAllInformation();
+                table[(position << 3) + count + 1] = entry.getAllInformation();
+                ttImprovements++;
                 return;
             }
         }

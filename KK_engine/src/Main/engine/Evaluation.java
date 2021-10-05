@@ -47,7 +47,7 @@ public final class Evaluation implements EvaluationInterface {
 			}
 		}
 		int eval = board.getMaterialCount();
-		eval += board.getPieceSquareTable(); //TODO
+		//eval += board.getPieceSquareTable(); //TODO
 		eval += advancementEval();
 		eval += pieceSquareTables();
 		eval += activityEval(board);

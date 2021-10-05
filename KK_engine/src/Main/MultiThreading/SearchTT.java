@@ -88,7 +88,7 @@ public class SearchTT implements SearchTTInterface {
 					}
 					if (lowBound ? oldEntry.getEval() < entry.getEval()
 					             : oldEntry.getEval() > entry.getEval()) {
-						// if we're storing lower bounds we want the eval to go up, otherwise we want it to go down
+						// if we're storing lower bounds we want the eval to go up, otherwise we want it to go down TODO if higher depth we might want to replace anyway
 						table[(position << 3) + count] = zobristHash ^ entry.getAllInformation();
 						table[(position << 3) + count + 1] = entry.getAllInformation();
 						ttImprovements++;
