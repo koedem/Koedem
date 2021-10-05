@@ -20,17 +20,8 @@ public class SearchExactTT extends SearchTT {
 
     @Override
     public TTEntry get(long zobristHashOne, TTEntry entry, int depth) {
-        long depthHash = zobristHashOne + depth;
-        long information;
-        int position = (int) depthHash & bitmask;
-        for (int count = 0; count < 8; count += 2) {
-            if ((table[(position << 3) + count] ^ (information = table[(position << 3) + count + 1])) == depthHash) {
-                entry.setAllInformation(information);
-                ttHits++;
-                return entry;
-            }
-        }
-        return null;
+        long depthHash = zobristHashOne + depth; // we include depth in the key to get exact depth matches when probing
+        return super.get(depthHash, entry, depth); // use modified hash to look up normally
     }
 
     @Override

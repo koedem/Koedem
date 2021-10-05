@@ -57,11 +57,10 @@ public class SearchTT implements SearchTTInterface {
 
 	@Override
 	public TTEntry get(long zobristHashOne, TTEntry entry, int depth) {
-		long depthHash = zobristHashOne + depth;
 		long information;
-		int position = (int) depthHash & bitmask;
+		int position = (int) zobristHashOne & bitmask;
 		for (int count = 0; count < 8; count += 2) {
-			if ((table[(position << 3) + count] ^ (information = table[(position << 3) + count + 1])) == depthHash) {
+			if ((table[(position << 3) + count] ^ (information = table[(position << 3) + count + 1])) == zobristHashOne) {
 				entry.setAllInformation(information);
 				ttHits++;
 				return entry;
