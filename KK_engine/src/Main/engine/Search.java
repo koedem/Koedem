@@ -184,7 +184,7 @@ public class Search implements SearchInterface {
 		}
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
-			if (entry.getDepth() == depthLeft) { // TODO for now only for exact depth matches, in the future >=
+			if (entry.getDepth() >= depthLeft) {
 				if (entry.getEval() >= beta) { // we get a beta cutoff
 					principleVariation[depth] = entry.getEval();
 					nodes++;
@@ -192,15 +192,12 @@ public class Search implements SearchInterface {
 				} else if (entry.getEval() > alpha) {
 					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
-				ttMoves[depthLeft][moveOrder[0]] = entry.getMove();
-			} else {
-				Logging.printLine("Probably hash collision, depth is not what it should be. Search lower bounds table, Position:");
-				board.printBoard();
 			}
+			ttMoves[depthLeft][moveOrder[0]] = entry.getMove();
 		}
 
 		if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
-			if (entry.getDepth() == depthLeft) { // TODO for now only for exact depth matches, in the future >=
+			if (entry.getDepth() >= depthLeft) {
 				if (entry.getEval() <= alpha) { // we are worse than alpha so can't possibly improve the score
 					principleVariation[depth] = entry.getEval();
 					nodes++;
@@ -208,11 +205,8 @@ public class Search implements SearchInterface {
 				} else if (entry.getEval() < beta) {
 					beta = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
-				ttMoves[depthLeft][moveOrder[1]] = entry.getMove();
-			} else {
-				Logging.printLine("Probably hash collision, depth is not what it should be. Search upper bounds table, Position:");
-				board.printBoard();
 			}
+			ttMoves[depthLeft][moveOrder[1]] = entry.getMove();
 		}
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft - 1) != null) { // use old depth entries
@@ -379,7 +373,7 @@ public class Search implements SearchInterface {
 		}
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, 1) != null) {
-			if (entry.getDepth() == 1) { // TODO for now only for exact depth matches, in the future >=
+			if (entry.getDepth() >= 1) { // TODO this is probably redundant?
 				if (entry.getEval() >= beta) { // we get a beta cutoff
 					principleVariation[depth] = entry.getEval();
 					nodes++;
@@ -387,15 +381,12 @@ public class Search implements SearchInterface {
 				} else if (entry.getEval() > alpha) {
 					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
-				ttMoves[1][2] = entry.getMove();
-			} else {
-				Logging.printLine("Probably hash collision, depth is not what it should be. D1-search lower bounds table, Position:");
-				board.printBoard();
 			}
+			ttMoves[1][2] = entry.getMove();
 		}
 
 		if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, 1) != null) {
-			if (entry.getDepth() == 1) { // TODO for now only for exact depth matches, in the future >=
+			if (entry.getDepth() >= 1) { // TODO this is probably redundant?
 				if (entry.getEval() <= alpha) { // we are worse than alpha so can't possibly improve the score
 					principleVariation[depth] = entry.getEval();
 					nodes++;
@@ -403,11 +394,8 @@ public class Search implements SearchInterface {
 				} else if (entry.getEval() < beta) {
 					beta = entry.getEval(); // we have at least this score proven so it becomes alpha
 				}
-				ttMoves[1][1] = entry.getMove();
-			} else {
-				Logging.printLine("Probably hash collision, depth is not what it should be. D1-search upper bounds table, Position:");
-				board.printBoard();
 			}
+			ttMoves[1][1] = entry.getMove();
 		}
 
 		if (ttMoves[1][1] == ttMoves[1][2]) {
@@ -526,29 +514,23 @@ public class Search implements SearchInterface {
 		}
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
-			if (entry.getDepth() == depthLeft) { // TODO for now only for exact depth matches, in the future >=
+			if (entry.getDepth() >= depthLeft) {
 				if (entry.getEval() > scoreToBeat) { // we beat the requested score -> return score
 					nodes++;
 					return entry.getEval();
 				}
-				ttMoves[depthLeft][moveOrder[0]] = entry.getMove();
-			} else {
-				Logging.printLine("Probably hash collision, depth is not what it should be. NW-search lower bounds table, Position:");
-				board.printBoard();
 			}
+			ttMoves[depthLeft][moveOrder[0]] = entry.getMove();
 		}
 
 		if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
-			if (entry.getDepth() == depthLeft) { // TODO for now only for exact depth matches, in the future >=
+			if (entry.getDepth() >= depthLeft) {
 				if (entry.getEval() <= scoreToBeat) { // we are worse than alpha so can't possibly improve the score
 					nodes++;
 					return entry.getEval();
 				}
-				ttMoves[depthLeft][moveOrder[1]] = entry.getMove();
-			} else {
-				Logging.printLine("Probably hash collision, depth is not what it should be. NW-search upper bounds table, Position:");
-				board.printBoard();
 			}
+			ttMoves[depthLeft][moveOrder[1]] = entry.getMove();
 		}
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft - 1) != null) { // use old depth entries
