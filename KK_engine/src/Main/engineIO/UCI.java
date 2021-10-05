@@ -40,8 +40,8 @@ public final class UCI {
 	static         String            engineName       = "Koedem";
 	static         BoardInterface    board            = new Board();
 	static         Perft             perft            = new Perft(board);
-	public static  SearchTTInterface upperBoundsTable = new SearchExactTT(ttSizeInMB * (1 << 19), false);
-	public static  SearchTTInterface lowerBoundsTable = new SearchExactTT(ttSizeInMB * (1 << 19), true);
+	public static  SearchTTInterface upperBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), false);
+	public static  SearchTTInterface lowerBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), true);
 	private static Scanner           sc               = new Scanner(System.in);
 	
 	public static void main(String[] args) {
@@ -160,8 +160,8 @@ public final class UCI {
 			case "Hash":
 				try {
 					ttSizeInMB = Integer.parseInt(parameters[4]);
-					upperBoundsTable = new SearchExactTT(ttSizeInMB * (1L << 19), false);
-					lowerBoundsTable = new SearchExactTT(ttSizeInMB * (1L << 19), true);
+					upperBoundsTable = new SearchTT(ttSizeInMB * (1L << 19), false);
+					lowerBoundsTable = new SearchTT(ttSizeInMB * (1L << 19), true);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'BaseTime'.");
 				}

@@ -81,18 +81,15 @@ public class SearchTT implements SearchTTInterface {
 				return;
 			} else if ((table[(position << 3) + count] ^ (oldInformation = table[(position << 3) + count + 1])) == zobristHash) {
 				oldEntry.setAllInformation(oldInformation);
-				if (oldEntry.getDepth() <= entry.getDepth()) {
-					if (oldEntry.getDepth() < entry.getDepth()) {
-						Logging.printLine("Probably collision, storing position with wrong depth"); // TODO what do we do here?
-					}
-					if (lowBound ? oldEntry.getEval() < entry.getEval()
-					             : oldEntry.getEval() > entry.getEval()) {
+				//if (oldEntry.getDepth() <= entry.getDepth()) { // version 3 is disabling this
+					//if (lowBound ? oldEntry.getEval() < entry.getEval() // version 2 is disabling this
+					  //           : oldEntry.getEval() > entry.getEval()) {
 						// if we're storing lower bounds we want the eval to go up, otherwise we want it to go down TODO if higher depth we might want to replace anyway
 						table[(position << 3) + count] = zobristHash ^ entry.getAllInformation();
 						table[(position << 3) + count + 1] = entry.getAllInformation();
 						ttImprovements++;
-					}
-				}
+					//}
+				//}
 				return;
 			}
 		}
