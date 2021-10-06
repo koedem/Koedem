@@ -535,6 +535,7 @@ public class Board implements BoardInterface {
 	 * @param oldCastlingRights The castling rights from before the move was executed on the board.
 	 */
 	public void unmakeMove(int move, byte capturedPiece, byte oldCastlingRights) {
+		removeRepetitionEntry(getZobristHash());
 		int endSquare = 0; // will get changed to correct endSquare
 		
 		if (oldCastlingRights != castlingRights && (move == 6160 || move == 6192 || move == 6615 || move == 6647)) {

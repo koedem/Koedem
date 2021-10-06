@@ -79,51 +79,67 @@ public class Search implements SearchInterface {
 			board.makeMove(move);
 			int[] innerPV;
 
-			if (moveIndex == 1 || // i.e. we make a full window search for the first move or after null window fail high
-			    -nullWindowSearch(!toMove, depth, depth - 1, -alpha - 1, time + maxTime) > principleVariation[depth]) {
-				if (moveIndex != 1) {
-					Logging.printLine("Null window fail high.");
-				}
-
-				if (depth == 2) {
-					innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
-				} else { // TODO !toMove is confusing, as board.toMove changes upon moving but not this local variable
-					innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha, time + maxTime);
-				}
-
-				innerPV[depth] = -innerPV[depth];
+			if (board.repetitionContained(board.getZobristHash())) { // this is either a repetition
+				innerPV = new int[depth + 1];
+				innerPV[depth] = 0;
 				innerPV[0] = move;
-
-				if (innerPV[depth] > 9000) {
-					innerPV[depth]--;
-					principleVariation = innerPV;
-
-					board.setEnPassant(enPassant);
-					board.unmakeMove(move, capturedPiece, castlingRights);
-					return principleVariation;
-				} else if (innerPV[depth] < -9000) {
-					innerPV[depth]++;
-				}
-
-				if (!UCI.isThreadFinished() && System.currentTimeMillis() - time < maxTime) {
+				if (innerPV[depth] > principleVariation[depth]) {
 					principleVariation = innerPV;
 					if (innerPV[depth] > alpha) {
 						alpha = principleVariation[depth];
-					} else {
-						int ignore = 0;
+					}
+				}
+				for (int i = moveIndex; i > 1; i--) {
+					moves[i] = moves[i - 1];
+				}
+				moves[1] = move; // order best move to top
+			} else { // or we have to search
+				if (moveIndex == 1 || // i.e. we make a full window search for the first move or after null window fail high
+				    -nullWindowSearch(!toMove, depth, depth - 1, -alpha - 1, time + maxTime) > principleVariation[depth]) {
+					if (moveIndex != 1) {
+						Logging.printLine("Null window fail high.");
 					}
 
-					if (moveIndex == 1) {
-						UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time);
-						// move on board not yet undone, thus !toMove
-					} else {
-						UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
+					if (depth == 2) {
+						innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
+					} else { // TODO !toMove is confusing, as board.toMove changes upon moving but not this local variable
+						innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha, time + maxTime);
 					}
 
-					for (int i = moveIndex; i > 1; i--) {
-						moves[i] = moves[i - 1];
+					innerPV[depth] = -innerPV[depth];
+					innerPV[0] = move;
+
+					if (innerPV[depth] > 9000) {
+						innerPV[depth]--;
+						principleVariation = innerPV;
+
+						board.setEnPassant(enPassant);
+						board.unmakeMove(move, capturedPiece, castlingRights);
+						return principleVariation;
+					} else if (innerPV[depth] < -9000) {
+						innerPV[depth]++;
 					}
-					moves[1] = move; // order best move to top
+
+					if (!UCI.isThreadFinished() && System.currentTimeMillis() - time < maxTime) {
+						principleVariation = innerPV;
+						if (innerPV[depth] > alpha) {
+							alpha = principleVariation[depth];
+						} else {
+							int ignore = 0;
+						}
+
+						if (moveIndex == 1) {
+							UCI.printEngineOutput("", principleVariation, board, !board.getToMove(), time);
+							// move on board not yet undone, thus !toMove
+						} else {
+							UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
+						}
+
+						for (int i = moveIndex; i > 1; i--) {
+							moves[i] = moves[i - 1];
+						}
+						moves[1] = move; // order best move to top
+					}
 				}
 			}
 
@@ -177,9 +193,6 @@ public class Search implements SearchInterface {
 		ttMoves[depthLeft][4] = 0;
 		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
-			return principleVariation;
-		} else if (board.repetitionContained(board.getZobristHash()) && depthLeft != depth) {
-			principleVariation[depth] = 0;
 			return principleVariation;
 		}
 
@@ -254,6 +267,7 @@ public class Search implements SearchInterface {
 		int preAlpha = alpha;
 		int bestMove = 0;
 
+		board.putRepetitionEntry(board.getZobristHash());
 		for (int index = 1; index <= moves[0]; index++) {
 			int move = moves[index];
 			if (depthLeft == 2) {
@@ -282,27 +296,41 @@ public class Search implements SearchInterface {
 			
 			int[] innerPV;
 
-			if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
-			    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha - 1, finishUntil) > principleVariation[depth]) {
-				if (depthLeft == 2) {
-					innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
-				} else {
-					innerPV = negaMax(!toMove, depth, depthLeft - 1, -beta, -alpha, finishUntil);
-				}
-				innerPV[depth] = -innerPV[depth];
+			if (board.repetitionContained(board.getZobristHash())) { // this is either a repetition
+				innerPV = new int[depth + 1];
+				innerPV[depth] = 0;
 				innerPV[depth - depthLeft] = move;
-				if (innerPV[depth] > 9000) {
-					innerPV[depth]--;
-				} else if (innerPV[depth] < -9000) {
-					innerPV[depth]++;
-				}
-
 				if (innerPV[depth] > principleVariation[depth]) {
 					principleVariation = innerPV;
 					if (innerPV[depth] > alpha) {
 						alpha = principleVariation[depth];
 					}
 					bestMove = move;
+				}
+			} else { // or we have to search
+
+				if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
+				    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha - 1, finishUntil) > principleVariation[depth]) {
+					if (depthLeft == 2) {
+						innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
+					} else {
+						innerPV = negaMax(!toMove, depth, depthLeft - 1, -beta, -alpha, finishUntil);
+					}
+					innerPV[depth] = -innerPV[depth];
+					innerPV[depth - depthLeft] = move;
+					if (innerPV[depth] > 9000) {
+						innerPV[depth]--;
+					} else if (innerPV[depth] < -9000) {
+						innerPV[depth]++;
+					}
+
+					if (innerPV[depth] > principleVariation[depth]) {
+						principleVariation = innerPV;
+						if (innerPV[depth] > alpha) {
+							alpha = principleVariation[depth];
+						}
+						bestMove = move;
+					}
 				}
 			}
 
@@ -366,9 +394,6 @@ public class Search implements SearchInterface {
 		ttMoves[1][2] = 0;
 		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
-			return principleVariation;
-		} else if (board.repetitionContained(board.getZobristHash()) && 1 != depth) {
-			principleVariation[depth] = 0;
 			return principleVariation;
 		}
 
@@ -441,7 +466,12 @@ public class Search implements SearchInterface {
 			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 
-			int qsearch = -memoryEfficientQSearch(!toMove, -beta, -alpha, 0);
+			int qsearch;
+			if (board.repetitionContained(board.getZobristHash())) { // this is either a repetition
+				qsearch = 0;
+			} else { // or we have to search
+				qsearch = -memoryEfficientQSearch(!toMove, -beta, -alpha, 0);
+			}
 			if (qsearch > 9000) {
 				qsearch--;
 			} else if (qsearch < -9000) {
@@ -509,8 +539,6 @@ public class Search implements SearchInterface {
 		ttMoves[depthLeft][4] = 0;
 		if (moves[0] == -1) {
 			return 10000;
-		} else if (board.repetitionContained(board.getZobristHash()) && depthLeft != depth) {
-			return 0;
 		}
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
@@ -616,20 +644,26 @@ public class Search implements SearchInterface {
 			board.makeMove(move);
 
 			int innerEval = -30000;
-			if (depthLeft > 1) {
-				innerEval = nullWindowSearch(!toMove, depth, depthLeft - 1, -scoreToBeat - 1, finishUntil);
-				innerEval = -innerEval;
-				if (innerEval > 9000) {
-					innerEval--;
-				} else if (innerEval < -9000) {
-					innerEval++;
-				}
-			} else if (depthLeft == 1) {
-				innerEval = -memoryEfficientQSearch(!toMove, -scoreToBeat - 1, -scoreToBeat, 0);
-				if (innerEval > 9000) {
-					innerEval--;
-				} else if (innerEval < -9000) {
-					innerEval++;
+			if (board.repetitionContained(board.getZobristHash()) && depthLeft != depth) { // this is either a repetition
+				innerEval = 0;
+			} else { // or we have to search
+				board.putRepetitionEntry(board.getZobristHash());
+
+				if (depthLeft > 1) {
+					innerEval = nullWindowSearch(!toMove, depth, depthLeft - 1, -scoreToBeat - 1, finishUntil);
+					innerEval = -innerEval;
+					if (innerEval > 9000) {
+						innerEval--;
+					} else if (innerEval < -9000) {
+						innerEval++;
+					}
+				} else if (depthLeft == 1) {
+					innerEval = -memoryEfficientQSearch(!toMove, -scoreToBeat - 1, -scoreToBeat, 0);
+					if (innerEval > 9000) {
+						innerEval--;
+					} else if (innerEval < -9000) {
+						innerEval++;
+					}
 				}
 			}
 			if (innerEval > eval) {
