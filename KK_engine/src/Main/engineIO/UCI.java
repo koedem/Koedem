@@ -118,9 +118,7 @@ public final class UCI {
 			} else if (command.equals("evaluate")) {
 				Logging.printLine(Integer.toString(board.getEvaluation().evaluation(board.getToMove(), -30000)));
 			} else if (command.equals("Hashtable")) {
-				for (Node value : board.getHashTable().values()) {
-					value.print();
-				}
+				board.printRepetitionInfo();
 			} else if (command.startsWith("perft")) {
 				int depth = Integer.parseInt(command.substring(6));
 				perft.basePerft(depth, false, false);
@@ -402,18 +400,13 @@ public final class UCI {
 					i += 6;
 					break;
 				case "moves":
-					board.getHashTable().clear();
-					for (int k = 0; k < ThreadOrganization.boards.length; k++) {
-						ThreadOrganization.boards[k].getHashTable().clear();
-					}
 					i++;
 					for (int j = 0; j < (parameters.length - i); j++) {
-						Node node = new Node(board, 0, 0, 0, board.getToMove());
 						board.makeMove(parameters[i + j]);
+						board.putRepetitionEntry(board.getZobristHash());
                         for (int k = 0; k < ThreadOrganization.boards.length; k++) {
-                            Node node1 = new Node(ThreadOrganization.boards[k], 0, 0, 0,
-                                    ThreadOrganization.boards[k].getToMove());
                             ThreadOrganization.boards[k].makeMove(parameters[i + j]);
+	                        ThreadOrganization.boards[k].putRepetitionEntry(ThreadOrganization.boards[k].getZobristHash());
                         }
 					}
 					break;

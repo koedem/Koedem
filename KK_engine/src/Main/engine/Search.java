@@ -178,7 +178,7 @@ public class Search implements SearchInterface {
 		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
 			return principleVariation;
-		} else if (board.getHashTable().get(board.getZobristHash()) != null && depthLeft != depth) {
+		} else if (board.repetitionContained(board.getZobristHash()) && depthLeft != depth) {
 			principleVariation[depth] = 0;
 			return principleVariation;
 		}
@@ -367,7 +367,7 @@ public class Search implements SearchInterface {
 		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
 			return principleVariation;
-		} else if (board.getHashTable().get(board.getZobristHash()) != null && 1 != depth) {
+		} else if (board.repetitionContained(board.getZobristHash()) && 1 != depth) {
 			principleVariation[depth] = 0;
 			return principleVariation;
 		}
@@ -509,7 +509,7 @@ public class Search implements SearchInterface {
 		ttMoves[depthLeft][4] = 0;
 		if (moves[0] == -1) {
 			return 10000;
-		} else if (board.getHashTable().get(board.getZobristHash()) != null && depthLeft != depth) {
+		} else if (board.repetitionContained(board.getZobristHash()) && depthLeft != depth) {
 			return 0;
 		}
 

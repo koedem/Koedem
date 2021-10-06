@@ -59,7 +59,13 @@ public interface BoardInterface extends Serializable {
 
 	void addCastlingRights(byte castlingRights);
 
-	Hashtable<Long, Node> getHashTable();
+	void putRepetitionEntry(long zobristHash);
+
+	void removeRepetitionEntry(long zobristHash);
+
+	boolean repetitionContained(long zobristHash);
+
+	void printRepetitionInfo();
 
 	long getZobristHash();
 
@@ -74,8 +80,6 @@ public interface BoardInterface extends Serializable {
 	int getDangerToWhiteKing();
 
 	int getDangerToBlackKing();
-
-	void putHashTableElement(Node node);
 
 	void setSquare(int file, int row, byte value);
 

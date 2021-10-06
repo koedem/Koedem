@@ -5,6 +5,8 @@ import Main.Utility.DeepCopy;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Random;
 
@@ -118,9 +120,9 @@ public class Board implements BoardInterface {
 			ROOKVALUE, QUEENVALUE, KINGVALUE };
 	
 	/**
-	 * We store every position that actually occurred in the game.
+	 * We store the hash of every position that happened so far in the game plus in the current search variation.
 	 */
-	private Hashtable<Long, Node> hashTable = new Hashtable<>();
+	private HashSet<Long> repetitionTable = new HashSet<>();
 
 	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
 
@@ -219,6 +221,8 @@ public class Board implements BoardInterface {
 		setMoveNumber(Integer.parseInt(positions[positions.length - 1]));
 		attackBoard.generateAttackCount();
 		pieceSquareTable = evaluation.fullPST();
+		repetitionTable.clear();
+		putRepetitionEntry(getZobristHash());
 	}
 
 	private void setCastlingRights(String castling) {
@@ -735,12 +739,20 @@ public class Board implements BoardInterface {
 		piecesLeft--;
 	}
 	
-	public void putHashTableElement(Node node) {
-		hashTable.put(node.zobristHash, node);
+	public void putRepetitionEntry(long zobristHash) {
+		repetitionTable.add(zobristHash);
+	}
+
+	public void removeRepetitionEntry(long zobristHash) {
+		repetitionTable.remove(zobristHash);
 	}
 	
-	public Hashtable<Long, Node> getHashTable() {
-		return hashTable;
+	public boolean repetitionContained(long zobristHash) {
+		return repetitionTable.contains(zobristHash);
+	}
+
+	public void printRepetitionInfo() {
+		Logging.printLine(Integer.toString(repetitionTable.size()));
 	}
 
 	public int getPieceAdvancement(int index) {
@@ -862,6 +874,8 @@ public class Board implements BoardInterface {
 		evaluation.resetEvaluation();
 		search.resetSearch();
 		mateFinder.resetMateFinder();
+		repetitionTable.clear();
+		putRepetitionEntry(getZobristHash());
 	}
 
 	private static long[] initializeZobrist() {
