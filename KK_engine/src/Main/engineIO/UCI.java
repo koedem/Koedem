@@ -469,6 +469,18 @@ public final class UCI {
 	public static void setThreadFinished(boolean threadFinished) {
 		UCI.threadFinished = threadFinished;
 	}
+
+	public static String printPV(BoardInterface board) {
+		BoardInterface copy = board.cloneBoard();
+		TTEntry entry = new TTEntry();
+		StringBuilder str = new StringBuilder(" ");
+		while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, 0) != null || UCI.upperBoundsTable.get(copy.getZobristHash(), entry, 0) != null)
+		       && entry.getMove() != 0 && str.length() < 200) {
+			str.append(Transformation.numberToMove(entry.getMove())).append(" ");
+			copy.makeMove(entry.getMove());
+		}
+		return str.toString();
+	}
 	
 	public static void printEngineOutput(String praefix, int[] move, BoardInterface board, boolean toMove, long time) {
 		if (UCI.uci) {
@@ -476,7 +488,12 @@ public final class UCI {
 			StringBuilder pv = new StringBuilder();
 			for (int i = 0; i < move.length - 1; i++) {
 				pv.append(Transformation.numberToMove(move[i])).append(" ");
+				if (move[i] == 0) {
+					break;
+				}
 			}
+			pv.append(printPV(board));
+
 			Logging.printLine("info depth " + (move.length - 1) + " score cp " + move[move.length - 1] + " nodes "
 			      + (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) + " nps " + 1000 * (board.getSearch().getNodes() + board.getSearch().getAbortedNodes())
 			                                                                                         / (timeUsed > 0 ? timeUsed : 1)
