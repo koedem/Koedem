@@ -122,7 +122,7 @@ public class Board implements BoardInterface {
 	/**
 	 * We store the hash of every position that happened so far in the game plus in the current search variation.
 	 */
-	private HashSet<Long> repetitionTable = new HashSet<>(65536);
+	private HashMap<Long, Integer> repetitionTable = new HashMap<>(65536);
 
 	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
 
@@ -307,7 +307,7 @@ public class Board implements BoardInterface {
 	 *
 	 * TODO rework control flow especially with castling
 	 */
-	public int makeMove(int move) {
+	public boolean makeMove(int move) {
 		int endSquare = 0; // will get changed to "true" endSquare
 		if (move < (1 << 13)) {
 			endSquare = move % 64;
@@ -498,7 +498,9 @@ public class Board implements BoardInterface {
 			assert false;
 		}
 		changeToMove();
-		return 0; // TODO
+		boolean present = repetitionContained(getZobristHash()); // return whether this is a move repetition
+		putRepetitionEntry(getZobristHash());
+		return present;
 	}
 
 	/**
@@ -746,16 +748,24 @@ public class Board implements BoardInterface {
 		piecesLeft--;
 	}
 	
-	public void putRepetitionEntry(long zobristHash) {
-		repetitionTable.add(zobristHash);
+	private void putRepetitionEntry(long zobristHash) {
+		if (!repetitionTable.containsKey(zobristHash)) {
+			repetitionTable.put(zobristHash, 1);
+		} else {
+			repetitionTable.replace(zobristHash, repetitionTable.get(zobristHash) + 1);
+		}
 	}
 
-	public void removeRepetitionEntry(long zobristHash) {
-		repetitionTable.remove(zobristHash);
+	private void removeRepetitionEntry(long zobristHash) {
+		if (repetitionTable.getOrDefault(zobristHash, 1) == 1) {
+			repetitionTable.remove(zobristHash);
+		} else {
+			repetitionTable.replace(zobristHash, repetitionTable.get(zobristHash) - 1);
+		}
 	}
 	
-	public boolean repetitionContained(long zobristHash) {
-		return repetitionTable.contains(zobristHash);
+	private boolean repetitionContained(long zobristHash) {
+		return repetitionTable.containsKey(zobristHash);
 	}
 
 	public void printRepetitionInfo() {

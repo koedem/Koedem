@@ -76,10 +76,10 @@ public class Search implements SearchInterface {
 			}
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
-			board.makeMove(move);
+			boolean repetition = board.makeMove(move);
 			int[] innerPV;
 
-			if (board.repetitionContained(board.getZobristHash())) { // this is either a repetition
+			if (repetition) { // this is either a repetition
 				innerPV = new int[depth + 1];
 				innerPV[depth] = 0;
 				innerPV[0] = move;
@@ -267,7 +267,6 @@ public class Search implements SearchInterface {
 		int preAlpha = alpha;
 		int bestMove = 0;
 
-		board.putRepetitionEntry(board.getZobristHash());
 		for (int index = 1; index <= moves[0]; index++) {
 			int move = moves[index];
 			if (depthLeft == 2) {
@@ -292,11 +291,11 @@ public class Search implements SearchInterface {
 			}
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
-			board.makeMove(move);
+			boolean repetition = board.makeMove(move);
 			
 			int[] innerPV;
 
-			if (board.repetitionContained(board.getZobristHash())) { // this is either a repetition
+			if (repetition) { // this is either a repetition
 				innerPV = new int[depth + 1];
 				innerPV[depth] = 0;
 				innerPV[depth - depthLeft] = move;
@@ -308,7 +307,6 @@ public class Search implements SearchInterface {
 					bestMove = move;
 				}
 			} else { // or we have to search
-
 				if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
 				    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha - 1, finishUntil) > principleVariation[depth]) {
 					if (depthLeft == 2) {
@@ -464,10 +462,10 @@ public class Search implements SearchInterface {
 			}
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
-			board.makeMove(move);
+			boolean repetition = board.makeMove(move);
 
 			int qsearch;
-			if (board.repetitionContained(board.getZobristHash())) { // this is either a repetition
+			if (repetition) { // this is either a repetition
 				qsearch = 0;
 			} else { // or we have to search
 				qsearch = -memoryEfficientQSearch(!toMove, -beta, -alpha, 0);
@@ -641,14 +639,12 @@ public class Search implements SearchInterface {
 			}
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
-			board.makeMove(move);
+			boolean repetition = board.makeMove(move);
 
 			int innerEval = -30000;
-			if (board.repetitionContained(board.getZobristHash()) && depthLeft != depth) { // this is either a repetition
+			if (repetition && depthLeft != depth) { // this is either a repetition
 				innerEval = 0;
 			} else { // or we have to search
-				board.putRepetitionEntry(board.getZobristHash());
-
 				if (depthLeft > 1) {
 					innerEval = nullWindowSearch(!toMove, depth, depthLeft - 1, -scoreToBeat - 1, finishUntil);
 					innerEval = -innerEval;

@@ -19,9 +19,9 @@ public interface BoardInterface extends Serializable {
 	 * These will have to be restored when a corresponding unmakeMove is called.
 	 * @param move The move to be made. Usually the format will be startSquare endSquare however details are left
 	 *             to the implementation.
-	 * @return An integer token to be returned when unmaking the move.
+	 * @return a boolean that is true if the resulting position is present in the move repetition table and false if it is not.
 	 */
-	int makeMove(int move);
+	boolean makeMove(int move);
 
 	/**
 	 * TODO change
@@ -59,11 +59,11 @@ public interface BoardInterface extends Serializable {
 
 	void addCastlingRights(byte castlingRights);
 
-	void putRepetitionEntry(long zobristHash);
+	//void putRepetitionEntry(long zobristHash);
 
-	void removeRepetitionEntry(long zobristHash);
+	//void removeRepetitionEntry(long zobristHash);
 
-	boolean repetitionContained(long zobristHash);
+	//boolean repetitionContained(long zobristHash);
 
 	void printRepetitionInfo();
 

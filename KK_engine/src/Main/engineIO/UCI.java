@@ -403,10 +403,8 @@ public final class UCI {
 					i++;
 					for (int j = 0; j < (parameters.length - i); j++) {
 						board.makeMove(parameters[i + j]);
-						board.putRepetitionEntry(board.getZobristHash());
                         for (int k = 0; k < ThreadOrganization.boards.length; k++) {
                             ThreadOrganization.boards[k].makeMove(parameters[i + j]);
-	                        ThreadOrganization.boards[k].putRepetitionEntry(ThreadOrganization.boards[k].getZobristHash());
                         }
 					}
 					break;
