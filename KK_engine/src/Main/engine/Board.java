@@ -161,7 +161,6 @@ public class Board implements BoardInterface {
 	    dangerToBlackKing = 0;
 	    dangerToWhiteKing = 0;
 	    piecesLeft = 0;
-		zobristHash = 0;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				setSquare(i, j, (byte) 0);
@@ -171,6 +170,7 @@ public class Board implements BoardInterface {
             pieceAdvancement[i] = 0;
         }
         bitboard.resetBitBoard();
+		zobristHash = 0;
 
 		String position = fen;
 		String[] positions = position.split(" ");
@@ -204,10 +204,10 @@ public class Board implements BoardInterface {
 		}
 		switch (positions[1]) {
 			case "w":
-				this.toMove = true;
+				setToMove(true);
 				break;
 			case "b":
-				this.toMove = false;
+				setToMove(false);
 				break;
 			default:
 				throw new IllegalArgumentException();
@@ -275,7 +275,9 @@ public class Board implements BoardInterface {
 
 	@Override
 	public void setSquare(int file, int row, byte value) {
+		zobristHash ^= zobristKeys[(getSquare(file, row) + 6) * 64 + (file * 8 + row)]; // remove old value
 		square[file][row] = value;
+		zobristHash ^= zobristKeys[(getSquare(file, row) + 6) * 64 + (file * 8 + row)]; // add new value
 	}
 
 	/**
@@ -513,7 +515,9 @@ public class Board implements BoardInterface {
 	 *            : set the toMove parameter
 	 */
 	public void setToMove(boolean newToMove) {
-		this.toMove = newToMove;
+		if (toMove != newToMove) {
+			changeToMove();
+		}
 	}
 
 	/**
@@ -521,6 +525,7 @@ public class Board implements BoardInterface {
 	 */
 	public void changeToMove() {
 		this.toMove = (!toMove);
+		zobristHash ^= blackToMove;
 	}
 
 	/**
@@ -773,8 +778,8 @@ public class Board implements BoardInterface {
 		this.moveNumber = moveNumber;
 	}
 	
-	public long getZobristHash() {
-		zobristHash = 0;
+	public long calculateZobristHash() {
+		long zobristHash = 0;
 		int squareNumber = 0;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
@@ -785,6 +790,11 @@ public class Board implements BoardInterface {
 		if (!toMove) {
 			zobristHash ^= blackToMove;
 		}
+		return zobristHash;
+	}
+
+	public long getZobristHash() {
+		assert zobristHash == calculateZobristHash();
 		return zobristHash;
 	}
 
