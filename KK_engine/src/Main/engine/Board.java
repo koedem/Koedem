@@ -161,9 +161,10 @@ public class Board implements BoardInterface {
 	    dangerToBlackKing = 0;
 	    dangerToWhiteKing = 0;
 	    piecesLeft = 0;
+		zobristHash = 0;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				square[i][j] = 0;
+				setSquare(i, j, (byte) 0);
 			}
 		}
 	    for (int i = 0; i < pieceAdvancement.length; i++) {
@@ -182,13 +183,13 @@ public class Board implements BoardInterface {
             } else if (Character.isDigit(positions[0].charAt(i))){
                 int emptySquares = Character.getNumericValue(position.charAt(i));
                 for (int j = 0; j < emptySquares; j++) {
-                    this.square[file][row] = 0;
+                    setSquare(file, row, (byte) 0);
                     file++;
                 }
             } else {
                 byte piece = pieceLetterToByte(positions[0].charAt(i));
                 int colour = piece / Math.abs(piece);
-                this.square[file][row] = piece;
+                setSquare(file, row, piece);
                 materialCount += PIECEVALUE[Math.abs(piece)] * colour;
                 if (colour == 1) {
                     dangerToBlackKing += PIECEDANGER[piece * colour];
@@ -249,7 +250,7 @@ public class Board implements BoardInterface {
 		for (int i = 7; i >= 0; i--) {
 			StringBuilder row = new StringBuilder();
 			for (int j = 0; j < 8; j++) {
-				row.append(Transformation.numberToPiece(square[j][i])).append(" ");
+				row.append(Transformation.numberToPiece(getSquare(j, i))).append(" ");
 			}
 
 			Logging.printLine(row.toString());
@@ -312,7 +313,7 @@ public class Board implements BoardInterface {
 			endSquare = (move / 8) % 64;
 		}
 
-		int capturedPiece = square[endSquare / 8][endSquare % 8];
+		int capturedPiece = getSquare(endSquare / 8, endSquare % 8);
 		
 		if (capturedPiece != 0) {
 			piecesLeft--;
@@ -331,7 +332,7 @@ public class Board implements BoardInterface {
 		
 		if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
-			int movingPieceType = Math.abs(square[startSquare / 8][startSquare % 8]);
+			int movingPieceType = Math.abs(getSquare(startSquare / 8, startSquare % 8));
 			endSquare = move % 64;
 			
 			if (startSquare == 32) { // if we move with the King (or e1 isn't even the king) we can't castle anymore
@@ -359,12 +360,12 @@ public class Board implements BoardInterface {
 				removeCastlingRights((byte) 0x1);
 			}
 			
-			if (startSquare == 32 && square[4][0] == 6 && (endSquare == 48 || endSquare == 16)) {
+			if (startSquare == 32 && getSquare(4, 0) == 6 && (endSquare == 48 || endSquare == 16)) {
 				if (endSquare == 48) {
-					square[6][0] = 6;
-					square[4][0] = 0;
-					square[5][0] = 4; // rook move in castling
-					square[7][0] = 0;
+					setSquare(6, 0, (byte) 6);
+					setSquare(4, 0, (byte) 0);
+					setSquare(5, 0, (byte) 4); // rook move in castling
+					setSquare(7, 0, (byte) 0);
 
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(56, true);
@@ -374,10 +375,10 @@ public class Board implements BoardInterface {
 					                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.H1];
 																			// King happens further below in the standard make move part.
 				} else {
-					square[2][0] = 6;
-					square[4][0] = 0;
-					square[3][0] = 4; // rook move in castling
-					square[0][0] = 0;
+					setSquare(2, 0, (byte) 6);
+					setSquare(4, 0, (byte) 0);
+					setSquare(3, 0, (byte) 4); // rook move in castling
+					setSquare(0, 0, (byte) 0);
 
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(0, true);
@@ -387,12 +388,12 @@ public class Board implements BoardInterface {
 					                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.A1];
 																			// King happens further below in the standard make move part.
 				}
-			} else if (startSquare == 39 && square[4][7] == -6 && (endSquare == 55 || endSquare == 23)) {
+			} else if (startSquare == 39 && getSquare(4, 7) == -6 && (endSquare == 55 || endSquare == 23)) {
 				if (endSquare == 55) {
-					square[6][7] = -6;
-					square[4][7] = 0;
-					square[5][7] = -4; // rook move in castling
-					square[7][7] = 0;
+					setSquare(6, 7, (byte) -6);
+					setSquare(4, 7, (byte) 0);
+					setSquare(5, 7, (byte) -4); // rook move in castling
+					setSquare(7, 7, (byte) 0);
 
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(63, true);
@@ -402,10 +403,10 @@ public class Board implements BoardInterface {
 					                    - Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.H8];
 																			// King happens further below in the standard make move part.
 				} else {
-					square[2][7] = -6;
-					square[4][7] = 0;
-					square[3][7] = -4; // rook move in castling
-					square[0][7] = 0;
+					setSquare(2, 7, (byte) -6);
+					setSquare(4, 7, (byte) 0);
+					setSquare(3, 7, (byte) -4); // rook move in castling
+					setSquare(0, 7, (byte) 0);
 
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(7, true);
@@ -419,13 +420,13 @@ public class Board implements BoardInterface {
 				if (movingPieceType == Constants.PAWN && endSquare == enPassant) {
 					piecesLeft--;
 					if (toMove) {
-						square[enPassant / 8][(enPassant % 8) - 1] = 0; // capture the pawn that is on the square before ep
+						setSquare(enPassant / 8, (enPassant % 8) - 1, (byte) 0); // capture the pawn that is on the square before ep
 						materialCount += PAWNVALUE;
 						pieceAdvancement[1] -= 2 * ((enPassant % 8) - 1) - 7;
 						pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.PAWN][enPassant - 1];
 						bitboard.remove(endSquare - 1, true);
 					} else {
-						square[enPassant / 8][(enPassant % 8) + 1] = 0;
+						setSquare(enPassant / 8, (enPassant % 8) + 1, (byte) 0);
 						materialCount -= PAWNVALUE;
 						pieceAdvancement[1] -= 2 * ((enPassant % 8) + 1) - 7;
 						pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.PAWN][enPassant + 1];
@@ -433,8 +434,8 @@ public class Board implements BoardInterface {
 					}
 				}
 
-				square[endSquare / 8][endSquare % 8] = square[startSquare / 8][startSquare % 8]; // the actual moving
-				square[startSquare / 8][startSquare % 8] = 0; // start square becomes empty
+				setSquare(endSquare / 8, endSquare % 8, getSquare(startSquare / 8, startSquare % 8)); // the actual moving
+				setSquare(startSquare / 8, startSquare % 8, (byte) 0); // start square becomes empty
 
 				bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 			}
@@ -471,7 +472,7 @@ public class Board implements BoardInterface {
 			
 			byte promotion = (byte) (move % (1 << 3));
 			
-			square[startSquare / 8][startSquare % 8] = 0;
+			setSquare(startSquare / 8, startSquare % 8, (byte) 0);
 			pieceAdvancement[Constants.PAWN] -= 2 * (startSquare % 8) - 7;
 			pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.WHITE : Constants.BLACK][Constants.PAWN][startSquare];
 
@@ -479,11 +480,11 @@ public class Board implements BoardInterface {
 			pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.WHITE : Constants.BLACK][promotion][endSquare];
 			
 			if (endSquare % 8 == 7) {
-				square[endSquare / 8][endSquare % 8] = promotion;
+				setSquare(endSquare / 8, endSquare % 8, promotion);
 				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
 				dangerToBlackKing += PIECEDANGER[promotion];
 			} else if (endSquare % 8 == 0) {
-				square[endSquare / 8][endSquare % 8] = (byte) -promotion;
+				setSquare(endSquare / 8, endSquare % 8, (byte) -promotion);
 				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
 				dangerToWhiteKing += PIECEDANGER[promotion];
 			}
@@ -540,12 +541,12 @@ public class Board implements BoardInterface {
 		
 		if (oldCastlingRights != castlingRights && (move == 6160 || move == 6192 || move == 6615 || move == 6647)) {
 			if (move == (1 << 12) + (32 << 6) + 16) { // White castle queen side.
-				assert square[4][0] == 0 && square[3][0] == 4 && square[2][0] == 6 
-						&& square[1][0] == 0 && square[0][0] == 0;
-				square[4][0] = 6; // King move gets undone.
-				square[2][0] = 0;
-				square[3][0] = 0; // Rook move get undone.
-				square[0][0] = 4;
+				assert getSquare(4, 0) == 0 && getSquare(3, 0) == 4 && getSquare(2, 0) == 6 
+						&& getSquare(1,0) == 0 && getSquare(0, 0) == 0;
+				setSquare(4, 0, (byte) 6); // King move gets undone.
+				setSquare(2, 0, (byte) 0);
+				setSquare(3, 0, (byte) 0); // Rook move get undone.
+				setSquare(0, 0, (byte) 4);
 				bitboard.remove(24, true);
 				bitboard.add(4, 0, 0);
 				bitboard.move(16, 32, false, 0);
@@ -555,11 +556,11 @@ public class Board implements BoardInterface {
 				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.KING][Constants.E1]
 				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.KING][Constants.C1];
 			} else if (move == (1 << 12) + (32 << 6) + 48) { // White castle king side.
-				assert square[4][0] == 0 && square[5][0] == 4 && square[6][0] == 6 && square[7][0] == 0;
-				square[4][0] = 6; 
-				square[6][0] = 0;
-				square[5][0] = 0; 
-				square[7][0] = 4;
+				assert getSquare(4, 0) == 0 && getSquare(5, 0) == 4 && getSquare(6, 0) == 6 && getSquare(7 , 0) == 0;
+				setSquare(4, 0, (byte) 6); 
+				setSquare(6, 0, (byte) 0);
+				setSquare(5, 0, (byte) 0); 
+				setSquare(7, 0, (byte) 4);
 				bitboard.remove(40, true);
 				bitboard.add(4, 0, 56);
 				bitboard.move(48, 32, false, 0);
@@ -569,12 +570,12 @@ public class Board implements BoardInterface {
 				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.KING][Constants.E1]
 				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.KING][Constants.G1];
 			} else if (move == (1 << 12) + (39 << 6) + 23) { // Black castle queen side.
-				assert square[4][7] == 0 && square[3][7] == -4 && square[2][7] == -6 
-						&& square[1][7] == 0 && square[0][7] == 0;
-				square[4][7] = -6;
-				square[2][7] = 0;
-				square[3][7] = 0; 
-				square[0][7] = -4;
+				assert getSquare(4, 7) == 0 && getSquare(3, 7) == -4 && getSquare(2, 7) == -6 
+						&& getSquare(1, 7) == 0 && getSquare(0, 7) == 0;
+				setSquare(4, 7, (byte) -6);
+				setSquare(2, 7, (byte) 0);
+				setSquare(3, 7, (byte) 0); 
+				setSquare(0, 7, (byte) -4);
 				bitboard.remove(31, true);
 				bitboard.add(4, 1, 7);
 				bitboard.move(23, 39, false, 0);
@@ -584,11 +585,11 @@ public class Board implements BoardInterface {
 				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.KING][Constants.E8]
 				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.KING][Constants.C8];
 			} else { // Black castle king side.
-				assert square[4][7] == 0 && square[5][7] == -4 && square[6][7] == -6 && square[7][7] == 0;
-				square[4][7] = -6;
-				square[6][7] = 0;
-				square[5][7] = 0;
-				square[7][7] = -4;
+				assert getSquare(4,7) == 0 && getSquare(5, 7) == -4 && getSquare(6, 7) == -6 && getSquare(7, 7) == 0;
+				setSquare(4, 7, (byte) -6);
+				setSquare(6, 7, (byte) 0);
+				setSquare(5, 7, (byte) 0);
+				setSquare(7, 7, (byte) -4);
 				bitboard.remove(47, true);
 				bitboard.add(4, 1, 63);
 				bitboard.move(55, 39, false, 0);
@@ -601,14 +602,14 @@ public class Board implements BoardInterface {
 		} else if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
 			endSquare = move % 64;
-			int movedPieceType = Math.abs(square[endSquare / 8][endSquare % 8]);
+			int movedPieceType = Math.abs(getSquare(endSquare / 8, endSquare % 8));
 			
 			pieceAdvancement[movedPieceType] -= 2 * ((endSquare % 8) - (startSquare % 8)); // subtract/undo the advancement change the move made
 			pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.BLACK : Constants.WHITE][movedPieceType][startSquare] // white toMove means black made the last move
 			                    - Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.BLACK : Constants.WHITE][movedPieceType][endSquare];
 			
-			square[startSquare / 8][startSquare % 8] = square[endSquare / 8][endSquare % 8]; // actual moving
-			square[endSquare / 8][endSquare % 8] = capturedPiece; // put captured piece back on its square
+			setSquare(startSquare / 8, startSquare % 8, getSquare(endSquare / 8, endSquare % 8)); // actual moving
+			setSquare(endSquare / 8, endSquare % 8, capturedPiece); // put captured piece back on its square
             boolean success = bitboard.move(endSquare, startSquare, false, capturedPiece);
             assert success;
 			if (movedPieceType == 1 && endSquare == enPassant) {
@@ -617,16 +618,16 @@ public class Board implements BoardInterface {
 				piecesLeft++;
 				if (endSquare % 8 == 5) { // white captured en passant.
 					assert endSquare - startSquare == -7 || endSquare - startSquare == 9;
-					assert square[endSquare / 8][(endSquare % 8) - 1] == 0; // should be empty
-					square[endSquare / 8][(endSquare % 8) - 1] = -1; // pawn added back on; -1 because of en passant
+					assert getSquare(endSquare / 8, (endSquare % 8) - 1) == 0; // should be empty
+					setSquare(endSquare / 8, (endSquare % 8) - 1, (byte) -1); // pawn added back on; -1 because of en passant
                     bitboard.add(1, 1, endSquare - 1);
 					materialCount -= PAWNVALUE;
 					pieceAdvancement[1] += 2 * ((enPassant % 8) - 1) - 7;
 					pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.PAWN][enPassant - 1];
 				} else if (endSquare % 8 == 2) {
 					assert endSquare - startSquare == 7 || endSquare - startSquare == -9;
-					assert square[endSquare / 8][(endSquare % 8) + 1] == 0;
-					square[endSquare / 8][(endSquare % 8) + 1] = 1;
+					assert getSquare(endSquare / 8, (endSquare % 8) + 1) == 0;
+					setSquare(endSquare / 8, (endSquare % 8) + 1, (byte) 1);
 					bitboard.add(1, 0, endSquare + 1);
 					materialCount += PAWNVALUE;
 					pieceAdvancement[1] += 2 * ((enPassant % 8) + 1) - 7;
@@ -640,7 +641,7 @@ public class Board implements BoardInterface {
 			endSquare = (move % (1 << 9)) / (1 << 3);
 			byte promotion = (byte) (move % (1 << 3));
 			
-			assert square[startSquare / 8][startSquare % 8] == 0;
+			assert getSquare(startSquare / 8, startSquare % 8) == 0;
 			pieceAdvancement[Constants.PAWN] += 2 * (startSquare % 8) - 7;
 			pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.BLACK : Constants.WHITE][Constants.PAWN][startSquare];
 
@@ -648,19 +649,19 @@ public class Board implements BoardInterface {
 			pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.BLACK : Constants.WHITE][promotion][endSquare];
 			
 			if (endSquare % 8 == 7) {
-				square[startSquare / 8][startSquare % 8] = 1;
+				setSquare(startSquare / 8, startSquare % 8, (byte) 1);
 				bitboard.remove(endSquare, false); // the un-promotion, remove the piece
 				bitboard.add(1, 0, endSquare); // add the pawn
 				
-				square[endSquare / 8][endSquare % 8] = capturedPiece; // bitboard change done below
+				setSquare(endSquare / 8, endSquare % 8, capturedPiece); // bitboard change done below
 				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
 				dangerToBlackKing -= PIECEDANGER[promotion];
 			} else if (endSquare % 8 == 0) {
-				square[startSquare / 8][startSquare % 8] = -1;
+				setSquare(startSquare / 8, startSquare % 8, (byte) -1);
 				bitboard.remove(endSquare, false);
 				bitboard.add(1, 1, endSquare);
 				
-				square[endSquare / 8][endSquare % 8] = capturedPiece;
+				setSquare(endSquare / 8, endSquare % 8, capturedPiece);
 				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
 				dangerToWhiteKing -= PIECEDANGER[promotion];
 			} else {
@@ -777,7 +778,7 @@ public class Board implements BoardInterface {
 		int squareNumber = 0;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				zobristHash ^= zobristKeys[(square[i][j] + 6) * 64 + squareNumber];
+				zobristHash ^= zobristKeys[(getSquare(i, j) + 6) * 64 + squareNumber];
 				squareNumber++;
 			}
 		}
