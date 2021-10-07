@@ -31,14 +31,14 @@ public class TTEntry implements Serializable {
 	public void setEval(int eval) {
 		this.eval = eval;
 		allInformation &= 0xFFFFFFFFFF0000FFL;
-		allInformation |= eval << 8;
+		allInformation |= (long) eval << 8;
 	}
 
 	public void setAllInformation(long allInformation) {
 		this.allInformation = allInformation;
-		this.depth = (int)(byte) allInformation & 0xFF;
+		this.depth = (int) (allInformation & 0xFF);
 		this.eval = (int)(short)((allInformation >> 8) & 0xFFFF);
-		this.move = (int)(short)((allInformation >> 24) & 0xFFFF);
+		this.move = (int) ((allInformation >> 24) & 0xFFFF);
 	}
 
 	public long getAllInformation() {

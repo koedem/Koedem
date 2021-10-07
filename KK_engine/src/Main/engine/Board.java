@@ -122,7 +122,7 @@ public class Board implements BoardInterface {
 	/**
 	 * We store the hash of every position that happened so far in the game plus in the current search variation.
 	 */
-	private HashSet<Long> repetitionTable = new HashSet<>();
+	private HashSet<Long> repetitionTable = new HashSet<>(65536);
 
 	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
 
