@@ -22,14 +22,10 @@ public class Search implements SearchInterface {
                                                                                 // TODO: Less than MAX_MOVE_COUNT
 	private int[][] ttMoves = new int[101][5];
 
-    private int[] utilityCaptures = new int[MoveGenerator.MAX_MOVE_COUNT];
-    private TTEntry entry = new TTEntry();
+	private TTEntry entry = new TTEntry();
     private static final int[] moveOrder = { 4, 3, 2, 1 };
 
     private static int[] unused = new int[6];
-
-    private int[] evaluations = new int[MAX_DEPTH];
-    private int[][] principleVariations = new int[MAX_DEPTH][MAX_DEPTH]; // TODO use in search and create additional one for qSearch
 
 	private long nodes = 0;
 	private long abortedNodes = 0;

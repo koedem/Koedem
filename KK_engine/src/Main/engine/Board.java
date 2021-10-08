@@ -19,7 +19,7 @@ public class Board implements BoardInterface {
 	private SearchInterface search = new Search(this);
 	private MateFinder mateFinder = new MateFinder(this);
 
-	private long zobristHash; // TODO why is this not incremental?
+	private long zobristHash;
 	private static final Random random = new Random(1234567890);
 	private static final long[] zobristKeys = initializeZobrist();
 	private static final long blackToMove = random.nextLong();
@@ -54,7 +54,7 @@ public class Board implements BoardInterface {
 	private byte castlingRights = 0;
 	
 	/**
-	 * Square on which a en passant capture would be legal. Default -1 ( = a0).
+	 * Square on which an en passant capture would be legal. Default -1 ( = a0).
 	 * Format: fileRow, 26 = 3 * 8 + 2 = d3.
 	 */
 	private byte enPassant = -1;
@@ -129,7 +129,7 @@ public class Board implements BoardInterface {
 	private String bestmove = "";
 	
 	/**
-	 * Constructor, create new Board and setup the chess start position
+	 * Constructor, create new Board and set up the chess start position
 	 */
 	public Board() {
 	    bitboard = new BitBoard(this);
@@ -308,7 +308,7 @@ public class Board implements BoardInterface {
 	 * TODO rework control flow especially with castling
 	 */
 	public boolean makeMove(int move) {
-		int endSquare = 0; // will get changed to "true" endSquare
+		int endSquare; // will get changed to "true" endSquare
 		if (move < (1 << 13)) {
 			endSquare = move % 64;
 		} else {

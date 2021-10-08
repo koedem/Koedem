@@ -41,8 +41,8 @@ public final class UCI {
 	static         BoardInterface    board            = new Board();
 	static         Perft             perft            = new Perft(board);
 	public static  SearchTTInterface upperBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), false);
-	public static  SearchTTInterface lowerBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), true);
-	private static Scanner           sc               = new Scanner(System.in);
+	public static        SearchTTInterface lowerBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), true);
+	private static final Scanner           sc               = new Scanner(System.in);
 	
 	public static void main(String[] args) {
 		CorrespondenceOrganisation.getInstance().setup();
@@ -58,7 +58,7 @@ public final class UCI {
 		while (!command.equals("quit")) {
 			command = sc.nextLine();
 			if (logging) {
-				Logging.printLine("info command received at milli: " + Long.toString(System.currentTimeMillis()));
+				Logging.printLine("info command received at milli: " + System.currentTimeMillis());
 			}
 			Logging.addToLogFile(">> " + command);
 			
@@ -473,7 +473,7 @@ public final class UCI {
 		return str.toString();
 	}
 	
-	public static void printEngineOutput(String praefix, int[] move, BoardInterface board, boolean toMove, long time) {
+	public static void printEngineOutput(String prefix, int[] move, BoardInterface board, boolean toMove, long time) {
 		if (UCI.uci) {
 			long timeUsed = System.currentTimeMillis() - time;
 			StringBuilder pv = new StringBuilder();
@@ -491,7 +491,7 @@ public final class UCI {
 			      + " hashfull " + lowerBoundsTable.getFill() + " time " + (System.currentTimeMillis() - time) + " pv " + pv);
 			Logging.printLine("Exact nodes: " + board.getSearch().getExactNodes());
 		} else {
-			StringBuilder pv = new StringBuilder(praefix);
+			StringBuilder pv = new StringBuilder(prefix);
 			for (int j = 0; j < move.length - 1; j++) {
 				if (move[j] == -1) {
 					break;
@@ -512,7 +512,7 @@ public final class UCI {
 				}
 			}
 			Logging.printLine(pv.toString() + move[move.length - 1]);
-			Logging.printLine(praefix + "Node count: " + Transformation.nodeCountOutput(((board.getSearch().getNodes()
+			Logging.printLine(prefix + "Node count: " + Transformation.nodeCountOutput(((board.getSearch().getNodes()
 					+ board.getSearch().getAbortedNodes()))) + "(" + Transformation.nodeCountOutput(board.getSearch().getNodes())
 					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.getSearch().getQNodes()) + ". Time used: "
 					+ Transformation.timeUsedOutput((System.currentTimeMillis() - time)));
