@@ -1266,11 +1266,9 @@ public class AttackBoard implements Serializable {
     }
 
     void generateAttackCount() {
-		for (int i = 0; i < pieceAttackCount.length; i++) {
-			for (int j = 0; j < pieceAttackCount[i].length; j++) {
-				pieceAttackCount[i][j] = 0;
-			}
-		}
+	    for (byte[] bytes : pieceAttackCount) {
+		    Arrays.fill(bytes, (byte) 0);
+	    }
 		for (int i = 0; i < attackBoards.length; i++) {
 			for (int j = 2; j < attackBoards[i].length; j++) {
 				for (int k = 0; k < 2; k++) { // most of the time we only have two pieces per piece type

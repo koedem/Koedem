@@ -3,6 +3,8 @@ package Main.engine;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 
+import java.util.Arrays;
+
 public class BitBoard implements BitBoardInterface {
 
     private BoardInterface board;
@@ -18,11 +20,10 @@ public class BitBoard implements BitBoardInterface {
 	private long[] allPieces = { 0, 0 }; // 2 colours
 	
 	public BitBoard(BoardInterface board) {
-		for (int colour = 0; colour < bitBoards.length; colour++) {
-			for (int piece = 0; piece < bitBoards[colour].length; piece++) {
-				for (int pieceIndex = 0; pieceIndex < bitBoards[colour][piece].length; pieceIndex++) {
-					bitBoards[colour][piece][pieceIndex] = 0; // 0 means no piece on any square yet / empty board
-				}
+		for (long[][] bitBoard : bitBoards) {
+			for (long[] longs : bitBoard) {
+				// 0 means no piece on any square yet / empty board
+				Arrays.fill(longs, 0);
 			}
 		}
         attackBoard = new AttackBoard(board, this);

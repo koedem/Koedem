@@ -5,42 +5,39 @@ import Main.Utility.DeepCopy;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Random;
+import java.util.*;
 
 public class Board implements BoardInterface {
 
-	private MoveGeneratorInterface moveGenerator = new MoveGenerator(this);
-	private CaptureGeneratorInterface captureGenerator = new CaptureGenerator(this);
-	private CheckMoveGeneratorInterface checkMoveGenerator = new CheckMoveGenerator(this);
-	private EvaluationInterface evaluation = new Evaluation(this);
-	private SearchInterface search = new Search(this);
-	private MateFinder mateFinder = new MateFinder(this);
+	private final MoveGeneratorInterface    moveGenerator    = new MoveGenerator(this);
+	private final CaptureGeneratorInterface captureGenerator = new CaptureGenerator(this);
+	private final CheckMoveGeneratorInterface checkMoveGenerator = new CheckMoveGenerator(this);
+	private final EvaluationInterface evaluation = new Evaluation(this);
+	private final SearchInterface     search     = new Search(this);
+	private final MateFinder          mateFinder = new MateFinder(this);
 
 	private long zobristHash;
 	private static final Random random = new Random(1234567890);
 	private static final long[] zobristKeys = initializeZobrist();
 	private static final long blackToMove = random.nextLong();
 
-	private static final int QUEENDANGER = 12;
-	private static final int ROOKDANGER = 5;
-	private static final int BISHOPDANGER = 3;
-	private static final int KNIGHTDANGER = 3;
+	private static final int QUEEN_DANGER = 12;
+	private static final int ROOK_DANGER   = 5;
+	private static final int BISHOP_DANGER = 3;
+	private static final int KNIGHT_DANGER = 3;
 	
-	private static final int[] PIECEDANGER = { 0, 0, KNIGHTDANGER, BISHOPDANGER, ROOKDANGER, QUEENDANGER, 0 };
+	private static final int[] PIECE_DANGER = {0, 0, KNIGHT_DANGER, BISHOP_DANGER, ROOK_DANGER, QUEEN_DANGER, 0 };
 
 
-	private BitBoardInterface bitboard;
-	private AttackBoard       attackBoard;
+	private final BitBoardInterface bitboard;
+	private final AttackBoard       attackBoard;
 
 	/**
 	 * Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6. 
 	 * White pieces get positive values, black pieces negative ones, empty squares a 0.
 	 * Format as fileRow, each reduced by one. Example: d6 becomes 3, 5.
 	 */
-	private byte[][] square = new byte[8][8];
+	private final byte[][] square = new byte[8][8];
 	
 	/**
 	 * True = white to move, false = black to move.
@@ -80,7 +77,7 @@ public class Board implements BoardInterface {
 	private int dangerToWhiteKing = 0;
 	private int dangerToBlackKing = 0;
 	
-	private int[] pieceAdvancement = { 0, 0, 0, 0, 0, 0, 0 }; // empty square, pawn, knight, bishop, rook, queen, king
+	private final int[] pieceAdvancement = {0, 0, 0, 0, 0, 0, 0 }; // empty square, pawn, knight, bishop, rook, queen, king
 	
 	/**
 	 * Material value of a pawn in centi pawns according to Larry Kaufmann (Komodo team).
@@ -122,7 +119,7 @@ public class Board implements BoardInterface {
 	/**
 	 * We store the hash of every position that happened so far in the game plus in the current search variation.
 	 */
-	private HashMap<Long, Integer> repetitionTable = new HashMap<>(65536);
+	private final HashMap<Long, Integer> repetitionTable = new HashMap<>(65536);
 
 	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
 
@@ -166,14 +163,11 @@ public class Board implements BoardInterface {
 				setSquare(i, j, (byte) 0);
 			}
 		}
-	    for (int i = 0; i < pieceAdvancement.length; i++) {
-            pieceAdvancement[i] = 0;
-        }
+		Arrays.fill(pieceAdvancement, 0);
         bitboard.resetBitBoard();
 		zobristHash = 0;
 
-		String position = fen;
-		String[] positions = position.split(" ");
+		String[] positions = fen.split(" ");
 		byte file = 0;
 		byte row = 7;
 		for (int i = 0; i < positions[0].length(); i++) {
@@ -181,7 +175,7 @@ public class Board implements BoardInterface {
                 row--;
                 file = 0;
             } else if (Character.isDigit(positions[0].charAt(i))){
-                int emptySquares = Character.getNumericValue(position.charAt(i));
+                int emptySquares = Character.getNumericValue(fen.charAt(i));
                 for (int j = 0; j < emptySquares; j++) {
                     setSquare(file, row, (byte) 0);
                     file++;
@@ -192,9 +186,9 @@ public class Board implements BoardInterface {
                 setSquare(file, row, piece);
                 materialCount += PIECEVALUE[Math.abs(piece)] * colour;
                 if (colour == 1) {
-                    dangerToBlackKing += PIECEDANGER[piece * colour];
+                    dangerToBlackKing += PIECE_DANGER[piece * colour];
                 } else {
-                    dangerToWhiteKing += PIECEDANGER[piece * colour];
+                    dangerToWhiteKing += PIECE_DANGER[piece * colour];
                 }
                 piecesLeft++;
                 pieceAdvancement[Math.abs(piece)] += 2 * row - 7;
@@ -321,12 +315,12 @@ public class Board implements BoardInterface {
 			piecesLeft--;
 			if (capturedPiece > 0) {
 				materialCount -= PIECEVALUE[capturedPiece];
-				dangerToBlackKing -= PIECEDANGER[capturedPiece];
+				dangerToBlackKing -= PIECE_DANGER[capturedPiece];
 				pieceAdvancement[capturedPiece] -= 2 * (endSquare % 8) - 7;
 				pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][capturedPiece][endSquare];
 			} else {
 				materialCount += PIECEVALUE[Math.abs(capturedPiece)];
-				dangerToWhiteKing -= PIECEDANGER[Math.abs(capturedPiece)];
+				dangerToWhiteKing -= PIECE_DANGER[Math.abs(capturedPiece)];
 				pieceAdvancement[Math.abs(capturedPiece)] -= 2 * (endSquare % 8) - 7;
 				pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][-capturedPiece][endSquare];
 			}
@@ -484,11 +478,11 @@ public class Board implements BoardInterface {
 			if (endSquare % 8 == 7) {
 				setSquare(endSquare / 8, endSquare % 8, promotion);
 				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
-				dangerToBlackKing += PIECEDANGER[promotion];
+				dangerToBlackKing += PIECE_DANGER[promotion];
 			} else if (endSquare % 8 == 0) {
 				setSquare(endSquare / 8, endSquare % 8, (byte) -promotion);
 				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
-				dangerToWhiteKing += PIECEDANGER[promotion];
+				dangerToWhiteKing += PIECE_DANGER[promotion];
 			}
 
 			bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
@@ -662,7 +656,7 @@ public class Board implements BoardInterface {
 				
 				setSquare(endSquare / 8, endSquare % 8, capturedPiece); // bitboard change done below
 				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
-				dangerToBlackKing -= PIECEDANGER[promotion];
+				dangerToBlackKing -= PIECE_DANGER[promotion];
 			} else if (endSquare % 8 == 0) {
 				setSquare(startSquare / 8, startSquare % 8, (byte) -1);
 				bitboard.remove(endSquare, false);
@@ -670,7 +664,7 @@ public class Board implements BoardInterface {
 				
 				setSquare(endSquare / 8, endSquare % 8, capturedPiece);
 				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
-				dangerToWhiteKing -= PIECEDANGER[promotion];
+				dangerToWhiteKing -= PIECE_DANGER[promotion];
 			} else {
 				assert false;
 			}
@@ -685,12 +679,12 @@ public class Board implements BoardInterface {
             piecesLeft++;
             if ((int) capturedPiece > 0) {
                 materialCount += PIECEVALUE[(int) capturedPiece]; // piece gets back on the board, so added to materialCount
-                dangerToBlackKing += PIECEDANGER[(int) capturedPiece]; // and to danger-numbers
+                dangerToBlackKing += PIECE_DANGER[(int) capturedPiece]; // and to danger-numbers
                 pieceAdvancement[(int) capturedPiece] += 2 * (endSquare % 8) - 7; // and add back its advancement
 	            pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][capturedPiece][endSquare];
             } else {
                 materialCount -= PIECEVALUE[Math.abs((int) capturedPiece)];
-                dangerToWhiteKing += PIECEDANGER[Math.abs((int) capturedPiece)];
+                dangerToWhiteKing += PIECE_DANGER[Math.abs((int) capturedPiece)];
                 pieceAdvancement[Math.abs((int) capturedPiece)] += 2 * (endSquare % 8) - 7;
                 pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][-capturedPiece][endSquare];
             }
@@ -709,11 +703,7 @@ public class Board implements BoardInterface {
 	public byte getCastlingRights() {
 		return castlingRights;
 	}
-	
-	public void setCastlingRights(byte castlingRights) {
-		this.castlingRights = castlingRights;
-	}
-	
+
 	/**
 	 * This method takes a byte and sets the 1s in the byte to 0 in castlingRights.
 	 * 
@@ -735,19 +725,7 @@ public class Board implements BoardInterface {
 	public int getPiecesLeft() {
 		return piecesLeft;
 	}
-	
-	public void setPiecesLeft(int newCount) {
-		piecesLeft = newCount;
-	}
-	
-	public void incrementPiecesLeft() {
-		piecesLeft++;
-	}
-	
-	public void decrementPiecesLeft() {
-		piecesLeft--;
-	}
-	
+
 	private void putRepetitionEntry(long zobristHash) {
 		if (!repetitionTable.containsKey(zobristHash)) {
 			repetitionTable.put(zobristHash, 1);
@@ -774,10 +752,6 @@ public class Board implements BoardInterface {
 
 	public int getPieceAdvancement(int index) {
 		return pieceAdvancement[index];
-	}
-	
-	public void setPieceAdvancement(int index, int advancement) {
-		pieceAdvancement[index] = advancement;
 	}
 
 	public int getMoveNumber() {
@@ -816,10 +790,6 @@ public class Board implements BoardInterface {
 		this.enPassant = enPassant;
 	}
 
-	public void setMaterialCount(short materialCount) {
-		this.materialCount = materialCount;
-	}
-
 	public int[] getRootMoves() {
 		return rootMoves;
 	}
@@ -832,16 +802,8 @@ public class Board implements BoardInterface {
 		return dangerToWhiteKing;
 	}
 
-	public void setDangerToWhiteKing(int dangerToWhiteKing) {
-		this.dangerToWhiteKing = dangerToWhiteKing;
-	}
-
 	public int getDangerToBlackKing() {
 		return dangerToBlackKing;
-	}
-
-	public void setDangerToBlackKing(int dangerToBlackKing) {
-		this.dangerToBlackKing = dangerToBlackKing;
 	}
 
 	private static byte pieceLetterToByte(char piece) {
@@ -868,24 +830,12 @@ public class Board implements BoardInterface {
 		return moveGenerator;
 	}
 
-	public void setMoveGenerator(MoveGeneratorInterface moveGenerator) {
-		this.moveGenerator = moveGenerator;
-	}
-
 	public EvaluationInterface getEvaluation() {
 		return evaluation;
 	}
 
-	public void setEvaluation(EvaluationInterface evaluation) {
-		this.evaluation = evaluation;
-	}
-
 	public SearchInterface getSearch() {
 		return search;
-	}
-
-	public void setSearch(SearchInterface search) {
-		this.search = search;
 	}
 
 	public void resetBoard() {
@@ -965,18 +915,8 @@ public class Board implements BoardInterface {
 	}
 
 	@Override
-	public void setAttackBoard(AttackBoard attackBoard) {
-		this.attackBoard = attackBoard;
-	}
-
-	@Override
 	public BitBoardInterface getBitboard() {
 		return bitboard;
-	}
-
-	@Override
-	public void setBitboard(BitBoardInterface bitboard) {
-		this.bitboard = bitboard;
 	}
 
 	public MateFinder getMateFinder() {
@@ -996,7 +936,4 @@ public class Board implements BoardInterface {
 		return pieceSquareTable;
 	}
 
-	public void setPieceSquareTable(int pieceSquareTable) {
-		this.pieceSquareTable = pieceSquareTable;
-	}
 }

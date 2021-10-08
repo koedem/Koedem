@@ -45,7 +45,7 @@ public class CaptureGenerator implements CaptureGeneratorInterface {
 			}
 			long       legalCaptures;
 			int        startSquare, endSquare = -1;
-			int capturedPieceValue = -1;
+			int capturedPieceValue;
 			long[][][] attackBoards           = board.getAttackBoard().getAttackBoards();
 			if ((board.getAttackBoard().getPieceTypes()[toMove][1] & bitboard.getAllPieces(whoToMove ? 1 : 0)) != 0) { // i.e. there are some pawn captures
 				for (int index = 0; index < 8; index++) {

@@ -2,7 +2,6 @@ package test;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 

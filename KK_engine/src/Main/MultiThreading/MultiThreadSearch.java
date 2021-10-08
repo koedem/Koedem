@@ -7,8 +7,6 @@ import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
 
-import java.util.concurrent.Callable;
-
 public class MultiThreadSearch implements SearchThreadInterface {
 
 	private BoardInterface   board;

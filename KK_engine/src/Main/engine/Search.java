@@ -14,18 +14,16 @@ import java.util.ArrayList;
  */
 public class Search implements SearchInterface {
 
-	public static final int MAX_DEPTH = 100;
-
-	private BoardInterface board;
-	private int[][] movesStorage = new int[101][MoveGenerator.MAX_MOVE_COUNT];
-	private int[][] capturesStorage = new int[30][MoveGenerator.MAX_MOVE_COUNT]; // 30 because thats max number of captures;
+	private final BoardInterface board;
+	private final int[][] movesStorage    = new int[101][MoveGenerator.MAX_MOVE_COUNT];
+	private final int[][] capturesStorage = new int[30][MoveGenerator.MAX_MOVE_COUNT]; // 30 because thats max number of captures;
                                                                                 // TODO: Less than MAX_MOVE_COUNT
-	private int[][] ttMoves = new int[101][5];
+	private final int[][] ttMoves         = new int[101][5];
 
-	private TTEntry entry = new TTEntry();
-    private static final int[] moveOrder = { 4, 3, 2, 1 };
+	private final        TTEntry entry     = new TTEntry();
+    private static final int[]   moveOrder = { 4, 3, 2, 1 };
 
-    private static int[] unused = new int[6];
+    private static final int[] unused = new int[6];
 
 	private long nodes = 0;
 	private long abortedNodes = 0;
@@ -85,8 +83,8 @@ public class Search implements SearchInterface {
 						alpha = principleVariation[depth];
 					}
 				}
-				for (int i = moveIndex; i > 1; i--) {
-					moves[i] = moves[i - 1];
+				if (moveIndex - 1 >= 0) {
+					System.arraycopy(moves, 1, moves, 2, moveIndex - 1);
 				}
 				moves[1] = move; // order best move to top
 			} else { // or we have to search
@@ -131,8 +129,8 @@ public class Search implements SearchInterface {
 							UCI.printEngineOutput("New best move: ", principleVariation, board, !board.getToMove(), time);
 						}
 
-						for (int i = moveIndex; i > 1; i--) {
-							moves[i] = moves[i - 1];
+						if (moveIndex - 1 >= 0) {
+							System.arraycopy(moves, 1, moves, 2, moveIndex - 1);
 						}
 						moves[1] = move; // order best move to top
 					}
@@ -229,8 +227,8 @@ public class Search implements SearchInterface {
 		for (int i = 1; i <= ttMoves[depthLeft][0]; i++) {
 			if (ttMoves[depthLeft][i] == 0) {
 				ttMoves[depthLeft][0]--;
-				for (int j = i; j <= ttMoves[depthLeft][0]; j++) { // ttMove[0] already got reduced here
-					ttMoves[depthLeft][j] = ttMoves[depthLeft][j + 1];
+				if (ttMoves[depthLeft][0] + 1 - i >= 0) { // ttMove[0] already got reduced here
+					System.arraycopy(ttMoves[depthLeft], i + 1, ttMoves[depthLeft], i, ttMoves[depthLeft][0] + 1 - i);
 				}
 				i--;
 			}
@@ -240,8 +238,8 @@ public class Search implements SearchInterface {
 			for (int j = i + 1; j <= ttMoves[depthLeft][0]; j++) {
 				if (ttMoves[depthLeft][i] == ttMoves[depthLeft][j]) {
 					ttMoves[depthLeft][0]--;
-					for (int k = j; k <= ttMoves[depthLeft][0]; k++) {
-						ttMoves[depthLeft][k] = ttMoves[depthLeft][k + 1];
+					if (ttMoves[depthLeft][0] + 1 - j >= 0) {
+						System.arraycopy(ttMoves[depthLeft], j + 1, ttMoves[depthLeft], j, ttMoves[depthLeft][0] + 1 - j);
 					}
 					j--;
 				}
@@ -251,8 +249,8 @@ public class Search implements SearchInterface {
 		for (int move = 1; move <= ttMoves[depthLeft][0]; move++) {
 			for (int i = 1; i <= moves[0]; i++) {
 				if (moves[i] == ttMoves[depthLeft][move]) {
-					for (int j = i; j > 1; j--) { // reorder moves to put TT move to top
-						moves[j] = moves[j - 1];
+					if (i - 1 >= 0) { // reorder moves to put TT move to top
+						System.arraycopy(moves, 1, moves, 2, i - 1);
 					}
 					moves[1] = ttMoves[depthLeft][move];
 					break;
@@ -435,8 +433,8 @@ public class Search implements SearchInterface {
 		for (int move = 1; move <= ttMoves[1][0]; move++) {
 			for (int i = 1; i <= moves[0]; i++) {
 				if (moves[i] == ttMoves[1][move]) {
-					for (int j = i; j > 1; j--) { // reorder moves to put TT move to top
-						moves[j] = moves[j - 1];
+					if (i - 1 >= 0) { // reorder moves to put TT move to top
+						System.arraycopy(moves, 1, moves, 2, i - 1);
 					}
 					moves[1] = ttMoves[1][move];
 					break;
@@ -566,8 +564,8 @@ public class Search implements SearchInterface {
 		for (int i = 1; i <= ttMoves[depthLeft][0]; i++) {
 			if (ttMoves[depthLeft][i] == 0) {
 				ttMoves[depthLeft][0]--;
-				for (int j = i; j <= ttMoves[depthLeft][0]; j++) { // ttMove[0] already got reduced here
-					ttMoves[depthLeft][j] = ttMoves[depthLeft][j + 1];
+				if (ttMoves[depthLeft][0] + 1 - i >= 0) { // ttMove[0] already got reduced here
+					System.arraycopy(ttMoves[depthLeft], i + 1, ttMoves[depthLeft], i, ttMoves[depthLeft][0] + 1 - i);
 				}
 				i--;
 			}
@@ -577,8 +575,8 @@ public class Search implements SearchInterface {
 			for (int j = i + 1; j <= ttMoves[depthLeft][0]; j++) {
 				if (ttMoves[depthLeft][i] == ttMoves[depthLeft][j]) {
 					ttMoves[depthLeft][0]--;
-					for (int k = j; k <= ttMoves[depthLeft][0]; k++) {
-						ttMoves[depthLeft][k] = ttMoves[depthLeft][k + 1];
+					if (ttMoves[depthLeft][0] + 1 - j >= 0) {
+						System.arraycopy(ttMoves[depthLeft], j + 1, ttMoves[depthLeft], j, ttMoves[depthLeft][0] + 1 - j);
 					}
 					j--;
 				}
@@ -592,8 +590,8 @@ public class Search implements SearchInterface {
 		for (int move = 1; move <= ttMoves[depthLeft][0]; move++) {
 			for (int i = 1; i <= moves[0]; i++) {
 				if (moves[i] == ttMoves[depthLeft][move]) {
-					for (int j = i; j > 1; j--) { // reorder moves to put TT move to top
-						moves[j] = moves[j - 1];
+					if (i - 1 >= 0) { // reorder moves to put TT move to top
+						System.arraycopy(moves, 1, moves, 2, i - 1);
 					}
 					moves[1] = ttMoves[depthLeft][move];
 					break;

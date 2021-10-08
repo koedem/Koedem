@@ -1,7 +1,6 @@
 package Main.engine;
 
 import java.io.Serializable;
-import java.util.Hashtable;
 
 /**
  *
@@ -43,7 +42,7 @@ public interface BoardInterface extends Serializable {
 	 *
 	 * @return Which castlings are still possible.
 	 */
-	abstract byte getCastlingRights();
+	byte getCastlingRights();
 
 	byte getEnPassant();
 
@@ -87,8 +86,6 @@ public interface BoardInterface extends Serializable {
 
 	AttackBoard getAttackBoard();
 
-	void setAttackBoard(AttackBoard attackBoard);
-
 	SearchInterface getSearch();
 
 	MoveGeneratorInterface getMoveGenerator();
@@ -103,13 +100,10 @@ public interface BoardInterface extends Serializable {
 
 	BitBoardInterface getBitboard();
 
-	void setBitboard(BitBoardInterface bitboard);
-
 	void resetBoard();
 
 	int isFreeSquare(int file, int row, boolean toMove);
 
 	int getPieceSquareTable();
 
-	void setPieceSquareTable(int pst);
 }

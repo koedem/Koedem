@@ -1,7 +1,5 @@
 package Main.MultiThreading;
 
-import Main.engineIO.Logging;
-
 public class AggressiveMatefinderTT extends AbstractMatefinderTT {
 
     /**
