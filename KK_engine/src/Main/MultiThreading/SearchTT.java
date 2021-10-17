@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+import static Main.engineIO.UCI.MAX_DEPTH;
+
 /**
  *
  */
@@ -71,6 +73,9 @@ public class SearchTT implements SearchTTInterface {
 	@Override
 	public void put(long zobristHash, @NotNull TTEntry entry) {
 		int position = (int) zobristHash & bitmask;
+		if (Math.abs(entry.getEval()) > 9000) {
+			entry.setDepth(MAX_DEPTH);
+		}
 		long oldInformation;
 		for (int count = 0; count < 8; count += 2) {
 			if (table[(position << 3) + count] == 0) { // entry free, we can just put new entry there and return

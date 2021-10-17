@@ -105,7 +105,7 @@ public class Search implements SearchInterface {
 
 					if (innerPV[depth] > 9000) {
 						innerPV[depth]--;
-						principleVariation = innerPV;
+						principleVariation = innerPV; // TODO remove here too?
 
 						board.setEnPassant(enPassant);
 						board.unmakeMove(move, capturedPiece, castlingRights);
@@ -210,7 +210,7 @@ public class Search implements SearchInterface {
 					nodes++;
 					return principleVariation;
 				} else if (entry.getEval() < beta) {
-					beta = entry.getEval(); // we have at least this score proven so it becomes alpha
+					beta = entry.getEval(); // we have at most this score proven so it becomes beta
 				}
 			}
 			ttMoves[depthLeft][moveOrder[1]] = entry.getMove();
@@ -338,6 +338,9 @@ public class Search implements SearchInterface {
 				entry.setDepth(depthLeft);
 				entry.setMove(move);
 				UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
+				if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null && entry.getEval() < principleVariation[depth]) {
+					int a = 0;
+				}
 				return principleVariation;
 			}
 			innerPV = null;
@@ -405,7 +408,7 @@ public class Search implements SearchInterface {
 		if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, 1) != null) {
 			if (entry.getDepth() >= 1) { // TODO this is probably redundant?
 				if (entry.getEval() <= alpha) { // we are worse than alpha so can't possibly improve the score
-					principleVariation[depth] = entry.getEval();
+					principleVariation[depth] = entry.getEval(); // TODO what if this is worse than previous eval?
 					nodes++;
 					return principleVariation;
 				} else if (entry.getEval() < beta) {
@@ -486,6 +489,9 @@ public class Search implements SearchInterface {
 				entry.setDepth(1);
 				entry.setMove(move);
 				UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
+				if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, 1) != null && entry.getEval() < principleVariation[depth]) {
+					int a = 0;
+				}
 				return principleVariation;
 			}
 			if (UCI.isThreadFinished()) { // we should stop calculating here
@@ -672,6 +678,9 @@ public class Search implements SearchInterface {
 				entry.setDepth(depthLeft);
 				entry.setMove(move);
 				UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
+				if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null && entry.getEval() < scoreToBeat) {
+					int a = 0;
+				}
 				return eval;
 			}
 			if (UCI.isThreadFinished()) { // we should stop calculating here

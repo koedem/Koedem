@@ -34,14 +34,15 @@ public final class UCI {
 	private static int threadCount = 1;
 	private static final int LOWER_THREAD_COUNT = 1;
 	private static final int UPPER_THREAD_COUNT = 5;
+	public static final int MAX_DEPTH = 100;
 
 	private static boolean threadFinished = true;
 
 	static         String            engineName       = "Koedem";
 	static         BoardInterface    board            = new Board();
 	static         Perft             perft            = new Perft(board);
-	public static  SearchTTInterface upperBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), false);
-	public static        SearchTTInterface lowerBoundsTable = new SearchTT(ttSizeInMB * (1 << 19), true);
+	public static  SearchTTInterface upperBoundsTable = new SearchExactTT(ttSizeInMB * (1 << 19), false);
+	public static        SearchTTInterface lowerBoundsTable = new SearchExactTT(ttSizeInMB * (1 << 19), true);
 	private static final Scanner           sc               = new Scanner(System.in);
 	
 	public static void main(String[] args) {
@@ -134,6 +135,8 @@ public final class UCI {
 				Evaluation.setMaterialOnly(false);
 			} else if (command.equals("print bitboard")) {
 				board.getBitboard().printBitBoard();
+			} else if (command.startsWith("probe")) {
+				probe(Integer.parseInt(command.substring(6, 8)) ,command.substring(9));
 			} else if (command.equals("stop")) {
 			    threadFinished = true;
             }
@@ -517,6 +520,15 @@ public final class UCI {
 					+ ")" + ". Q-nodes: " + Transformation.nodeCountOutput(board.getSearch().getQNodes()) + ". Time used: "
 					+ Transformation.timeUsedOutput((System.currentTimeMillis() - time)));
 		}
+	}
+
+	private static void probe(int depth, String fen) {
+		Board probing = new Board(fen);
+		TTEntry probeEntry = new TTEntry();
+		upperBoundsTable.get(probing.getZobristHash(), probeEntry, depth);
+		Logging.printLine("Upper bound: " + probeEntry.getEval() + ", best move: " + Transformation.numberToMove(probeEntry.getMove()));
+		lowerBoundsTable.get(probing.getZobristHash(), probeEntry, depth);
+		Logging.printLine("Lower bound: " + probeEntry.getEval() + ", best move: " + Transformation.numberToMove(probeEntry.getMove()));
 	}
 	
 	private UCI() {
