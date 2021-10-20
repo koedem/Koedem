@@ -71,6 +71,22 @@ public class Search implements SearchInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			boolean repetition = board.makeMove(move);
+
+			boolean innerToMove;
+			int scoreToBeat, innerAlpha, innerBeta, signChange;
+			if (toMove == board.getToMove()) {
+				innerToMove = board.getToMove();
+				scoreToBeat = alpha - 1;
+				innerAlpha = alpha;
+				innerBeta = beta;
+				signChange = 1;
+			} else {
+				innerToMove = board.getToMove();
+				scoreToBeat = -alpha - 1;
+				innerAlpha = -beta;
+				innerBeta = -alpha;
+				signChange = -1;
+			}
 			int[] innerPV;
 
 			if (repetition) { // this is either a repetition
@@ -89,18 +105,18 @@ public class Search implements SearchInterface {
 				moves[1] = move; // order best move to top
 			} else { // or we have to search
 				if (moveIndex == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    -nullWindowSearch(!toMove, depth, depth - 1, -alpha - 1, time + maxTime) > principleVariation[depth]) {
+				    signChange * nullWindowSearch(innerToMove, depth, depth - 1, scoreToBeat, time + maxTime) > principleVariation[depth]) {
 					if (moveIndex != 1) {
 						Logging.printLine("Null window fail high.");
 					}
 
 					if (depth == 2) {
-						innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
+						innerPV = openWindowDepthOneSearch(innerToMove, depth, innerAlpha, innerBeta);
 					} else { // TODO !toMove is confusing, as board.toMove changes upon moving but not this local variable
-						innerPV = negaMax(!toMove, depth, depth - 1, -beta, -alpha, time + maxTime);
+						innerPV = negaMax(innerToMove, depth, depth - 1, innerAlpha, innerBeta, time + maxTime);
 					}
 
-					innerPV[depth] = -innerPV[depth];
+					innerPV[depth] = signChange * innerPV[depth];
 					innerPV[0] = move;
 
 					if (innerPV[depth] > 9000) {
@@ -286,7 +302,22 @@ public class Search implements SearchInterface {
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
 			boolean repetition = board.makeMove(move);
-			
+
+			boolean innerToMove;
+			int scoreToBeat, innerAlpha, innerBeta, signChange;
+			if (toMove == board.getToMove()) {
+				innerToMove = board.getToMove();
+				scoreToBeat = alpha - 1;
+				innerAlpha = alpha;
+				innerBeta = beta;
+				signChange = 1;
+			} else {
+				innerToMove = board.getToMove();
+				scoreToBeat = -alpha - 1;
+				innerAlpha = -beta;
+				innerBeta = -alpha;
+				signChange = -1;
+			}
 			int[] innerPV;
 
 			if (repetition) { // this is either a repetition
@@ -302,13 +333,13 @@ public class Search implements SearchInterface {
 				}
 			} else { // or we have to search
 				if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha - 1, finishUntil) > principleVariation[depth]) {
+				    signChange * nullWindowSearch(innerToMove, depth, depthLeft - 1, scoreToBeat, finishUntil) > principleVariation[depth]) {
 					if (depthLeft == 2) {
-						innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
+						innerPV = openWindowDepthOneSearch(innerToMove, depth, innerAlpha, innerBeta);
 					} else {
-						innerPV = negaMax(!toMove, depth, depthLeft - 1, -beta, -alpha, finishUntil);
+						innerPV = negaMax(innerToMove, depth, depthLeft - 1, innerAlpha, innerBeta, finishUntil);
 					}
-					innerPV[depth] = -innerPV[depth];
+					innerPV[depth] = signChange * innerPV[depth];
 					innerPV[depth - depthLeft] = move;
 					if (innerPV[depth] > 9000) {
 						innerPV[depth]--;
@@ -459,13 +490,31 @@ public class Search implements SearchInterface {
 			}
 			byte castlingRights = board.getCastlingRights();
 			byte enPassant = board.getEnPassant();
+			if (board.getSearch().getNodes() == 21) {
+				int a = 0;
+			}
 			boolean repetition = board.makeMove(move);
 
+			boolean innerToMove;
+			int scoreToBeat, innerAlpha, innerBeta, signChange;
+			if (toMove == board.getToMove()) {
+				innerToMove = board.getToMove();
+				scoreToBeat = alpha - 1;
+				innerAlpha = alpha;
+				innerBeta = beta;
+				signChange = 1;
+			} else {
+				innerToMove = board.getToMove();
+				scoreToBeat = -alpha - 1;
+				innerAlpha = -beta;
+				innerBeta = -alpha;
+				signChange = -1;
+			}
 			int qsearch;
 			if (repetition) { // this is either a repetition
 				qsearch = 0;
 			} else { // or we have to search
-				qsearch = -memoryEfficientQSearch(!toMove, -beta, -alpha, 0);
+				qsearch = signChange * memoryEfficientQSearch(innerToMove, innerAlpha, innerBeta, 0);
 			}
 			if (qsearch > 9000) {
 				qsearch--;
@@ -641,20 +690,31 @@ public class Search implements SearchInterface {
 			byte enPassant = board.getEnPassant();
 			boolean repetition = board.makeMove(move);
 
+			boolean innerToMove;
+			int innerScoreToBeat, innerAlpha, innerBeta, signChange;
+			if (toMove == board.getToMove()) {
+				innerToMove = board.getToMove();
+				innerScoreToBeat = scoreToBeat;
+				signChange = 1;
+			} else {
+				innerToMove = board.getToMove();
+				innerScoreToBeat = -scoreToBeat - 1;
+				signChange = -1;
+			}
 			int innerEval = -30000;
 			if (repetition && depthLeft != depth) { // this is either a repetition
 				innerEval = 0;
 			} else { // or we have to search
 				if (depthLeft > 1) {
-					innerEval = nullWindowSearch(!toMove, depth, depthLeft - 1, -scoreToBeat - 1, finishUntil);
-					innerEval = -innerEval;
+					innerEval = nullWindowSearch(innerToMove, depth, depthLeft - 1, innerScoreToBeat, finishUntil);
+					innerEval = signChange * innerEval;
 					if (innerEval > 9000) {
 						innerEval--;
 					} else if (innerEval < -9000) {
 						innerEval++;
 					}
 				} else if (depthLeft == 1) {
-					innerEval = -memoryEfficientQSearch(!toMove, -scoreToBeat - 1, -scoreToBeat, 0);
+					innerEval = signChange * memoryEfficientQSearch(innerToMove, innerScoreToBeat, innerScoreToBeat + 1, 0);
 					if (innerEval > 9000) {
 						innerEval--;
 					} else if (innerEval < -9000) {
@@ -720,7 +780,7 @@ public class Search implements SearchInterface {
 	public ArrayList<Integer> qSearch(boolean toMove, int alphaBound, int betaBound, int depthSoFar) {
 	    // IMPORTANT: If anything other than captures should be calculated in this method, the ArraySizes might need to be changed.
 
-		int alpha = alphaBound;
+		int alpha = alphaBound; // TODO change for different game modes
 		int beta = betaBound;
 		ArrayList<Integer> principleVariation = new ArrayList<>(1);
 		principleVariation.add(-30000);
@@ -811,7 +871,7 @@ public class Search implements SearchInterface {
             principleVariation.set(0, -10000);
             return principleVariation;
         }*/
-        if (eval >= beta) {
+        if (eval >= beta || UCI.GAME_MODE != UCI.STANDARD_CHESS) { // in variants skip qsearch
             return eval;
         }
         capturesStorage[depthSoFar] = board.getCaptureGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);

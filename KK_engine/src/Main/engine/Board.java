@@ -4,8 +4,11 @@ import Main.Utility.Constants;
 import Main.Utility.DeepCopy;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
+import Main.engineIO.UCI;
 
 import java.util.*;
+
+import static Main.engineIO.UCI.*;
 
 public class Board implements BoardInterface {
 
@@ -31,6 +34,9 @@ public class Board implements BoardInterface {
 
 	private final BitBoardInterface bitboard;
 	private final AttackBoard       attackBoard;
+
+	private int gamePhase = 1;
+	private int pliesLeftInMove = 1;
 
 	/**
 	 * Pawn = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5, King = 6. 
@@ -217,6 +223,8 @@ public class Board implements BoardInterface {
 		attackBoard.generateAttackCount();
 		pieceSquareTable = evaluation.fullPST();
 		repetitionTable.clear();
+		zobristHash ^= gamePhase * 64L;
+		zobristHash ^= pliesLeftInMove;
 		putRepetitionEntry(getZobristHash());
 	}
 
@@ -491,10 +499,64 @@ public class Board implements BoardInterface {
 		} else {
 			assert false;
 		}
-		changeToMove();
+		if (updateToMove(true)) {
+			changeToMove();
+		}
 		boolean present = repetitionContained(getZobristHash()); // return whether this is a move repetition
 		putRepetitionEntry(getZobristHash());
 		return present;
+	}
+
+	private boolean updateToMove(boolean forwardMove) {
+		boolean changeToMove = false;
+		if (UCI.GAME_MODE == STANDARD_CHESS) {
+			changeToMove = true;
+		} else if (UCI.GAME_MODE == ZOMBIE_CHESS) {
+			zobristHash ^= gamePhase * 64L;
+			zobristHash ^= pliesLeftInMove;
+			if (forwardMove) {
+				if (pliesLeftInMove == 1) {
+					changeToMove = true;
+					gamePhase = (gamePhase % 2) + 1; // alternate between 1 and 2 plies per move
+					pliesLeftInMove = gamePhase;
+				} else {
+					pliesLeftInMove--;
+				}
+			} else {
+				if (pliesLeftInMove == gamePhase) {
+					changeToMove = true;
+					gamePhase = (gamePhase % 2) + 1; // alternate between 1 and 2 plies per move
+					pliesLeftInMove = 1;
+				} else {
+					pliesLeftInMove++;
+				}
+			}
+			zobristHash ^= gamePhase * 64L;
+			zobristHash ^= pliesLeftInMove;
+		} else if (UCI.GAME_MODE == WAVE_CHESS) {
+			zobristHash ^= gamePhase * 64L;
+			zobristHash ^= pliesLeftInMove;
+			if (forwardMove) {
+				if (pliesLeftInMove == 1) {
+					changeToMove = true;
+					gamePhase++;
+					pliesLeftInMove = gamePhase;
+				} else {
+					pliesLeftInMove--;
+				}
+			} else {
+				if (pliesLeftInMove == gamePhase) {
+					changeToMove = true;
+					gamePhase--;
+					pliesLeftInMove = 1;
+				} else {
+					pliesLeftInMove++;
+				}
+			}
+			zobristHash ^= gamePhase * 64L;
+			zobristHash ^= pliesLeftInMove;
+		}
+		return changeToMove;
 	}
 
 	/**
@@ -672,7 +734,9 @@ public class Board implements BoardInterface {
 		} else {
 			assert false;
 		}
-		changeToMove();
+		if (updateToMove(false)) {
+			changeToMove();
+		}
 		castlingRights = oldCastlingRights;
 		
 		if ((int) capturedPiece != 0) {
@@ -774,10 +838,12 @@ public class Board implements BoardInterface {
 		if (!toMove) {
 			zobristHash ^= blackToMove;
 		}
+		zobristHash ^= gamePhase * 64L;
+		zobristHash ^= pliesLeftInMove;
 		return zobristHash;
 	}
 
-	public long getZobristHash() {
+	public long getZobristHash() {// -1220555251401921615 (0xEF0FB77733736BB1)
 		assert zobristHash == calculateZobristHash();
 		return zobristHash;
 	}
