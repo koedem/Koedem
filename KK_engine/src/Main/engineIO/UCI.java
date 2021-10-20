@@ -35,6 +35,8 @@ public final class UCI {
 	private static final int LOWER_THREAD_COUNT = 1;
 	private static final int UPPER_THREAD_COUNT = 5;
 	public static final int MAX_DEPTH = 100;
+	public static final int STANDARD_CHESS = 0, ZOMBIE_CHESS = 1, WAVE_CHESS = 2;
+	public static int GAME_MODE = ZOMBIE_CHESS;
 
 	private static boolean threadFinished = true;
 
@@ -137,6 +139,8 @@ public final class UCI {
 				board.getBitboard().printBitBoard();
 			} else if (command.startsWith("probe")) {
 				probe(Integer.parseInt(command.substring(6, 8)) ,command.substring(9));
+			} else if (command.equals("refute")) {
+				ThreadOrganization.refute();
 			} else if (command.equals("stop")) {
 			    threadFinished = true;
             }

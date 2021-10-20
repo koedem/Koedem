@@ -36,12 +36,25 @@ public class ThreadOrganization {
         thread[0].setDepth(depth);
         thread[0].setTimeLimit(timeLimit);
         thread[0].setHardTimeLimit(hardTimeLimit);
+		((MultiThreadSearch) thread[0]).setStandard(true);
         synchronized (thread[0]) {
 	        UCI.setThreadFinished(false);
             thread[0].notify();
         }
         Thread.yield(); // give the cpu to the calculating thread
     }
+
+	public static void refute() {
+		thread[0].setDepth(100);
+		thread[0].setTimeLimit(Integer.MAX_VALUE / 2);
+		thread[0].setHardTimeLimit(Integer.MAX_VALUE / 2);
+		((MultiThreadSearch) thread[0]).setStandard(false);
+		synchronized (thread[0]) {
+			UCI.setThreadFinished(false);
+			thread[0].notify();
+		}
+		Thread.yield(); // give the cpu to the calculating thread
+	}
 
     public static void findMate() {
 	    thread[1].setDepth(60);
