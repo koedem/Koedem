@@ -13,6 +13,7 @@ public class MultiThreadSearch implements SearchThreadInterface {
     private int     depth;
     private long    timeLimit;
     private long hardTimeLimit;
+	private boolean standard = true;
 	
 	public MultiThreadSearch(BoardInterface board, int threadNumber, boolean moveOrdering) {
         this.board = board;
@@ -20,8 +21,6 @@ public class MultiThreadSearch implements SearchThreadInterface {
 	
 	@Override
 	public void run() {
-        int[] move = null;
-        int[] movesSize = new int[6]; // unused
         while (!UCI.shuttingDown) {
         	synchronized (this) {
         		while (UCI.isThreadFinished()) {
@@ -32,52 +31,122 @@ public class MultiThreadSearch implements SearchThreadInterface {
 			        }
 		        }
 	        }
-	        if (hardTimeLimit == Integer.MAX_VALUE / 2) {
-	        	CorrespondenceOrganisation.getInstance().getLock();
-	        	Logging.printLine("Acquiring lock.");
+	        if (standard) {
+				standardSearch();
+	        } else {
+				refutationSearch();
 	        }
-
-            long time = System.currentTimeMillis();
-            board.getSearch().setNodes(0);
-            board.getSearch().setAbortedNodes(0);
-            board.getSearch().setQNodes(0);
-            board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT], movesSize));
-            if (UCI.logging) {
-            	Logging.printLine("info search started at milli: " + System.currentTimeMillis());
-            }
-	        MoveOrdering.getInstance().orderRootMoves(board);
-
-            for (int i = 2; i <= depth; i++) { // our root ordering already does a depth 1 search essentially
-                move = board.getSearch().rootMax(board.getToMove(), i, time, hardTimeLimit);
-
-                if (Math.abs(move[move.length - 1]) > 9000) {
-                    break;
-                }
-
-                if (System.currentTimeMillis() - time > timeLimit                   // We break if the time is up
-                        && (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) > timeLimit * UCI.getLowerKN_Bound() // and we searched enough nodes.
-                        || (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) > timeLimit * UCI.getUpperKN_Bound() // Or when we searched more than enough nodes.
-                        || board.getBestmove().equals("(none)")) { // or there are no legal moves
-                    break;
-                }
-                if (UCI.isThreadFinished()) {
-                    break;
-                }
-            }
-            assert move != null;
-	        UCI.setThreadFinished(true);
-            if (board.getBestmove().equals("(none)")) {
-                Logging.printLine("bestmove (none)");
-            } else {
-                UCI.printEngineOutput("", move, board, board.getToMove(), time);
-
-                Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
-            }
-            if (hardTimeLimit == Integer.MAX_VALUE / 2) {
-	            CorrespondenceOrganisation.getInstance().returnLock();
-	            Logging.printLine("Returning lock.");
-            }
         }
+	}
+
+	private void standardSearch() {
+		int[] move = null;
+		int[] movesSize = new int[6]; // unused
+
+		if (hardTimeLimit == Integer.MAX_VALUE / 2) {
+			CorrespondenceOrganisation.getInstance().getLock();
+			Logging.printLine("Acquiring lock.");
+		}
+
+		long time = System.currentTimeMillis();
+		board.getSearch().setNodes(0);
+		board.getSearch().setAbortedNodes(0);
+		board.getSearch().setQNodes(0);
+		board.setRootMoves(board.getMoveGenerator().collectMoves(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT], movesSize));
+		if (UCI.logging) {
+			Logging.printLine("info search started at milli: " + System.currentTimeMillis());
+		}
+		MoveOrdering.getInstance().orderRootMoves(board);
+
+		for (int i = 2; i <= depth; i++) { // our root ordering already does a depth 1 search essentially
+			move = board.getSearch().rootMax(board.getToMove(), i, time, hardTimeLimit);
+
+			if (Math.abs(move[move.length - 1]) > 9000) {
+				break;
+			}
+
+			if (System.currentTimeMillis() - time > timeLimit                   // We break if the time is up
+			    && (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) > timeLimit * UCI.getLowerKN_Bound() // and we searched enough nodes.
+			    || (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) > timeLimit * UCI.getUpperKN_Bound() // Or when we searched more than enough nodes.
+			    || board.getBestmove().equals("(none)")) { // or there are no legal moves
+				break;
+			}
+			if (UCI.isThreadFinished()) {
+				break;
+			}
+		}
+		assert move != null;
+		UCI.setThreadFinished(true);
+		if (board.getBestmove().equals("(none)")) {
+			Logging.printLine("bestmove (none)");
+		} else {
+			UCI.printEngineOutput("", move, board, board.getToMove(), time);
+
+			Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
+		}
+		if (hardTimeLimit == Integer.MAX_VALUE / 2) {
+			CorrespondenceOrganisation.getInstance().returnLock();
+			Logging.printLine("Returning lock.");
+		}
+	}
+
+	private void refutationSearch() {
+		int[] move = null;
+		int[] movesSize = new int[6]; // unused
+
+		long time = System.currentTimeMillis();
+		board.getSearch().setNodes(0);
+		board.getSearch().setAbortedNodes(0);
+		board.getSearch().setQNodes(0);
+		int[] rootMoves = board.getMoveGenerator().collectMoves(board.getToMove(), new int[MoveGenerator.MAX_MOVE_COUNT], movesSize);
+		if (UCI.logging) {
+			Logging.printLine("info search started at milli: " + System.currentTimeMillis());
+		}
+
+		for (int i = 3; i <= 100; i++) { // our root ordering already does a depth 1 search essentially
+			for (int j = 1; j <= rootMoves[0]; j++) {
+
+				byte capturedPiece;
+				if (rootMoves[j] < (1 << 13)) {
+					capturedPiece = board.getSquare((rootMoves[j] / 8) % 8, rootMoves[j] % 8);
+				} else {
+					capturedPiece = board.getSquare((rootMoves[j] / 64) % 8, (rootMoves[j] / 8) % 8);
+				}
+				byte castlingRights = board.getCastlingRights();
+				byte enPassant = board.getEnPassant();
+				board.makeMove(rootMoves[j]);
+				move = board.getSearch().negaMax(board.getToMove(), i, i - 1, -30000, 30000, System.currentTimeMillis() + hardTimeLimit);
+
+				board.setEnPassant(enPassant);
+				board.unmakeMove(rootMoves[j], capturedPiece, castlingRights);
+				board.addCastlingRights(castlingRights);
+
+				if (Math.abs(move[move.length - 1]) < -9000) {
+					break;
+				}
+				if (Math.abs(move[move.length - 1]) > 9000) {
+					move[0] = rootMoves[j];
+					UCI.printEngineOutput("\n", move, board, board.getToMove(), time);
+					rootMoves[j] = rootMoves[rootMoves[0]--]; // replace index with the last array element and then decrease array size by one to de facto remove index
+					j--;
+				}
+			}
+			Logging.printLine("\ninfo depth " + i + " nodes " + (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) + " nps "
+			                  + 1000 * (board.getSearch().getNodes() + board.getSearch().getAbortedNodes()) / ((System.currentTimeMillis() - time) > 0 ?
+			                                                                                                   (System.currentTimeMillis() - time) : 1)
+			                  + " hashfull " + UCI.lowerBoundsTable.getFill() + " time " + (System.currentTimeMillis() - time));
+			UCI.lowerBoundsTable.printStats();
+			Logging.printLine("Non losing moves: " + rootMoves[0] + "   ");
+			StringBuilder str = new StringBuilder();
+			for (int index = 1; index <= rootMoves[0]; index++) {
+				str.append(Transformation.numberToMove(rootMoves[index])).append(", ");
+			}
+			Logging.printLine(str.toString() + "\n");
+			if (UCI.isThreadFinished() || rootMoves[0] == 0) {
+				break;
+			}
+		}
+		UCI.setThreadFinished(true);
 	}
 
 	public BoardInterface getBoard() {
@@ -98,5 +167,9 @@ public class MultiThreadSearch implements SearchThreadInterface {
 
 	public void setHardTimeLimit(long hardTimeLimit) {
 		this.hardTimeLimit = hardTimeLimit;
+	}
+
+	public void setStandard(boolean standard) {
+		this.standard = standard;
 	}
 }
