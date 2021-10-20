@@ -18,13 +18,13 @@ public class SearchExactTT extends SearchTT {
 
     @Override
     public TTEntry get(long zobristHashOne, TTEntry entry, int depth) {
-        long depthHash = zobristHashOne + depth; // we include depth in the key to get exact depth matches when probing
+        long depthHash = zobristHashOne + 4096L * depth; // we include depth in the key to get exact depth matches when probing
         return super.get(depthHash, entry, depth); // use modified hash to look up normally
     }
 
     @Override
     public void put(long zobristHash, @NotNull TTEntry entry) {
-        long depthHash = zobristHash + entry.getDepth();
+        long depthHash = zobristHash + 4096L * entry.getDepth();
         int position = (int) depthHash & bitmask;
         long oldInformation;
         for (int count = 0; count < 8; count += 2) {
@@ -40,7 +40,7 @@ public class SearchExactTT extends SearchTT {
                     Logging.printLine("Probably collision, storing position with wrong depth"); // TODO what do we do here?
                 }
                 assert  (lowBound ? oldEntry.getEval() < entry.getEval() : oldEntry.getEval() > entry.getEval());
-                // if this would not hold, we would have gotten a cutoff before already instead of having to search
+                // if this would not hold, we would have gotten a cutoff before already instead of having to search TODO apparently this breaks in case of stalemate?!
 
                 table[(position << 3) + count] = depthHash ^ entry.getAllInformation();
                 table[(position << 3) + count + 1] = entry.getAllInformation();
