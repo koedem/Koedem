@@ -89,7 +89,7 @@ public class Search implements SearchInterface {
 				moves[1] = move; // order best move to top
 			} else { // or we have to search
 				if (moveIndex == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    -nullWindowSearch(!toMove, depth, depth - 1, -alpha - 1, time + maxTime) > principleVariation[depth]) {
+				    -nullWindowSearch(!toMove, depth, depth - 1, -alpha, time + maxTime) > principleVariation[depth]) {
 					if (moveIndex != 1) {
 						Logging.printLine("Null window fail high.");
 					}
@@ -302,7 +302,7 @@ public class Search implements SearchInterface {
 				}
 			} else { // or we have to search
 				if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha - 1, finishUntil) > principleVariation[depth]) {
+				    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha, finishUntil) > principleVariation[depth]) {
 					if (depthLeft == 2) {
 						innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
 					} else {
@@ -523,11 +523,11 @@ public class Search implements SearchInterface {
 	 *
 	 * @param toMove : who to move it is
 	 * @param depthLeft : how many plies are left in the recursion
-	 * @param scoreToBeat The value of the alpha bound for alpha-beta-algorithm. TODO
+	 * @param scoreToTie The value of the beta bound for alpha-beta-algorithm. TODO
 	 *
-	 * @return the estimated eval, either <= or > scoreToBeat.
+	 * @return the estimated eval, either <= or > scoreToTie.
 	 */
-	public int nullWindowSearch(boolean toMove, int depth, int depthLeft, int scoreToBeat, long finishUntil) {
+	public int nullWindowSearch(boolean toMove, int depth, int depthLeft, int scoreToTie, long finishUntil) {
 		int eval = -30000;
 		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - depthLeft], unused); // todo remove depth dependency
 		ttMoves[depthLeft][0] = 4; // set array to full since we're going to fill it with tt moves
@@ -541,7 +541,7 @@ public class Search implements SearchInterface {
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
 			if (entry.getDepth() >= depthLeft) {
-				if (entry.getEval() > scoreToBeat) { // we beat the requested score -> return score
+				if (entry.getEval() >= scoreToTie) { // we beat the requested score -> return score
 					nodes++;
 					return entry.getEval();
 				}
@@ -551,7 +551,7 @@ public class Search implements SearchInterface {
 
 		if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
 			if (entry.getDepth() >= depthLeft) {
-				if (entry.getEval() <= scoreToBeat) { // we are worse than alpha so can't possibly improve the score
+				if (entry.getEval() < scoreToTie) { // we are worse than alpha so can't possibly improve the score
 					nodes++;
 					return entry.getEval();
 				}
@@ -646,7 +646,7 @@ public class Search implements SearchInterface {
 				innerEval = 0;
 			} else { // or we have to search
 				if (depthLeft > 1) {
-					innerEval = nullWindowSearch(!toMove, depth, depthLeft - 1, -scoreToBeat - 1, finishUntil);
+					innerEval = nullWindowSearch(!toMove, depth, depthLeft - 1, 1 -scoreToTie, finishUntil);
 					innerEval = -innerEval;
 					if (innerEval > 9000) {
 						innerEval--;
@@ -654,7 +654,7 @@ public class Search implements SearchInterface {
 						innerEval++;
 					}
 				} else if (depthLeft == 1) {
-					innerEval = -memoryEfficientQSearch(!toMove, -scoreToBeat - 1, -scoreToBeat, 0);
+					innerEval = -memoryEfficientQSearch(!toMove, -scoreToTie, 1 - scoreToTie, 0);
 					if (innerEval > 9000) {
 						innerEval--;
 					} else if (innerEval < -9000) {
@@ -673,12 +673,12 @@ public class Search implements SearchInterface {
 				return eval;
 			}
 
-			if (eval > scoreToBeat) {
+			if (eval >= scoreToTie) {
 				entry.setEval(eval);
 				entry.setDepth(depthLeft);
 				entry.setMove(move);
 				UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
-				if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null && entry.getEval() < scoreToBeat) {
+				if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null && entry.getEval() < scoreToTie) {
 					int a = 0;
 				}
 				return eval;
@@ -698,7 +698,7 @@ public class Search implements SearchInterface {
 		entry.setMove(bestMove);
 		UCI.upperBoundsTable.put(board.getZobristHash(), entry);
 
-		if (eval > scoreToBeat) { // this is an exact score, so a lower bound too, this can e.g. happen if stalemate
+		if (eval >= scoreToTie) { // this is an exact score, so a lower bound too, this can e.g. happen if stalemate
 			entry.setEval(eval);
 			entry.setDepth(depthLeft);
 			entry.setMove(bestMove);
