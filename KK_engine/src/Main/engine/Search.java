@@ -89,7 +89,8 @@ public class Search implements SearchInterface {
 				moves[1] = move; // order best move to top
 			} else { // or we have to search
 				if (moveIndex == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    -nullWindowSearch(!toMove, depth, depth - 1, -alpha, time + maxTime) > principleVariation[depth]) {
+				    -nullWindowSearch(!toMove, depth, depth - 1, -alpha, time + maxTime) > principleVariation[depth]) { // could use >alpha but seems to be less
+																									// performant when meddling with the default alpha value; otherwise equivalent
 					if (moveIndex != 1) {
 						Logging.printLine("Null window fail high.");
 					}
@@ -107,8 +108,7 @@ public class Search implements SearchInterface {
 						innerPV[depth]--;
 						principleVariation = innerPV; // TODO remove here too?
 
-						board.setEnPassant(enPassant);
-						board.unmakeMove(move, capturedPiece, castlingRights);
+						board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 						return principleVariation;
 					} else if (innerPV[depth] < -9000) {
 						innerPV[depth]++;
@@ -137,8 +137,7 @@ public class Search implements SearchInterface {
 				}
 			}
 
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 			if (UCI.isThreadFinished() || System.currentTimeMillis() - time > maxTime) {
 				Logging.printLine("Search interrupted.");
 				if (principleVariation[0] == 0) { // if we don't have a move yet use our best move ordering guess
@@ -197,7 +196,8 @@ public class Search implements SearchInterface {
 					nodes++;
 					return principleVariation;
 				} else if (entry.getEval() > alpha) {
-					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha
+					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha TODO is this correct? if researching after nw failhigh, deeper in the tree
+												// of the best move we might incorrectly cut off even though we're in the best move
 				}
 			}
 			ttMoves[depthLeft][moveOrder[0]] = entry.getMove();
@@ -302,7 +302,8 @@ public class Search implements SearchInterface {
 				}
 			} else { // or we have to search
 				if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha, finishUntil) > principleVariation[depth]) {
+				    -nullWindowSearch(!toMove, depth, depthLeft - 1, -alpha, finishUntil) > principleVariation[depth]) { // this currently can't say > alpha because of
+																																		// the TT bound update problem
 					if (depthLeft == 2) {
 						innerPV = openWindowDepthOneSearch(!toMove, depth, -beta, -alpha);
 					} else {
@@ -326,8 +327,7 @@ public class Search implements SearchInterface {
 				}
 			}
 
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 
 			if (System.currentTimeMillis() > finishUntil) { // if we exceeded the maximum allotted time we return
 				return principleVariation;
@@ -481,8 +481,7 @@ public class Search implements SearchInterface {
 				}
 				bestMove = move;
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 
 			if (principleVariation[depth] >= beta) {
 				entry.setEval(principleVariation[depth]);
@@ -666,8 +665,7 @@ public class Search implements SearchInterface {
 				eval = innerEval;
 				bestMove = move;
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 
 			if (System.currentTimeMillis() > finishUntil) { // if we exceeded the maximum allotted time we return
 				return eval;
@@ -759,8 +757,7 @@ public class Search implements SearchInterface {
 			if (innerPV.get(0) == -10000) {
 				principleVariation = new ArrayList<>(1);
 				principleVariation.add(0, 10000);
-				board.setEnPassant(enPassant);
-				board.unmakeMove(capture, capturedPiece, castlingRights);
+				board.unmakeMove(capture, capturedPiece, castlingRights, enPassant);
 				return principleVariation;
 			}
 			innerPV.set(0, -innerPV.get(0));
@@ -771,8 +768,7 @@ public class Search implements SearchInterface {
 					alpha = principleVariation.get(0);
 				}
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(capture, capturedPiece, castlingRights);
+			board.unmakeMove(capture, capturedPiece, castlingRights, enPassant);
 			if (principleVariation.get(0) >= beta) {
 				return principleVariation;
 			}
@@ -832,8 +828,7 @@ public class Search implements SearchInterface {
             int innerEval = -memoryEfficientQSearch(!toMove, -beta, -alpha, depthSoFar + 1);
             qNodes++;
             if (innerEval == 10000) {
-                board.setEnPassant(enPassant);
-                board.unmakeMove(capture, capturedPiece, castlingRights);
+                board.unmakeMove(capture, capturedPiece, castlingRights, enPassant);
                 return innerEval;
             }
             if (innerEval > eval) {
@@ -842,8 +837,7 @@ public class Search implements SearchInterface {
                     alpha = eval;
                 }
             }
-            board.setEnPassant(enPassant);
-            board.unmakeMove(capture, capturedPiece, castlingRights);
+            board.unmakeMove(capture, capturedPiece, castlingRights, enPassant);
             if (eval >= beta) {
                 return eval;
             }

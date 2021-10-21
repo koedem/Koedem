@@ -117,8 +117,7 @@ public class MultiThreadSearch implements SearchThreadInterface {
 				board.makeMove(rootMoves[j]);
 				move = board.getSearch().negaMax(board.getToMove(), i, i - 1, -30000, 30000, System.currentTimeMillis() + hardTimeLimit);
 
-				board.setEnPassant(enPassant);
-				board.unmakeMove(rootMoves[j], capturedPiece, castlingRights);
+				board.unmakeMove(rootMoves[j], capturedPiece, castlingRights, enPassant);
 				board.addCastlingRights(castlingRights);
 
 				if (Math.abs(move[move.length - 1]) < -9000) {

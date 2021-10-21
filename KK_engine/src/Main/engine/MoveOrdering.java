@@ -37,8 +37,7 @@ public class MoveOrdering {
 				}
 			}
 
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 		}
 	}
 

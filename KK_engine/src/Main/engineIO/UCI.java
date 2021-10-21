@@ -165,8 +165,8 @@ public final class UCI {
 			case "Hash":
 				try {
 					ttSizeInMB = Integer.parseInt(parameters[4]);
-					upperBoundsTable = new SearchTT(ttSizeInMB * (1L << 19), false);
-					lowerBoundsTable = new SearchTT(ttSizeInMB * (1L << 19), true);
+					upperBoundsTable = new SearchExactTT(ttSizeInMB * (1L << 19), false);
+					lowerBoundsTable = new SearchExactTT(ttSizeInMB * (1L << 19), true);
 				} catch (NumberFormatException e) {
 					Logging.printLine("Illegal value for option 'BaseTime'.");
 				}

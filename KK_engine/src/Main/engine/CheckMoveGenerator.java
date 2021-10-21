@@ -42,8 +42,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 				storage[0]--;
 				index--;
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 			board.addCastlingRights(castlingRights);
 		}
 		return storage;
@@ -84,8 +83,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 					index--;
 				}
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 			board.addCastlingRights(castlingRights);
 		}
 		System.arraycopy(storage, 1, checks, checks[0] + 1, storage[0]); // add non-checks to the checks; all we did here was move ordering the checks to the front
@@ -128,8 +126,7 @@ public class CheckMoveGenerator implements CheckMoveGeneratorInterface {
 					index--;
 				}
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 			board.addCastlingRights(castlingRights);
 		}
 		return checks;

@@ -51,8 +51,7 @@ public class MateFinder implements Serializable {
 				bestMoveIndex = index;
 				bestMove = move;
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(moves[index], capturedPiece, castlingRights);
+			board.unmakeMove(moves[index], capturedPiece, castlingRights, enPassant);
 			board.addCastlingRights(castlingRights);
 			if (innerEval < 0) {
 				moves[index] = moves[moves[0]--]; // replace index with the last array element and then decrease array size by one to de facto remove index
@@ -162,8 +161,7 @@ public class MateFinder implements Serializable {
 				mateScore = innerEval;
 				bestMove = move;
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 			board.addCastlingRights(castlingRights);
 			if (zobrist != board.getZobristHash()) {
 				assert false;

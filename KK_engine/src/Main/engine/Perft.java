@@ -55,8 +55,7 @@ public class Perft {
 			board.makeMove(move);
 
 			nodes += fastPerft(depth - 1);
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 		}
 		return nodes;
 	}
@@ -86,8 +85,7 @@ public class Perft {
 			long innerPerft = perft(depth - 1);
 			Logging.printLine(Transformation.numberToMove(move) + ": " + innerPerft);
 			nodes += innerPerft;
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 		}
 		return nodes;
 	}
@@ -115,8 +113,7 @@ public class Perft {
 			board.makeMove(move);
 
 			nodes += perft(depth - 1);
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
 		}
 		return nodes;
 	}

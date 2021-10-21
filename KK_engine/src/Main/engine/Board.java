@@ -20,6 +20,8 @@ public class Board implements BoardInterface {
 	private static final Random random = new Random(1234567890);
 	private static final long[] zobristKeys = initializeZobrist();
 	private static final long blackToMove = random.nextLong();
+	private static final long enPassantKey = random.nextLong();
+	private static final long[] castlingKeys = { random.nextLong(), random.nextLong(), random.nextLong(), random.nextLong(), random.nextLong(), random.nextLong() };
 
 	private static final int QUEEN_DANGER = 12;
 	private static final int ROOK_DANGER   = 5;
@@ -163,9 +165,11 @@ public class Board implements BoardInterface {
 				setSquare(i, j, (byte) 0);
 			}
 		}
+		setEnPassant((byte) -1);
+		setCastlingRights((byte) 0);
 		Arrays.fill(pieceAdvancement, 0);
         bitboard.resetBitBoard();
-		zobristHash = 0;
+		zobristHash = Long.rotateRight(enPassantKey, enPassant); // initialize with current empty value since enPassant for that is non 0
 
 		String[] positions = fen.split(" ");
 		byte file = 0;
@@ -221,18 +225,46 @@ public class Board implements BoardInterface {
 	}
 
 	private void setCastlingRights(String castling) {
-		this.castlingRights = 0;
+		byte castlingRights = 0;
 		for (int i = 0; i < castling.length(); i++) {
 			if (castling.charAt(i) == 'K') {
-				this.castlingRights = (byte) (this.castlingRights | 0x18);
+				castlingRights = (byte) (castlingRights | 0x18);
 			} else if (castling.charAt(i) == 'Q') {
-				this.castlingRights = (byte) (this.castlingRights | 0x30);
+				castlingRights = (byte) (castlingRights | 0x30);
 			} else if (castling.charAt(i) == 'k') {
-				this.castlingRights = (byte) (this.castlingRights | 0x3);
+				castlingRights = (byte) (castlingRights | 0x3);
 			} else if (castling.charAt(i) == 'q') {
-				this.castlingRights = (byte) (this.castlingRights | 0x6);
+				castlingRights = (byte) (castlingRights | 0x6);
 			}
 		}
+		setCastlingRights(castlingRights);
+	}
+
+	/**
+	 * Set the private castlingRights variable to a new value, updating the zobrist hash in the process
+	 * @param newValue
+	 */
+	private void setCastlingRights(byte newValue) {
+		int change = this.castlingRights ^ newValue;
+		if ((change & 0b00100000) != 0) {
+			zobristHash ^= castlingKeys[0];
+		}
+		if ((change & 0b00010000) != 0) {
+			zobristHash ^= castlingKeys[1];
+		}
+		if ((change & 0b00001000) != 0) {
+			zobristHash ^= castlingKeys[2];
+		}
+		if ((change & 0b00000100) != 0) {
+			zobristHash ^= castlingKeys[3];
+		}
+		if ((change & 0b00000010) != 0) {
+			zobristHash ^= castlingKeys[4];
+		}
+		if ((change & 0b00000001) != 0) {
+			zobristHash ^= castlingKeys[5];
+		}
+		this.castlingRights = newValue;
 	}
 
 	/**
@@ -328,7 +360,8 @@ public class Board implements BoardInterface {
 		
 		if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
-			int movingPieceType = Math.abs(getSquare(startSquare / 8, startSquare % 8));
+			int movingPiece = getSquare(startSquare / 8, startSquare % 8);
+			int movingPieceType = Math.abs(movingPiece);
 			endSquare = move % 64;
 			
 			if (startSquare == 32) { // if we move with the King (or e1 isn't even the king) we can't castle anymore
@@ -441,7 +474,9 @@ public class Board implements BoardInterface {
 
 			setEnPassant((byte) -1); // remove old en passant values
 			
-			if (movingPieceType == Constants.PAWN && Math.abs(startSquare - endSquare) == 2) {
+			if (movingPieceType == Constants.PAWN && Math.abs(startSquare - endSquare) == 2
+				&& (endSquare > 8 && getSquare((endSquare - 8) / 8, endSquare % 8) == -movingPiece  // only set if there is an opposing pawn that could take
+				    || endSquare < 56 && getSquare((endSquare + 8) / 8, endSquare % 8) == -movingPiece)) {
 																				// if a pawn moves two squares far
 				setEnPassant((byte) ((startSquare + endSquare) / 2));  			// we update the en passant to be 
 																				// in the middle of start/end square
@@ -536,8 +571,9 @@ public class Board implements BoardInterface {
 	 * 		(can also be 0 = empty square).
 	 * @param oldCastlingRights The castling rights from before the move was executed on the board.
 	 */
-	public void unmakeMove(int move, byte capturedPiece, byte oldCastlingRights) {
+	public void unmakeMove(int move, byte capturedPiece, byte oldCastlingRights, byte enPassant) {
 		removeRepetitionEntry(getZobristHash());
+		setEnPassant(enPassant);
 		int endSquare = 0; // will get changed to correct endSquare
 		
 		if (oldCastlingRights != castlingRights && (move == 6160 || move == 6192 || move == 6615 || move == 6647)) {
@@ -673,7 +709,7 @@ public class Board implements BoardInterface {
 			assert false;
 		}
 		changeToMove();
-		castlingRights = oldCastlingRights;
+		setCastlingRights(oldCastlingRights);
 		
 		if ((int) capturedPiece != 0) {
             piecesLeft++;
@@ -710,7 +746,7 @@ public class Board implements BoardInterface {
 	 * @param change Which castling rights should be removed.
 	 */
 	public void removeCastlingRights(byte change) {
-		this.castlingRights = (byte) (this.castlingRights & (~change));
+		setCastlingRights((byte) (this.castlingRights & (~change)));
 	}
 	
 	/**
@@ -719,7 +755,7 @@ public class Board implements BoardInterface {
 	 * @param change Which castling rights should be added.
 	 */
 	public void addCastlingRights(byte change) {
-		this.castlingRights = (byte) (this.castlingRights | change);
+		setCastlingRights((byte) (this.castlingRights | change));
 	}
 	
 	public int getPiecesLeft() {
@@ -774,6 +810,25 @@ public class Board implements BoardInterface {
 		if (!toMove) {
 			zobristHash ^= blackToMove;
 		}
+		zobristHash ^= Long.rotateRight(enPassantKey, enPassant);
+		if ((castlingRights & 0b00100000) != 0) {
+			zobristHash ^= castlingKeys[0];
+		}
+		if ((castlingRights & 0b00010000) != 0) {
+			zobristHash ^= castlingKeys[1];
+		}
+		if ((castlingRights & 0b00001000) != 0) {
+			zobristHash ^= castlingKeys[2];
+		}
+		if ((castlingRights & 0b00000100) != 0) {
+			zobristHash ^= castlingKeys[3];
+		}
+		if ((castlingRights & 0b00000010) != 0) {
+			zobristHash ^= castlingKeys[4];
+		}
+		if ((castlingRights & 0b00000001) != 0) {
+			zobristHash ^= castlingKeys[5];
+		}
 		return zobristHash;
 	}
 
@@ -787,6 +842,8 @@ public class Board implements BoardInterface {
 	}
 
 	public void setEnPassant(byte enPassant) {
+		long change = Long.rotateRight(enPassantKey, this.enPassant) ^ Long.rotateRight(enPassantKey, enPassant);
+		zobristHash ^= change;
 		this.enPassant = enPassant;
 	}
 
