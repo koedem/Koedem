@@ -62,14 +62,6 @@ public class Search implements SearchInterface {
 				Logging.printLine("info depth " + depth + " currmove " 
 						+ Transformation.numberToMove(move) + " currmovenumber " + (moveIndex));
 			}
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			boolean repetition = board.makeMove(move);
 
 			boolean innerToMove;
@@ -105,7 +97,8 @@ public class Search implements SearchInterface {
 				moves[1] = move; // order best move to top
 			} else { // or we have to search
 				if (moveIndex == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    signChange * nullWindowSearch(innerToMove, depth, depth - 1, scoreToBeat, time + maxTime) > principleVariation[depth]) {
+				    signChange * nullWindowSearch(innerToMove, depth, depth - 1, scoreToBeat, time + maxTime) > principleVariation[depth]) { // could use >alpha but seems to be less
+					// performant when meddling with the default alpha value; otherwise equivalent
 					if (moveIndex != 1) {
 						Logging.printLine("Null window fail high.");
 					}
@@ -123,8 +116,7 @@ public class Search implements SearchInterface {
 						innerPV[depth]--;
 						principleVariation = innerPV; // TODO remove here too?
 
-						board.setEnPassant(enPassant);
-						board.unmakeMove(move, capturedPiece, castlingRights);
+						board.unmakeMove(move);
 						return principleVariation;
 					} else if (innerPV[depth] < -9000) {
 						innerPV[depth]++;
@@ -153,8 +145,7 @@ public class Search implements SearchInterface {
 				}
 			}
 
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move);
 			if (UCI.isThreadFinished() || System.currentTimeMillis() - time > maxTime) {
 				Logging.printLine("Search interrupted.");
 				if (principleVariation[0] == 0) { // if we don't have a move yet use our best move ordering guess
@@ -213,7 +204,8 @@ public class Search implements SearchInterface {
 					nodes++;
 					return principleVariation;
 				} else if (entry.getEval() > alpha) {
-					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha
+					alpha = entry.getEval(); // we have at least this score proven so it becomes alpha TODO is this correct? if researching after nw failhigh, deeper in the tree
+												// of the best move we might incorrectly cut off even though we're in the best move
 				}
 			}
 			ttMoves[depthLeft][moveOrder[0]] = entry.getMove();
@@ -292,15 +284,6 @@ public class Search implements SearchInterface {
 			} else if (depthLeft == 7) {
 				int a = 0;
 			}
-			
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			boolean repetition = board.makeMove(move);
 
 			boolean innerToMove;
@@ -333,7 +316,8 @@ public class Search implements SearchInterface {
 				}
 			} else { // or we have to search
 				if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    signChange * nullWindowSearch(innerToMove, depth, depthLeft - 1, scoreToBeat, finishUntil) > principleVariation[depth]) {
+				    signChange * nullWindowSearch(innerToMove, depth, depthLeft - 1, scoreToBeat, finishUntil) > principleVariation[depth]) { // this currently can't say
+																																// > alpha because of the TT bound update problem
 					if (depthLeft == 2) {
 						innerPV = openWindowDepthOneSearch(innerToMove, depth, innerAlpha, innerBeta);
 					} else {
@@ -357,8 +341,7 @@ public class Search implements SearchInterface {
 				}
 			}
 
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move);
 
 			if (System.currentTimeMillis() > finishUntil) { // if we exceeded the maximum allotted time we return
 				return principleVariation;
@@ -481,18 +464,6 @@ public class Search implements SearchInterface {
 
 		for (int index = 1; index <= moves[0]; index++) {
 			int move = moves[index];
-
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
-			if (board.getSearch().getNodes() == 21) {
-				int a = 0;
-			}
 			boolean repetition = board.makeMove(move);
 
 			boolean innerToMove;
@@ -530,8 +501,7 @@ public class Search implements SearchInterface {
 				}
 				bestMove = move;
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move);
 
 			if (principleVariation[depth] >= beta) {
 				entry.setEval(principleVariation[depth]);
@@ -572,11 +542,11 @@ public class Search implements SearchInterface {
 	 *
 	 * @param toMove : who to move it is
 	 * @param depthLeft : how many plies are left in the recursion
-	 * @param scoreToBeat The value of the alpha bound for alpha-beta-algorithm. TODO
+	 * @param scoreToTie The value of the beta bound for alpha-beta-algorithm. TODO
 	 *
-	 * @return the estimated eval, either <= or > scoreToBeat.
+	 * @return the estimated eval, either <= or > scoreToTie.
 	 */
-	public int nullWindowSearch(boolean toMove, int depth, int depthLeft, int scoreToBeat, long finishUntil) {
+	public int nullWindowSearch(boolean toMove, int depth, int depthLeft, int scoreToTie, long finishUntil) {
 		int eval = -30000;
 		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - depthLeft], unused); // todo remove depth dependency
 		ttMoves[depthLeft][0] = 4; // set array to full since we're going to fill it with tt moves
@@ -590,7 +560,7 @@ public class Search implements SearchInterface {
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
 			if (entry.getDepth() >= depthLeft) {
-				if (entry.getEval() > scoreToBeat) { // we beat the requested score -> return score
+				if (entry.getEval() >= scoreToTie) { // we beat the requested score -> return score
 					nodes++;
 					return entry.getEval();
 				}
@@ -600,7 +570,7 @@ public class Search implements SearchInterface {
 
 		if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
 			if (entry.getDepth() >= depthLeft) {
-				if (entry.getEval() <= scoreToBeat) { // we are worse than alpha so can't possibly improve the score
+				if (entry.getEval() < scoreToTie) { // we are worse than alpha so can't possibly improve the score
 					nodes++;
 					return entry.getEval();
 				}
@@ -680,25 +650,17 @@ public class Search implements SearchInterface {
 				int a = 0;
 			}
 
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			boolean repetition = board.makeMove(move);
 
 			boolean innerToMove;
 			int innerScoreToBeat, innerAlpha, innerBeta, signChange;
 			if (toMove == board.getToMove()) {
 				innerToMove = board.getToMove();
-				innerScoreToBeat = scoreToBeat;
+				innerScoreToBeat = scoreToTie;
 				signChange = 1;
 			} else {
 				innerToMove = board.getToMove();
-				innerScoreToBeat = -scoreToBeat - 1;
+				innerScoreToBeat = 1 - scoreToTie;
 				signChange = -1;
 			}
 			int innerEval = -30000;
@@ -714,7 +676,7 @@ public class Search implements SearchInterface {
 						innerEval++;
 					}
 				} else if (depthLeft == 1) {
-					innerEval = signChange * memoryEfficientQSearch(innerToMove, innerScoreToBeat, innerScoreToBeat + 1, 0);
+					innerEval = signChange * memoryEfficientQSearch(innerToMove, innerScoreToBeat, innerScoreToBeat, 0);
 					if (innerEval > 9000) {
 						innerEval--;
 					} else if (innerEval < -9000) {
@@ -726,19 +688,18 @@ public class Search implements SearchInterface {
 				eval = innerEval;
 				bestMove = move;
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(move, capturedPiece, castlingRights);
+			board.unmakeMove(move);
 
 			if (System.currentTimeMillis() > finishUntil) { // if we exceeded the maximum allotted time we return
 				return eval;
 			}
 
-			if (eval > scoreToBeat) {
+			if (eval >= scoreToTie) {
 				entry.setEval(eval);
 				entry.setDepth(depthLeft);
 				entry.setMove(move);
 				UCI.lowerBoundsTable.put(board.getZobristHash(), entry);
-				if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null && entry.getEval() < scoreToBeat) {
+				if (UCI.upperBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null && entry.getEval() < scoreToTie) {
 					int a = 0;
 				}
 				return eval;
@@ -758,7 +719,7 @@ public class Search implements SearchInterface {
 		entry.setMove(bestMove);
 		UCI.upperBoundsTable.put(board.getZobristHash(), entry);
 
-		if (eval > scoreToBeat) { // this is an exact score, so a lower bound too, this can e.g. happen if stalemate
+		if (eval >= scoreToTie) { // this is an exact score, so a lower bound too, this can e.g. happen if stalemate
 			entry.setEval(eval);
 			entry.setDepth(depthLeft);
 			entry.setMove(bestMove);
@@ -805,22 +766,13 @@ public class Search implements SearchInterface {
 		}
 		for (int i = 1; i <= capturesStorage[depthSoFar][0]; i++) {
 		    int capture = capturesStorage[depthSoFar][i];
-			byte capturedPiece;
-			if (capture < (1 << 13)) {
-				capturedPiece = board.getSquare((capture / 8) % 8, capture % 8);
-			} else {
-				capturedPiece = board.getSquare((capture / 64) % 8, (capture / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			board.makeMove(capture);
 			ArrayList<Integer> innerPV = qSearch(!toMove, -beta, -alpha, depthSoFar + 1);
 			qNodes++;
 			if (innerPV.get(0) == -10000) {
 				principleVariation = new ArrayList<>(1);
 				principleVariation.add(0, 10000);
-				board.setEnPassant(enPassant);
-				board.unmakeMove(capture, capturedPiece, castlingRights);
+				board.unmakeMove(capture);
 				return principleVariation;
 			}
 			innerPV.set(0, -innerPV.get(0));
@@ -831,8 +783,7 @@ public class Search implements SearchInterface {
 					alpha = principleVariation.get(0);
 				}
 			}
-			board.setEnPassant(enPassant);
-			board.unmakeMove(capture, capturedPiece, castlingRights);
+			board.unmakeMove(capture);
 			if (principleVariation.get(0) >= beta) {
 				return principleVariation;
 			}
@@ -877,23 +828,11 @@ public class Search implements SearchInterface {
         capturesStorage[depthSoFar] = board.getCaptureGenerator().collectCaptures(toMove, capturesStorage[depthSoFar]);
         for (int i = 1; i <= capturesStorage[depthSoFar][0]; i++) {
             int capture = capturesStorage[depthSoFar][i];
-            byte capturedPiece;
-            if (capture < (1 << 13)) {
-                capturedPiece = board.getSquare((capture / 8) % 8, capture % 8);
-            } else {
-                capturedPiece = board.getSquare((capture / 64) % 8, (capture / 8) % 8);
-            }
-            byte castlingRights = board.getCastlingRights();
-            byte enPassant = board.getEnPassant();
-            if (capture == 0b00011010_00001100) {
-                int breakPoint = 0;
-            }
             board.makeMove(capture);
             int innerEval = -memoryEfficientQSearch(!toMove, -beta, -alpha, depthSoFar + 1);
             qNodes++;
             if (innerEval == 10000) {
-                board.setEnPassant(enPassant);
-                board.unmakeMove(capture, capturedPiece, castlingRights);
+                board.unmakeMove(capture);
                 return innerEval;
             }
             if (innerEval > eval) {
@@ -902,8 +841,7 @@ public class Search implements SearchInterface {
                     alpha = eval;
                 }
             }
-            board.setEnPassant(enPassant);
-            board.unmakeMove(capture, capturedPiece, castlingRights);
+            board.unmakeMove(capture);
             if (eval >= beta) {
                 return eval;
             }
