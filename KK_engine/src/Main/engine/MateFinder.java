@@ -28,14 +28,6 @@ public class MateFinder implements Serializable {
 		for (int index = 1; index <= moves[0]; index++) {
 			int move = moves[index];
 			board.getSearch().incrementNodes();
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 			int innerEval;
 
@@ -51,8 +43,7 @@ public class MateFinder implements Serializable {
 				bestMoveIndex = index;
 				bestMove = move;
 			}
-			board.unmakeMove(moves[index], capturedPiece, castlingRights, enPassant);
-			board.addCastlingRights(castlingRights);
+			board.unmakeMove(moves[index]);
 			if (innerEval < 0) {
 				moves[index] = moves[moves[0]--]; // replace index with the last array element and then decrease array size by one to de facto remove index
 				index--;
@@ -131,14 +122,6 @@ public class MateFinder implements Serializable {
 		for (int index = 1; index <= moves[0]; index++) {
 			int move = moves[index];
 			board.getSearch().incrementNodes();
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			long zobrist = board.getZobristHash();
 			board.makeMove(move);
 			int innerEval = -50;
@@ -161,8 +144,7 @@ public class MateFinder implements Serializable {
 				mateScore = innerEval;
 				bestMove = move;
 			}
-			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
-			board.addCastlingRights(castlingRights);
+			board.unmakeMove(move);
 			if (zobrist != board.getZobristHash()) {
 				assert false;
 			}

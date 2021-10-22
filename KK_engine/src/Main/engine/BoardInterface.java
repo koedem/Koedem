@@ -25,10 +25,8 @@ public interface BoardInterface extends Serializable {
 	/**
 	 * TODO change
 	 * @param move
-	 * @param capturedPiece
-	 * @param oldCastlingRights
 	 */
-	void unmakeMove(int move, byte capturedPiece, byte oldCastlingRights, byte enPassant);
+	void unmakeMove(int move);
 
 	int[] getRootMoves();
 

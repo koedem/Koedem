@@ -44,18 +44,10 @@ public class Perft {
 
 		for (int i = 1; i <= moves[0]; i++) {
 			int move = moves[i];
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 
 			nodes += fastPerft(depth - 1);
-			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
+			board.unmakeMove(move);
 		}
 		return nodes;
 	}
@@ -72,20 +64,12 @@ public class Perft {
 
 		for (int i = 1; i <= moves[0]; i++) {
 			int move = moves[i];
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
 
 			long innerPerft = perft(depth - 1);
 			Logging.printLine(Transformation.numberToMove(move) + ": " + innerPerft);
 			nodes += innerPerft;
-			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
+			board.unmakeMove(move);
 		}
 		return nodes;
 	}
@@ -102,18 +86,9 @@ public class Perft {
 
 		for (int i = 1; i <= moves[0]; i++) {
 			int move = moves[i];
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-
 			nodes += perft(depth - 1);
-			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
+			board.unmakeMove(move);
 		}
 		return nodes;
 	}

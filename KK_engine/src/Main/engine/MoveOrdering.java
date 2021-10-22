@@ -14,16 +14,7 @@ public class MoveOrdering {
 
 		for (int moveIndex = 1; moveIndex <= rootMoves[0]; moveIndex++) {
 			int move = rootMoves[moveIndex];
-			byte capturedPiece;
-			if (move < (1 << 13)) {
-				capturedPiece = board.getSquare((move / 8) % 8, move % 8);
-			} else {
-				capturedPiece = board.getSquare((move / 64) % 8, (move / 8) % 8);
-			}
-			byte castlingRights = board.getCastlingRights();
-			byte enPassant = board.getEnPassant();
 			board.makeMove(move);
-
 			int eval = evaluations[moveIndex] = -board.getSearch().memoryEfficientQSearch(board.getToMove(), -30000, 30000, 0);
 
 			for (int i = moveIndex; i > 0; i--) {
@@ -36,8 +27,7 @@ public class MoveOrdering {
 					break;
 				}
 			}
-
-			board.unmakeMove(move, capturedPiece, castlingRights, enPassant);
+			board.unmakeMove(move);
 		}
 	}
 

@@ -5,6 +5,7 @@ import Main.Utility.DeepCopy;
 import Main.engineIO.Logging;
 import Main.engineIO.Transformation;
 
+import java.io.Serializable;
 import java.util.*;
 
 public class Board implements BoardInterface {
@@ -126,6 +127,8 @@ public class Board implements BoardInterface {
 	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
 
 	private String bestmove = "";
+
+	private final MakeMoveInfoStack infoStack = new MakeMoveInfoStack();
 	
 	/**
 	 * Constructor, create new Board and set up the chess start position
@@ -342,6 +345,7 @@ public class Board implements BoardInterface {
 		}
 
 		int capturedPiece = getSquare(endSquare / 8, endSquare % 8);
+		infoStack.push(getEnPassant(), getCastlingRights(), (byte) capturedPiece);
 		
 		if (capturedPiece != 0) {
 			piecesLeft--;
@@ -571,7 +575,12 @@ public class Board implements BoardInterface {
 	 * 		(can also be 0 = empty square).
 	 * @param oldCastlingRights The castling rights from before the move was executed on the board.
 	 */
-	public void unmakeMove(int move, byte capturedPiece, byte oldCastlingRights, byte enPassant) {
+	public void unmakeMove(int move) {
+		MakeMoveCache info = infoStack.pop();
+		byte enPassant = info.enPassant;
+		byte oldCastlingRights = info.castlingRights;
+		byte capturedPiece = info.capturedPiece;
+
 		removeRepetitionEntry(getZobristHash());
 		setEnPassant(enPassant);
 		int endSquare = 0; // will get changed to correct endSquare
@@ -904,6 +913,7 @@ public class Board implements BoardInterface {
 		search.resetSearch();
 		mateFinder.resetMateFinder();
 		repetitionTable.clear();
+		infoStack.reset();
 		putRepetitionEntry(getZobristHash());
 	}
 
@@ -991,6 +1001,40 @@ public class Board implements BoardInterface {
 
 	public int getPieceSquareTable() {
 		return pieceSquareTable;
+	}
+
+	private static class MakeMoveCache implements Serializable {
+		byte enPassant;
+		byte castlingRights;
+		byte capturedPiece;
+	}
+
+	private static class MakeMoveInfoStack implements Serializable {
+		private final int capacity = 1000;
+		int counter = 0;
+		private final MakeMoveCache[] makeMoveInfo = new MakeMoveCache[capacity];
+
+		MakeMoveInfoStack() {
+			for (int i = 0; i < makeMoveInfo.length; i++) {
+				makeMoveInfo[i] = new MakeMoveCache();
+			}
+		}
+
+		private void push(byte enPassant, byte castlingRights, byte capturedPiece) {
+			makeMoveInfo[counter].enPassant = enPassant;
+			makeMoveInfo[counter].castlingRights = castlingRights;
+			makeMoveInfo[counter].capturedPiece = capturedPiece;
+			counter++;
+		}
+
+		private MakeMoveCache pop() {
+			counter--;
+			return makeMoveInfo[counter];
+		}
+
+		private void reset() {
+			counter = 0;
+		}
 	}
 
 }
