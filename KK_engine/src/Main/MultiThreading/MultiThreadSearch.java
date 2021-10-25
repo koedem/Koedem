@@ -80,7 +80,9 @@ public class MultiThreadSearch implements SearchThreadInterface {
 		if (board.getBestmove().equals("(none)")) {
 			Logging.printLine("bestmove (none)");
 		} else {
+			board.makeMove(move[0]); // we don't have a TT entry for the root position
 			UCI.printEngineOutput("", move, board, board.getToMove(), time);
+			board.unmakeMove(move[0]);
 
 			Logging.printLine("bestmove " + Transformation.numberToMove(move[0]));
 		}

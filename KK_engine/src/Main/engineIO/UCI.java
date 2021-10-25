@@ -37,6 +37,7 @@ public final class UCI {
 	public static final int MAX_DEPTH = 100;
 	public static final int STANDARD_CHESS = 0, ZOMBIE_CHESS = 1, WAVE_CHESS = 2;
 	public static int GAME_MODE = WAVE_CHESS;
+	public static final boolean CHECKS_ARE_FORCING = true;
 
 	private static boolean threadFinished = true;
 
@@ -472,10 +473,24 @@ public final class UCI {
 		BoardInterface copy = board.cloneBoard();
 		TTEntry entry = new TTEntry();
 		StringBuilder str = new StringBuilder(" ");
-		while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, 0) != null || UCI.upperBoundsTable.get(copy.getZobristHash(), entry, 0) != null)
-		       && entry.getMove() != 0 && str.length() < 200) {
-			str.append(Transformation.numberToMove(entry.getMove())).append(" ");
-			copy.makeMove(entry.getMove());
+		if (UCI.lowerBoundsTable instanceof SearchExactTT) {
+			int startingDepth = 100;
+			while (startingDepth > 0 && (UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, startingDepth) == null
+			        || UCI.upperBoundsTable.get(copy.getZobristHash(), entry, startingDepth) == null)) {
+				startingDepth--;
+			}
+			while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, startingDepth) != null
+			        || UCI.upperBoundsTable.get(copy.getZobristHash(), entry, startingDepth) != null) && entry.getMove() != 0 && str.length() < 200) {
+				str.append(Transformation.numberToMove(entry.getMove())).append(" ");
+				copy.makeMove(entry.getMove());
+				startingDepth--;
+			}
+		} else {
+			while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, 0) != null ||
+			        UCI.upperBoundsTable.get(copy.getZobristHash(), entry, 0) != null) && entry.getMove() != 0 && str.length() < 200) {
+				str.append(Transformation.numberToMove(entry.getMove())).append(" ");
+				copy.makeMove(entry.getMove());
+			}
 		}
 		return str.toString();
 	}
