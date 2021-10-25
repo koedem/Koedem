@@ -39,8 +39,8 @@ public class SearchExactTT extends SearchTT {
                 if (oldEntry.getDepth() != entry.getDepth()) { // this should not happen since depth is stored in the hash key; unless some hash collision
                     Logging.printLine("Probably collision, storing position with wrong depth"); // TODO what do we do here?
                 }
-                assert  (lowBound ? oldEntry.getEval() < entry.getEval() : oldEntry.getEval() > entry.getEval());
-                // if this would not hold, we would have gotten a cutoff before already instead of having to search
+                assert  (lowBound ? oldEntry.getEval() < entry.getEval() : oldEntry.getEval() > entry.getEval())
+                        || (oldEntry.getEval() == 0 && entry.getEval() == 0); // technically not correct but this would be in case of a stalemate
 
                 table[(position << 3) + count] = depthHash ^ entry.getAllInformation();
                 table[(position << 3) + count + 1] = entry.getAllInformation();

@@ -472,10 +472,24 @@ public final class UCI {
 		BoardInterface copy = board.cloneBoard();
 		TTEntry entry = new TTEntry();
 		StringBuilder str = new StringBuilder(" ");
-		while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, 0) != null || UCI.upperBoundsTable.get(copy.getZobristHash(), entry, 0) != null)
-		       && entry.getMove() != 0 && str.length() < 200) {
-			str.append(Transformation.numberToMove(entry.getMove())).append(" ");
-			copy.makeMove(entry.getMove());
+		if (UCI.lowerBoundsTable instanceof SearchExactTT) {
+			int startingDepth = 100;
+			while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, startingDepth) == null
+			        || UCI.upperBoundsTable.get(copy.getZobristHash(), entry, startingDepth) == null)) {
+				startingDepth--;
+			}
+			while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, startingDepth) != null
+			        || UCI.upperBoundsTable.get(copy.getZobristHash(), entry, startingDepth) != null) && entry.getMove() != 0 && str.length() < 200) {
+				str.append(Transformation.numberToMove(entry.getMove())).append(" ");
+				copy.makeMove(entry.getMove());
+				startingDepth--;
+			}
+		} else {
+			while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, 0) != null ||
+			        UCI.upperBoundsTable.get(copy.getZobristHash(), entry, 0) != null) && entry.getMove() != 0 && str.length() < 200) {
+				str.append(Transformation.numberToMove(entry.getMove())).append(" ");
+				copy.makeMove(entry.getMove());
+			}
 		}
 		return str.toString();
 	}
