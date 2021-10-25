@@ -58,23 +58,23 @@ public class Search implements SearchInterface {
 				                                                                                                   (System.currentTimeMillis() - time) : 1)
 				                  + " hashfull " + UCI.lowerBoundsTable.getFill() + " time " + (System.currentTimeMillis() - time));
 				UCI.lowerBoundsTable.printStats();
-				//UCI.upperBoundsTable.printStats();
+				UCI.upperBoundsTable.printStats();
 				Logging.printLine("info depth " + depth + " currmove " 
 						+ Transformation.numberToMove(move) + " currmovenumber " + (moveIndex));
 			}
 			boolean repetition = board.makeMove(move);
 
 			boolean innerToMove;
-			int scoreToBeat, innerAlpha, innerBeta, signChange;
+			int scoreToTie, innerAlpha, innerBeta, signChange;
 			if (toMove == board.getToMove()) {
 				innerToMove = board.getToMove();
-				scoreToBeat = alpha - 1;
+				scoreToTie = alpha + 1;
 				innerAlpha = alpha;
 				innerBeta = beta;
 				signChange = 1;
 			} else {
 				innerToMove = board.getToMove();
-				scoreToBeat = -alpha - 1;
+				scoreToTie = -alpha;
 				innerAlpha = -beta;
 				innerBeta = -alpha;
 				signChange = -1;
@@ -97,7 +97,7 @@ public class Search implements SearchInterface {
 				moves[1] = move; // order best move to top
 			} else { // or we have to search
 				if (moveIndex == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    signChange * nullWindowSearch(innerToMove, depth, depth - 1, scoreToBeat, time + maxTime) > principleVariation[depth]) { // could use >alpha but seems to be less
+				    signChange * nullWindowSearch(innerToMove, depth, depth - 1, scoreToTie, time + maxTime) > principleVariation[depth]) { // could use >alpha but seems to be less
 					// performant when meddling with the default alpha value; otherwise equivalent
 					if (moveIndex != 1) {
 						Logging.printLine("Null window fail high.");
@@ -287,16 +287,16 @@ public class Search implements SearchInterface {
 			boolean repetition = board.makeMove(move);
 
 			boolean innerToMove;
-			int scoreToBeat, innerAlpha, innerBeta, signChange;
+			int scoreToTie, innerAlpha, innerBeta, signChange;
 			if (toMove == board.getToMove()) {
 				innerToMove = board.getToMove();
-				scoreToBeat = alpha - 1;
+				scoreToTie = alpha + 1;
 				innerAlpha = alpha;
 				innerBeta = beta;
 				signChange = 1;
 			} else {
 				innerToMove = board.getToMove();
-				scoreToBeat = -alpha - 1;
+				scoreToTie = -alpha;
 				innerAlpha = -beta;
 				innerBeta = -alpha;
 				signChange = -1;
@@ -316,7 +316,7 @@ public class Search implements SearchInterface {
 				}
 			} else { // or we have to search
 				if (index == 1 || // i.e. we make a full window search for the first move or after null window fail high
-				    signChange * nullWindowSearch(innerToMove, depth, depthLeft - 1, scoreToBeat, finishUntil) > principleVariation[depth]) { // this currently can't say
+				    signChange * nullWindowSearch(innerToMove, depth, depthLeft - 1, scoreToTie, finishUntil) > principleVariation[depth]) { // this currently can't say
 																																// > alpha because of the TT bound update problem
 					if (depthLeft == 2) {
 						innerPV = openWindowDepthOneSearch(innerToMove, depth, innerAlpha, innerBeta);
@@ -467,16 +467,14 @@ public class Search implements SearchInterface {
 			boolean repetition = board.makeMove(move);
 
 			boolean innerToMove;
-			int scoreToBeat, innerAlpha, innerBeta, signChange;
+			int     innerAlpha, innerBeta, signChange;
 			if (toMove == board.getToMove()) {
 				innerToMove = board.getToMove();
-				scoreToBeat = alpha - 1;
 				innerAlpha = alpha;
 				innerBeta = beta;
 				signChange = 1;
 			} else {
 				innerToMove = board.getToMove();
-				scoreToBeat = -alpha - 1;
 				innerAlpha = -beta;
 				innerBeta = -alpha;
 				signChange = -1;
