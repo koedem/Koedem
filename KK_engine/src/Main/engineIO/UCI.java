@@ -36,7 +36,7 @@ public final class UCI {
 	private static final int UPPER_THREAD_COUNT = 5;
 	public static final int MAX_DEPTH = 100;
 	public static final int STANDARD_CHESS = 0, ZOMBIE_CHESS = 1, WAVE_CHESS = 2;
-	public static int GAME_MODE = ZOMBIE_CHESS;
+	public static int GAME_MODE = WAVE_CHESS;
 
 	private static boolean threadFinished = true;
 

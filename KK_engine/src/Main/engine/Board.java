@@ -576,7 +576,9 @@ public class Board implements BoardInterface {
 			zobristHash ^= gamePhase * 64L;
 			zobristHash ^= pliesLeftInMove;
 			if (forwardMove) {
-				if (pliesLeftInMove == 1) {
+				infoStack.top().pliesLeft = pliesLeftInMove;
+				if (pliesLeftInMove == 1
+				    || (attackBoard.inCheck(!toMove))) {
 					changeToMove = true;
 					gamePhase++;
 					pliesLeftInMove = gamePhase;
@@ -587,7 +589,10 @@ public class Board implements BoardInterface {
 				if (pliesLeftInMove == gamePhase) {
 					changeToMove = true;
 					gamePhase--;
-					pliesLeftInMove = 1;
+					pliesLeftInMove = infoStack.top().pliesLeft;
+					if (pliesLeftInMove != 1) {
+						int a = 0;
+					}
 				} else {
 					pliesLeftInMove++;
 				}
@@ -633,17 +638,15 @@ public class Board implements BoardInterface {
 	 * TODO why don't we remember the incrementally updated eval changed from move instead of recalculating
 	 * 
 	 * @param move Move which gets undone.
-	 * @param capturedPiece Piece that got captured in the original move. It gets put back on the board
-	 * 		(can also be 0 = empty square).
-	 * @param oldCastlingRights The castling rights from before the move was executed on the board.
 	 */
 	public void unmakeMove(int move) {
+		removeRepetitionEntry(getZobristHash());
+		boolean toMoveUpdate = updateToMove(false);
 		MakeMoveCache info = infoStack.pop();
 		byte enPassant = info.enPassant;
 		byte oldCastlingRights = info.castlingRights;
 		byte capturedPiece = info.capturedPiece;
 
-		removeRepetitionEntry(getZobristHash());
 		setEnPassant(enPassant);
 		int endSquare = 0; // will get changed to correct endSquare
 		
@@ -779,7 +782,7 @@ public class Board implements BoardInterface {
 		} else {
 			assert false;
 		}
-		if (updateToMove(false)) {
+		if (toMoveUpdate) {
 			changeToMove();
 		}
 		setCastlingRights(oldCastlingRights);
@@ -1073,6 +1076,7 @@ public class Board implements BoardInterface {
 		byte enPassant;
 		byte castlingRights;
 		byte capturedPiece;
+		int pliesLeft;
 	}
 
 	private static class MakeMoveInfoStack implements Serializable {
@@ -1096,6 +1100,10 @@ public class Board implements BoardInterface {
 		private MakeMoveCache pop() {
 			counter--;
 			return makeMoveInfo[counter];
+		}
+
+		private MakeMoveCache top() {
+			return makeMoveInfo[counter - 1];
 		}
 
 		private void reset() {
