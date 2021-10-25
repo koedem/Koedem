@@ -475,7 +475,7 @@ public final class UCI {
 		StringBuilder str = new StringBuilder(" ");
 		if (UCI.lowerBoundsTable instanceof SearchExactTT) {
 			int startingDepth = 100;
-			while ((UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, startingDepth) == null
+			while (startingDepth > 0 && (UCI.lowerBoundsTable.get(copy.getZobristHash(), entry, startingDepth) == null
 			        || UCI.upperBoundsTable.get(copy.getZobristHash(), entry, startingDepth) == null)) {
 				startingDepth--;
 			}
