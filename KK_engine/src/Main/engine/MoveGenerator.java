@@ -1,5 +1,8 @@
 package Main.engine;
 
+import Main.Utility.Constants;
+import Main.engineIO.UCI;
+
 /**
  * 
  * @author Anon
@@ -43,6 +46,14 @@ public class MoveGenerator implements MoveGeneratorInterface {
 	 * @return array of ints, each containing a move
 	 */
 	public int[] collectMoves(boolean toMove, int[] allMoves, int[] movesSize) {
+		if (UCI.CHECKS_ARE_FORCING && board.getAttackBoard().inCheck(toMove)) {
+			return evadeChecks(toMove, allMoves, movesSize);
+		} else {
+			return generateAllMoves(toMove, allMoves, movesSize);
+		}
+	}
+
+	private int[] generateAllMoves(boolean toMove, int[] allMoves, int[] movesSize) {
 		for (int piece = 0; piece < 6; piece++) {
 			movesSize[piece] = 0;
 			captures[piece][0] = 0;
@@ -1062,6 +1073,20 @@ public class MoveGenerator implements MoveGeneratorInterface {
 				}
 			}
 		}
+	}
+
+	private int[] evadeChecks(boolean toMove, int[] moves, int[] movesSize) {
+		generateAllMoves(toMove, moves, movesSize);
+		for (int i = 1; i <= moves[0]; i++) {
+			board.makeMove(moves[i]);
+			boolean stillInCheck = board.getAttackBoard().inCheck(toMove);
+			board.unmakeMove(moves[i]);
+			if (stillInCheck) {
+				moves[i] = moves[moves[0]--]; // overwrite non evading move
+				i--;
+			}
+		}
+		return moves;
 	}
 
 	/**

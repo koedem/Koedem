@@ -171,15 +171,18 @@ public class Search implements SearchInterface {
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
 		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - depthLeft], unused);
+		if (moves[0] == -1) {
+			principleVariation[depth] = 10000;
+			return principleVariation;
+		} else if (moves[0] == 0) {
+			principleVariation[depth] = -9999;
+			return principleVariation;
+		}
 		ttMoves[depthLeft][0] = 4; // set array to full since we're going to fill it with tt moves
 		ttMoves[depthLeft][1] = 0;
 		ttMoves[depthLeft][2] = 0;
 		ttMoves[depthLeft][3] = 0;
 		ttMoves[depthLeft][4] = 0;
-		if (moves[0] == -1) {
-			principleVariation[depth] = 10000;
-			return principleVariation;
-		}
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
 			if (entry.getDepth() >= depthLeft) {
@@ -367,13 +370,16 @@ public class Search implements SearchInterface {
 		int[] principleVariation = new int[depth + 1];
 		principleVariation[depth] = -30000;
 		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - 1], unused);
-		ttMoves[1][0] = 2; // without lower depth moves we can gain at most two moves
-		ttMoves[1][1] = 0;
-		ttMoves[1][2] = 0;
 		if (moves[0] == -1) {
 			principleVariation[depth] = 10000;
 			return principleVariation;
+		} else if (moves[0] == 0) {
+			principleVariation[depth] = -9999;
+			return principleVariation;
 		}
+		ttMoves[1][0] = 2; // without lower depth moves we can gain at most two moves
+		ttMoves[1][1] = 0;
+		ttMoves[1][2] = 0;
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, 1) != null) {
 			if (entry.getDepth() >= 1) { // TODO this is probably redundant?
@@ -504,14 +510,16 @@ public class Search implements SearchInterface {
 	public int nullWindowSearch(boolean toMove, int depth, int depthLeft, int scoreToTie, long finishUntil) {
 		int eval = -30000;
 		int[] moves = board.getMoveGenerator().collectMoves(toMove, movesStorage[depth - depthLeft], unused); // todo remove depth dependency
+		if (moves[0] == -1) {
+			return 10000;
+		} else if (moves[0] == 0) {
+			return -9999;
+		}
 		ttMoves[depthLeft][0] = 4; // set array to full since we're going to fill it with tt moves
 		ttMoves[depthLeft][1] = 0;
 		ttMoves[depthLeft][2] = 0;
 		ttMoves[depthLeft][3] = 0;
 		ttMoves[depthLeft][4] = 0;
-		if (moves[0] == -1) {
-			return 10000;
-		}
 
 		if (UCI.lowerBoundsTable.get(board.getZobristHash(), entry, depthLeft) != null) {
 			if (entry.getDepth() >= depthLeft) {
