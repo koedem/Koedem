@@ -16,6 +16,7 @@ public final class Evaluation implements EvaluationInterface {
 
 	private static boolean materialOnly = false;
 	private final int[] storage = new int[MoveGenerator.MAX_MOVE_COUNT];
+	private final int[] movesSize = new int[6];
 	private final BoardInterface board;
 	
 	private static final Random random = new Random(64);
@@ -37,6 +38,14 @@ public final class Evaluation implements EvaluationInterface {
 		assert correctBitBoard();
 		assert Assertions.attackBoard(board);
 		// assert Assertions.correctPSTs(board); TODO this is bugged, fails on e4 a5
+
+		if (UCI.CHECKS_ARE_FORCING && board.getAttackBoard().inCheck(toMove)) {
+			board.getMoveGenerator().collectMoves(toMove, storage, movesSize);
+			assert storage[0] >= 0;
+			if (storage[0] == 0) {
+				return -9999;
+			}
+		}
 
 		board.getSearch().incrementNodes();
 		if (isMaterialOnly()) {
