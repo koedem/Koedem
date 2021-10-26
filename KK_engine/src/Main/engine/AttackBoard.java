@@ -1134,7 +1134,7 @@ public class AttackBoard implements Serializable {
                 pieceTypes[colour][5] = pieceTypes[colour + 2][5] | pieceTypes[colour + 4][5];
                 break;
 			case 6:
-                Logging.printLine("We just removed a king from the board. That should not happen!");
+                // Logging.printLine("We just removed a king from the board. That should not happen!");
                 pieceTypes[colour][6] = attackBoards[colour][6][index] = 0;
                 break;
 		}

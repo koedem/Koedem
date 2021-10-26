@@ -1098,9 +1098,13 @@ public class MoveGenerator implements MoveGeneratorInterface {
 	 */
 	public boolean isCheckmate(boolean toMove, int[] moves, int[] movesSize) {
 		boolean canEvade = false;
+		int toMoveInt = toMove ? 0 : 1;
+		int kingSquare = Long.numberOfTrailingZeros(board.getBitboard().getPieceTypeBoard(toMoveInt, Constants.KING));
+		board.getBitboard().remove(kingSquare, true);
 		long attacked = board.getAttackBoard().getAllPieces()[toMove ? 1 : 0]; // which squares does the opponent attack?
-		long nonAttacked = ~attacked & board.getAttackBoard().getPieceTypes()[toMove ? 0 : 1][6]; // which unattacked squares can our king reach?
-		long available = nonAttacked & ~board.getBitboard().getAllPieces(toMove ? 0 : 1); // we can't capture own pieces
+		long nonAttacked = ~attacked & board.getAttackBoard().getPieceTypes()[toMoveInt][6]; // which unattacked squares can our king reach?
+		long available = nonAttacked & ~board.getBitboard().getAllPieces(toMoveInt); // we can't capture own pieces
+		board.getBitboard().add(Constants.KING, toMoveInt, kingSquare);
 		canEvade = available != 0;
 		if (!canEvade) {
 			canEvade = evadeChecks(toMove, moves, movesSize)[0] != 0;
