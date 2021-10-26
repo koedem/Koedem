@@ -121,6 +121,7 @@ public class Board implements BoardInterface {
 	
 	/**
 	 * We store the hash of every position that happened so far in the game plus in the current search variation.
+	 * TODO as usual this is slow because Java implementation; should be replaced with own implementation
 	 */
 	private final HashMap<Long, Integer> repetitionTable = new HashMap<>(65536);
 

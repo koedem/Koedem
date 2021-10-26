@@ -40,9 +40,10 @@ public final class Evaluation implements EvaluationInterface {
 		// assert Assertions.correctPSTs(board); TODO this is bugged, fails on e4 a5
 
 		if (UCI.CHECKS_ARE_FORCING && board.getAttackBoard().inCheck(toMove)) {
-			board.getMoveGenerator().collectMoves(toMove, storage, movesSize);
-			assert storage[0] >= 0;
-			if (storage[0] == 0) {
+			//board.getMoveGenerator().collectMoves(toMove, storage, movesSize);
+			//assert storage[0] >= 0;
+			//if (storage[0] == 0) {
+			if (((MoveGenerator) board.getMoveGenerator()).isCheckmate(toMove, storage, movesSize)) {
 				return -9999;
 			}
 		}

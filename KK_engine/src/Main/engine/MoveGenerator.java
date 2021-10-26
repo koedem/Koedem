@@ -46,8 +46,8 @@ public class MoveGenerator implements MoveGeneratorInterface {
 	 * @return array of ints, each containing a move
 	 */
 	public int[] collectMoves(boolean toMove, int[] allMoves, int[] movesSize) {
-		if (UCI.CHECKS_ARE_FORCING && board.getAttackBoard().inCheck(toMove)) {
-			return evadeChecks(toMove, allMoves, movesSize);
+		if (UCI.CHECKS_ARE_FORCING && board.getAttackBoard().inCheck(toMove)) { // TODO: both versions, especially evade checks, are slow, should return one move at a time
+			return evadeChecks(toMove, allMoves, movesSize);                	// instead of an entire array that might be mostly wasted
 		} else {
 			return generateAllMoves(toMove, allMoves, movesSize);
 		}
@@ -1087,6 +1087,25 @@ public class MoveGenerator implements MoveGeneratorInterface {
 			}
 		}
 		return moves;
+	}
+
+	/**
+	 * Temporary method that detects checkmate, this should be implemented properly at some point, and probably belongs in AttackBoard.
+	 * @param toMove
+	 * @param moves
+	 * @param movesSize
+	 * @return
+	 */
+	public boolean isCheckmate(boolean toMove, int[] moves, int[] movesSize) {
+		boolean canEvade = false;
+		long attacked = board.getAttackBoard().getAllPieces()[toMove ? 1 : 0]; // which squares does the opponent attack?
+		long nonAttacked = ~attacked & board.getAttackBoard().getPieceTypes()[toMove ? 0 : 1][6]; // which unattacked squares can our king reach?
+		long available = nonAttacked & ~board.getBitboard().getAllPieces(toMove ? 0 : 1); // we can't capture own pieces
+		canEvade = available != 0;
+		if (!canEvade) {
+			canEvade = evadeChecks(toMove, moves, movesSize)[0] != 0;
+		}
+		return !canEvade; // if we can evade it's not checkmate
 	}
 
 	/**
