@@ -140,6 +140,8 @@ public final class UCI {
 				board.getBitboard().printBitBoard();
 			} else if (command.startsWith("probe")) {
 				probe(Integer.parseInt(command.substring(6, 8)) ,command.substring(9));
+			} else if (command.startsWith("recursive probe")) {
+				recursiveProbe(Integer.parseInt(command.substring(16, 17)), Integer.parseInt(command.substring(18, 20)),"", new Board(command.substring(21)));
 			} else if (command.equals("refute")) {
 				ThreadOrganization.refute();
 			} else if (command.equals("stop")) {
@@ -544,10 +546,39 @@ public final class UCI {
 	private static void probe(int depth, String fen) {
 		Board probing = new Board(fen);
 		TTEntry probeEntry = new TTEntry();
-		upperBoundsTable.get(probing.getZobristHash(), probeEntry, depth);
-		Logging.printLine("Upper bound: " + probeEntry.getEval() + ", best move: " + Transformation.numberToMove(probeEntry.getMove()));
-		lowerBoundsTable.get(probing.getZobristHash(), probeEntry, depth);
-		Logging.printLine("Lower bound: " + probeEntry.getEval() + ", best move: " + Transformation.numberToMove(probeEntry.getMove()));
+		for (int probeDepth = depth; probeDepth < 100; probeDepth++) {
+			if (upperBoundsTable.get(probing.getZobristHash(), probeEntry, probeDepth) != null) {
+				Logging.printLine("Depth " + probeDepth + ", UPPER bound: " + probeEntry.getEval() + ", best move: " + Transformation.numberToMove(probeEntry.getMove()));
+			}
+			if (lowerBoundsTable.get(probing.getZobristHash(), probeEntry, probeDepth) != null) {
+				Logging.printLine("Depth " + probeDepth + ", lower bound: " + probeEntry.getEval() + ", best move: " + Transformation.numberToMove(probeEntry.getMove()));
+			}
+		}
+	}
+
+	private static void recursiveProbe(int recursionDepth, int probeMinDepth, String pv, Board probing) {
+		TTEntry probeEntry = new TTEntry();
+		for (int probeDepth = 100; probeDepth >= probeMinDepth; probeDepth--) {
+			if (upperBoundsTable.get(probing.getZobristHash(), probeEntry, probeDepth) != null) {
+				Logging.printLine(pv + "; Depth " + probeDepth + ", UPPER bound: " + probeEntry.getEval() + ", best move: " + Transformation.numberToMove(probeEntry.getMove()));
+				break;
+			}
+		}
+		for (int probeDepth = 100; probeDepth >= probeMinDepth; probeDepth--) {
+			if (lowerBoundsTable.get(probing.getZobristHash(), probeEntry, probeDepth) != null) {
+				Logging.printLine(pv + "; Depth " + probeDepth + ", lower bound: " + probeEntry.getEval() + ", best move: " + Transformation.numberToMove(probeEntry.getMove()));
+				break;
+			}
+		}
+		if (recursionDepth > 1) {
+			int[] moves = new int[MoveGenerator.MAX_MOVE_COUNT], movesSize = new int[6];
+			moves = probing.getMoveGenerator().collectMoves(probing.getToMove(), moves, movesSize);
+			for (int i = 1; i <= moves[0]; i++) {
+				probing.makeMove(moves[i]);
+				recursiveProbe(recursionDepth - 1, probeMinDepth, new String(pv + " " + Transformation.numberToMove(moves[i])), probing);
+				probing.unmakeMove(moves[i]);
+			}
+		}
 	}
 	
 	private UCI() {
