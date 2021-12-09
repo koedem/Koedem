@@ -72,4 +72,6 @@ public interface BoardInterface extends Serializable {
 
 	int isFreeSquare(int file, int row, boolean toMove);
 
+	long zobristAfterMove(int move);
+
 }

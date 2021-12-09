@@ -194,6 +194,10 @@ public class Board implements BoardInterface {
 		zobristHash ^= zobristKeys[(getSquare(file, row) + 6) * 64 + (file * 8 + row)]; // add new value
 	}
 
+	public long zobristForSetSquare(int file, int row, byte value) {
+		return  zobristKeys[(getSquare(file, row) + 6) * 64 + (file * 8 + row)] ^ zobristKeys[(value + 6) * 64 + (file * 8 + row)];
+	}
+
 	/**
 	 * This method takes a move in UCI communication style and executes that move on the board.
 	 * Examples: e2e4 = Pawn e2 to e4; e1g1 = short castle; e7e8q = Pawn e7 to e8 promotes into queen
@@ -366,6 +370,68 @@ public class Board implements BoardInterface {
 		}
 		changeToMove();
 		return false;
+	}
+
+	public long zobristAfterMove(int move) {
+		long hash = getZobristHash();
+
+		if (move < (1 << 13) && move > (1 << 12)) {
+			int startSquare = (move / 64) % 64;
+			int movingPiece = getSquare(startSquare / 8, startSquare % 8);
+			int movingPieceType = Math.abs(movingPiece);
+			int endSquare = move % 64;
+
+			if (startSquare == 32 && getSquare(4, 0) == 6 && (endSquare == 48 || endSquare == 16)) {
+				if (endSquare == 48) {
+					hash ^= zobristForSetSquare(6, 0, (byte) 6);
+					hash ^= zobristForSetSquare(4, 0, (byte) 0);
+					hash ^= zobristForSetSquare(5, 0, (byte) 4); // rook move in castling
+					hash ^= zobristForSetSquare(7, 0, (byte) 0);
+				} else {
+					hash ^= zobristForSetSquare(2, 0, (byte) 6);
+					hash ^= zobristForSetSquare(4, 0, (byte) 0);
+					hash ^= zobristForSetSquare(3, 0, (byte) 4); // rook move in castling
+					hash ^= zobristForSetSquare(0, 0, (byte) 0);
+				}
+			} else if (startSquare == 39 && getSquare(4, 7) == -6 && (endSquare == 55 || endSquare == 23)) {
+				if (endSquare == 55) {
+					hash ^= zobristForSetSquare(6, 7, (byte) -6);
+					hash ^= zobristForSetSquare(4, 7, (byte) 0);
+					hash ^= zobristForSetSquare(5, 7, (byte) -4); // rook move in castling
+					hash ^= zobristForSetSquare(7, 7, (byte) 0);
+				} else {
+					hash ^= zobristForSetSquare(2, 7, (byte) -6);
+					hash ^= zobristForSetSquare(4, 7, (byte) 0);
+					hash ^= zobristForSetSquare(3, 7, (byte) -4); // rook move in castling
+					hash ^= zobristForSetSquare(0, 7, (byte) 0);
+				}
+			} else {
+				if (movingPieceType == Constants.PAWN && endSquare == enPassant) {
+					if (toMove) {
+						hash ^= zobristForSetSquare(enPassant / 8, (enPassant % 8) - 1, (byte) 0); // capture the pawn that is on the square before ep
+					} else {
+						hash ^= zobristForSetSquare(enPassant / 8, (enPassant % 8) + 1, (byte) 0);
+					}
+				}
+
+				hash ^= zobristForSetSquare(endSquare / 8, endSquare % 8, getSquare(startSquare / 8, startSquare % 8)); // the actual moving
+				hash ^= zobristForSetSquare(startSquare / 8, startSquare % 8, (byte) 0); // start square becomes empty
+			}
+		} else if (move < (1 << 16) && move > (1 << 15)) {
+			int startSquare = (move - (1 << 15)) / (1 << 9);
+			int endSquare = (move % (1 << 9)) / (1 << 3); // TODO why is this already initialized?
+
+			byte promotion = (byte) (move % (1 << 3));
+
+			hash ^= zobristForSetSquare(startSquare / 8, startSquare % 8, (byte) 0);
+
+			if (endSquare % 8 == 7) {
+				hash ^= zobristForSetSquare(endSquare / 8, endSquare % 8, promotion);
+			} else if (endSquare % 8 == 0) {
+				hash ^= zobristForSetSquare(endSquare / 8, endSquare % 8, (byte) -promotion);
+			}
+		}
+		return hash; // ^ blackToMove;
 	}
 
 	/**
