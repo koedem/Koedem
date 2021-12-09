@@ -46,7 +46,7 @@ public class MoveGenerator implements MoveGeneratorInterface {
 	 * @return array of ints, each containing a move
 	 */
 	public int[] collectMoves(boolean toMove, int[] allMoves, int[] movesSize) {
-		if (UCI.CHECKS_ARE_FORCING && board.getAttackBoard().inCheck(toMove)) { // TODO: both versions, especially evade checks, are slow, should return one move at a time
+		if (board.getAttackBoard().inCheck(toMove)) { // TODO: both versions, especially evade checks, are slow, should return one move at a time
 			return evadeChecks(toMove, allMoves, movesSize);                	// instead of an entire array that might be mostly wasted
 		} else {
 			return generateAllMoves(toMove, allMoves, movesSize);

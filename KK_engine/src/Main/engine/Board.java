@@ -12,25 +12,11 @@ public class Board implements BoardInterface {
 
 	private final MoveGeneratorInterface    moveGenerator    = new MoveGenerator(this);
 	private final CaptureGeneratorInterface captureGenerator = new CaptureGenerator(this);
-	private final CheckMoveGeneratorInterface checkMoveGenerator = new CheckMoveGenerator(this);
-	private final EvaluationInterface evaluation = new Evaluation(this);
-	private final SearchInterface     search     = new Search(this);
-	private final MateFinder          mateFinder = new MateFinder(this);
 
 	private long zobristHash;
 	private static final Random random = new Random(1234567890);
 	private static final long[] zobristKeys = initializeZobrist();
 	private static final long blackToMove = random.nextLong();
-	private static final long enPassantKey = random.nextLong();
-	private static final long[] castlingKeys = { random.nextLong(), random.nextLong(), random.nextLong(), random.nextLong(), random.nextLong(), random.nextLong() };
-
-	private static final int QUEEN_DANGER = 12;
-	private static final int ROOK_DANGER   = 5;
-	private static final int BISHOP_DANGER = 3;
-	private static final int KNIGHT_DANGER = 3;
-	
-	private static final int[] PIECE_DANGER = {0, 0, KNIGHT_DANGER, BISHOP_DANGER, ROOK_DANGER, QUEEN_DANGER, 0 };
-
 
 	private final BitBoardInterface bitboard;
 	private final AttackBoard       attackBoard;
@@ -60,74 +46,8 @@ public class Board implements BoardInterface {
 	private byte enPassant = -1;
 	
 	private int moveNumber = 1;
-	
-	/**
-	 * Based on Kaufmann values, Pawn = 100 CentiPawns, Knight = 325, Bishop = 335 CP, Rook = 500 CP, Queen = 975 CP.
-	 * At every point in search the material count should accurately show the material in the current search position.
-	 */
-	private short materialCount = 0;
-
-	/**
-	 * At every point in search the PST should have the correct value for the current position.
-	 */
-	private int pieceSquareTable = 0;
-	
-	/**
-	 * From 2 (King vs. King) to 32.
-	 */
-	private int piecesLeft = 0;
-	
-	private int dangerToWhiteKing = 0;
-	private int dangerToBlackKing = 0;
-	
-	private final int[] pieceAdvancement = {0, 0, 0, 0, 0, 0, 0 }; // empty square, pawn, knight, bishop, rook, queen, king
-	
-	/**
-	 * Material value of a pawn in centi pawns according to Larry Kaufmann (Komodo team).
-	 */
-	public static final int PAWNVALUE = 100;
-	
-	/**
-	 * Material value of a knight in centi pawns according to Larry Kaufmann (Komodo team).
-	 */
-	public static final int KNIGHTVALUE = 325;
-	
-	/**
-	 * Material value of a bishop in centi pawns according to Larry Kaufmann (Komodo team).
-	 */
-	public static final int BISHOPVALUE = 335;
-	
-	/**
-	 * Material value of a rook in centi pawns according to Larry Kaufmann (Komodo team).
-	 */
-	public static final int ROOKVALUE = 500;
-	
-	/**
-	 * Material value of a queen in centi pawns according to Larry Kaufmann (Komodo team).
-	 */
-	public static final int QUEENVALUE = 975;
-	
-	/**
-	 * Material value of a king, big enough to outvalue every other eval term. Should not play a role in Search.
-	 */
-	public static final int KINGVALUE = 10000;
-	
-	/**
-	 * Material values of the pieces where PIECEVALUE[piece] equals the material value of the corresponding piece
-	 * in board representation (1 = Pawn, ..., 6 = King)
-	 */
-	public static final int[] PIECEVALUE = { 0, PAWNVALUE, KNIGHTVALUE, BISHOPVALUE,
-			ROOKVALUE, QUEENVALUE, KINGVALUE };
-	
-	/**
-	 * We store the hash of every position that happened so far in the game plus in the current search variation.
-	 * TODO as usual this is slow because Java implementation; should be replaced with own implementation
-	 */
-	private final HashMap<Long, Integer> repetitionTable = new HashMap<>(65536);
 
 	private int[] rootMoves = new int[MoveGenerator.MAX_MOVE_COUNT];
-
-	private String bestmove = "";
 
 	private final MakeMoveInfoStack infoStack = new MakeMoveInfoStack();
 	
@@ -160,10 +80,6 @@ public class Board implements BoardInterface {
 	 *            : Position that the method sets.
 	 */
 	public void setFENPosition(String fen) {
-	    materialCount = 0;
-	    dangerToBlackKing = 0;
-	    dangerToWhiteKing = 0;
-	    piecesLeft = 0;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				setSquare(i, j, (byte) 0);
@@ -171,9 +87,7 @@ public class Board implements BoardInterface {
 		}
 		setEnPassant((byte) -1);
 		setCastlingRights((byte) 0);
-		Arrays.fill(pieceAdvancement, 0);
         bitboard.resetBitBoard();
-		zobristHash = Long.rotateRight(enPassantKey, enPassant); // initialize with current empty value since enPassant for that is non 0
 
 		String[] positions = fen.split(" ");
 		byte file = 0;
@@ -190,16 +104,7 @@ public class Board implements BoardInterface {
                 }
             } else {
                 byte piece = pieceLetterToByte(positions[0].charAt(i));
-                int colour = piece / Math.abs(piece);
                 setSquare(file, row, piece);
-                materialCount += PIECEVALUE[Math.abs(piece)] * colour;
-                if (colour == 1) {
-                    dangerToBlackKing += PIECE_DANGER[piece * colour];
-                } else {
-                    dangerToWhiteKing += PIECE_DANGER[piece * colour];
-                }
-                piecesLeft++;
-                pieceAdvancement[Math.abs(piece)] += 2 * row - 7;
                 bitboard.add(Math.abs(piece), (piece > 0) ? 0 : 1, (8 * file + row));
                 file++;
             }
@@ -223,9 +128,6 @@ public class Board implements BoardInterface {
 		}
 		setMoveNumber(Integer.parseInt(positions[positions.length - 1]));
 		attackBoard.generateAttackCount();
-		pieceSquareTable = evaluation.fullPST();
-		repetitionTable.clear();
-		putRepetitionEntry(getZobristHash());
 	}
 
 	private void setCastlingRights(String castling) {
@@ -250,24 +152,6 @@ public class Board implements BoardInterface {
 	 */
 	private void setCastlingRights(byte newValue) {
 		int change = this.castlingRights ^ newValue;
-		if ((change & 0b00100000) != 0) {
-			zobristHash ^= castlingKeys[0];
-		}
-		if ((change & 0b00010000) != 0) {
-			zobristHash ^= castlingKeys[1];
-		}
-		if ((change & 0b00001000) != 0) {
-			zobristHash ^= castlingKeys[2];
-		}
-		if ((change & 0b00000100) != 0) {
-			zobristHash ^= castlingKeys[3];
-		}
-		if ((change & 0b00000010) != 0) {
-			zobristHash ^= castlingKeys[4];
-		}
-		if ((change & 0b00000001) != 0) {
-			zobristHash ^= castlingKeys[5];
-		}
 		this.castlingRights = newValue;
 	}
 
@@ -348,21 +232,6 @@ public class Board implements BoardInterface {
 		int capturedPiece = getSquare(endSquare / 8, endSquare % 8);
 		infoStack.push(getEnPassant(), getCastlingRights(), (byte) capturedPiece);
 		
-		if (capturedPiece != 0) {
-			piecesLeft--;
-			if (capturedPiece > 0) {
-				materialCount -= PIECEVALUE[capturedPiece];
-				dangerToBlackKing -= PIECE_DANGER[capturedPiece];
-				pieceAdvancement[capturedPiece] -= 2 * (endSquare % 8) - 7;
-				pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][capturedPiece][endSquare];
-			} else {
-				materialCount += PIECEVALUE[Math.abs(capturedPiece)];
-				dangerToWhiteKing -= PIECE_DANGER[Math.abs(capturedPiece)];
-				pieceAdvancement[Math.abs(capturedPiece)] -= 2 * (endSquare % 8) - 7;
-				pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][-capturedPiece][endSquare];
-			}
-		}
-		
 		if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
 			int movingPiece = getSquare(startSquare / 8, startSquare % 8);
@@ -404,10 +273,6 @@ public class Board implements BoardInterface {
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(56, true);
 					bitboard.add(4, 0, 40);
-
-					pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.F1]
-					                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.H1];
-																			// King happens further below in the standard make move part.
 				} else {
 					setSquare(2, 0, (byte) 6);
 					setSquare(4, 0, (byte) 0);
@@ -417,10 +282,6 @@ public class Board implements BoardInterface {
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(0, true);
 					bitboard.add(4, 0, 24);
-
-					pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.D1]
-					                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.A1];
-																			// King happens further below in the standard make move part.
 				}
 			} else if (startSquare == 39 && getSquare(4, 7) == -6 && (endSquare == 55 || endSquare == 23)) {
 				if (endSquare == 55) {
@@ -432,10 +293,6 @@ public class Board implements BoardInterface {
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(63, true);
 					bitboard.add(4, 1, 47);
-
-					pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.F8]
-					                    - Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.H8];
-																			// King happens further below in the standard make move part.
 				} else {
 					setSquare(2, 7, (byte) -6);
 					setSquare(4, 7, (byte) 0);
@@ -445,25 +302,14 @@ public class Board implements BoardInterface {
 					bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 					bitboard.remove(7, true);
 					bitboard.add(4, 1, 31);
-
-					pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.D8]
-					                    - Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.A8];
-																			// King happens further below in the standard make move part.
 				}
 			} else {
 				if (movingPieceType == Constants.PAWN && endSquare == enPassant) {
-					piecesLeft--;
 					if (toMove) {
 						setSquare(enPassant / 8, (enPassant % 8) - 1, (byte) 0); // capture the pawn that is on the square before ep
-						materialCount += PAWNVALUE;
-						pieceAdvancement[1] -= 2 * ((enPassant % 8) - 1) - 7;
-						pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.PAWN][enPassant - 1];
 						bitboard.remove(endSquare - 1, true);
 					} else {
 						setSquare(enPassant / 8, (enPassant % 8) + 1, (byte) 0);
-						materialCount -= PAWNVALUE;
-						pieceAdvancement[1] -= 2 * ((enPassant % 8) + 1) - 7;
-						pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.PAWN][enPassant + 1];
 						bitboard.remove(endSquare + 1, true);
 					}
 				}
@@ -473,10 +319,6 @@ public class Board implements BoardInterface {
 
 				bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
 			}
-			pieceAdvancement[movingPieceType] += 2 * ((endSquare % 8) - (startSquare % 8)); // add the advancement change caused by the move
-			pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.WHITE : Constants.BLACK][movingPieceType][endSquare]
-			                    - Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.WHITE : Constants.BLACK][movingPieceType][startSquare];
-
 			setEnPassant((byte) -1); // remove old en passant values
 			
 			if (movingPieceType == Constants.PAWN && Math.abs(startSquare - endSquare) == 2
@@ -509,20 +351,11 @@ public class Board implements BoardInterface {
 			byte promotion = (byte) (move % (1 << 3));
 			
 			setSquare(startSquare / 8, startSquare % 8, (byte) 0);
-			pieceAdvancement[Constants.PAWN] -= 2 * (startSquare % 8) - 7;
-			pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.WHITE : Constants.BLACK][Constants.PAWN][startSquare];
-
-			pieceAdvancement[promotion] += 2 * (endSquare % 8) - 7;
-			pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.WHITE : Constants.BLACK][promotion][endSquare];
 			
 			if (endSquare % 8 == 7) {
 				setSquare(endSquare / 8, endSquare % 8, promotion);
-				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
-				dangerToBlackKing += PIECE_DANGER[promotion];
 			} else if (endSquare % 8 == 0) {
 				setSquare(endSquare / 8, endSquare % 8, (byte) -promotion);
-				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
-				dangerToWhiteKing += PIECE_DANGER[promotion];
 			}
 
 			bitboard.move(startSquare, endSquare, capturedPiece != 0, 0);
@@ -532,9 +365,7 @@ public class Board implements BoardInterface {
 			assert false;
 		}
 		changeToMove();
-		boolean present = repetitionContained(getZobristHash()); // return whether this is a move repetition
-		putRepetitionEntry(getZobristHash());
-		return present;
+		return false;
 	}
 
 	/**
@@ -572,9 +403,6 @@ public class Board implements BoardInterface {
 	 * TODO why don't we remember the incrementally updated eval changed from move instead of recalculating
 	 * 
 	 * @param move Move which gets undone.
-	 * @param capturedPiece Piece that got captured in the original move. It gets put back on the board
-	 * 		(can also be 0 = empty square).
-	 * @param oldCastlingRights The castling rights from before the move was executed on the board.
 	 */
 	public void unmakeMove(int move) {
 		MakeMoveCache info = infoStack.pop();
@@ -582,7 +410,6 @@ public class Board implements BoardInterface {
 		byte oldCastlingRights = info.castlingRights;
 		byte capturedPiece = info.capturedPiece;
 
-		removeRepetitionEntry(getZobristHash());
 		setEnPassant(enPassant);
 		int endSquare = 0; // will get changed to correct endSquare
 		
@@ -597,11 +424,6 @@ public class Board implements BoardInterface {
 				bitboard.remove(24, true);
 				bitboard.add(4, 0, 0);
 				bitboard.move(16, 32, false, 0);
-
-				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.A1]
-				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.D1];
-				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.KING][Constants.E1]
-				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.KING][Constants.C1];
 			} else if (move == (1 << 12) + (32 << 6) + 48) { // White castle king side.
 				assert getSquare(4, 0) == 0 && getSquare(5, 0) == 4 && getSquare(6, 0) == 6 && getSquare(7 , 0) == 0;
 				setSquare(4, 0, (byte) 6); 
@@ -611,11 +433,6 @@ public class Board implements BoardInterface {
 				bitboard.remove(40, true);
 				bitboard.add(4, 0, 56);
 				bitboard.move(48, 32, false, 0);
-
-				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.H1]
-				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.ROOK][Constants.F1];
-				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.KING][Constants.E1]
-				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.KING][Constants.G1];
 			} else if (move == (1 << 12) + (39 << 6) + 23) { // Black castle queen side.
 				assert getSquare(4, 7) == 0 && getSquare(3, 7) == -4 && getSquare(2, 7) == -6 
 						&& getSquare(1, 7) == 0 && getSquare(0, 7) == 0;
@@ -626,11 +443,6 @@ public class Board implements BoardInterface {
 				bitboard.remove(31, true);
 				bitboard.add(4, 1, 7);
 				bitboard.move(23, 39, false, 0);
-
-				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.A8]
-				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.D8];
-				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.KING][Constants.E8]
-				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.KING][Constants.C8];
 			} else { // Black castle king side.
 				assert getSquare(4,7) == 0 && getSquare(5, 7) == -4 && getSquare(6, 7) == -6 && getSquare(7, 7) == 0;
 				setSquare(4, 7, (byte) -6);
@@ -640,45 +452,27 @@ public class Board implements BoardInterface {
 				bitboard.remove(47, true);
 				bitboard.add(4, 1, 63);
 				bitboard.move(55, 39, false, 0);
-
-				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.H8]
-				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.ROOK][Constants.F8];
-				pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.KING][Constants.E8]
-				                    - Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.KING][Constants.G8];
 			}
 		} else if (move < (1 << 13) && move > (1 << 12)) {
 			int startSquare = (move / 64) % 64;
 			endSquare = move % 64;
 			int movedPieceType = Math.abs(getSquare(endSquare / 8, endSquare % 8));
 			
-			pieceAdvancement[movedPieceType] -= 2 * ((endSquare % 8) - (startSquare % 8)); // subtract/undo the advancement change the move made
-			pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.BLACK : Constants.WHITE][movedPieceType][startSquare] // white toMove means black made the last move
-			                    - Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.BLACK : Constants.WHITE][movedPieceType][endSquare];
-			
 			setSquare(startSquare / 8, startSquare % 8, getSquare(endSquare / 8, endSquare % 8)); // actual moving
 			setSquare(endSquare / 8, endSquare % 8, capturedPiece); // put captured piece back on its square
             boolean success = bitboard.move(endSquare, startSquare, false, capturedPiece);
             assert success;
 			if (movedPieceType == 1 && endSquare == enPassant) {
-				
-											// a pawn moving and ending on the en passant square ALWAYS means capture
-				piecesLeft++;
 				if (endSquare % 8 == 5) { // white captured en passant.
 					assert endSquare - startSquare == -7 || endSquare - startSquare == 9;
 					assert getSquare(endSquare / 8, (endSquare % 8) - 1) == 0; // should be empty
 					setSquare(endSquare / 8, (endSquare % 8) - 1, (byte) -1); // pawn added back on; -1 because of en passant
                     bitboard.add(1, 1, endSquare - 1);
-					materialCount -= PAWNVALUE;
-					pieceAdvancement[1] += 2 * ((enPassant % 8) - 1) - 7;
-					pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][Constants.PAWN][enPassant - 1];
 				} else if (endSquare % 8 == 2) {
 					assert endSquare - startSquare == 7 || endSquare - startSquare == -9;
 					assert getSquare(endSquare / 8, (endSquare % 8) + 1) == 0;
 					setSquare(endSquare / 8, (endSquare % 8) + 1, (byte) 1);
 					bitboard.add(1, 0, endSquare + 1);
-					materialCount += PAWNVALUE;
-					pieceAdvancement[1] += 2 * ((enPassant % 8) + 1) - 7;
-					pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][Constants.PAWN][enPassant + 1];
 				} else {
 					assert false;
 				}
@@ -689,11 +483,6 @@ public class Board implements BoardInterface {
 			byte promotion = (byte) (move % (1 << 3));
 			
 			assert getSquare(startSquare / 8, startSquare % 8) == 0;
-			pieceAdvancement[Constants.PAWN] += 2 * (startSquare % 8) - 7;
-			pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.BLACK : Constants.WHITE][Constants.PAWN][startSquare];
-
-			pieceAdvancement[promotion] -= 2 * (endSquare % 8) - 7;
-			pieceSquareTable -= Evaluation.PIECE_SQUARE_TABLES[toMove ? Constants.BLACK : Constants.WHITE][promotion][endSquare];
 			
 			if (endSquare % 8 == 7) {
 				setSquare(startSquare / 8, startSquare % 8, (byte) 1);
@@ -701,16 +490,12 @@ public class Board implements BoardInterface {
 				bitboard.add(1, 0, endSquare); // add the pawn
 				
 				setSquare(endSquare / 8, endSquare % 8, capturedPiece); // bitboard change done below
-				materialCount -= PIECEVALUE[promotion] - PAWNVALUE;
-				dangerToBlackKing -= PIECE_DANGER[promotion];
 			} else if (endSquare % 8 == 0) {
 				setSquare(startSquare / 8, startSquare % 8, (byte) -1);
 				bitboard.remove(endSquare, false);
 				bitboard.add(1, 1, endSquare);
 				
 				setSquare(endSquare / 8, endSquare % 8, capturedPiece);
-				materialCount += PIECEVALUE[promotion] - PAWNVALUE;
-				dangerToWhiteKing -= PIECE_DANGER[promotion];
 			} else {
 				assert false;
 			}
@@ -720,29 +505,6 @@ public class Board implements BoardInterface {
 		}
 		changeToMove();
 		setCastlingRights(oldCastlingRights);
-		
-		if ((int) capturedPiece != 0) {
-            piecesLeft++;
-            if ((int) capturedPiece > 0) {
-                materialCount += PIECEVALUE[(int) capturedPiece]; // piece gets back on the board, so added to materialCount
-                dangerToBlackKing += PIECE_DANGER[(int) capturedPiece]; // and to danger-numbers
-                pieceAdvancement[(int) capturedPiece] += 2 * (endSquare % 8) - 7; // and add back its advancement
-	            pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.WHITE][capturedPiece][endSquare];
-            } else {
-                materialCount -= PIECEVALUE[Math.abs((int) capturedPiece)];
-                dangerToWhiteKing += PIECE_DANGER[Math.abs((int) capturedPiece)];
-                pieceAdvancement[Math.abs((int) capturedPiece)] += 2 * (endSquare % 8) - 7;
-                pieceSquareTable += Evaluation.PIECE_SQUARE_TABLES[Constants.BLACK][-capturedPiece][endSquare];
-            }
-        }
-	}
-
-	/**
-	 * 
-	 * @return The material count in centi pawns.
-	 */
-	public short getMaterialCount() {
-		return materialCount;
 	}
 	
 	@Override
@@ -767,38 +529,6 @@ public class Board implements BoardInterface {
 	public void addCastlingRights(byte change) {
 		setCastlingRights((byte) (this.castlingRights | change));
 	}
-	
-	public int getPiecesLeft() {
-		return piecesLeft;
-	}
-
-	private void putRepetitionEntry(long zobristHash) {
-		if (!repetitionTable.containsKey(zobristHash)) {
-			repetitionTable.put(zobristHash, 1);
-		} else {
-			repetitionTable.replace(zobristHash, repetitionTable.get(zobristHash) + 1);
-		}
-	}
-
-	private void removeRepetitionEntry(long zobristHash) {
-		if (repetitionTable.getOrDefault(zobristHash, 1) == 1) {
-			repetitionTable.remove(zobristHash);
-		} else {
-			repetitionTable.replace(zobristHash, repetitionTable.get(zobristHash) - 1);
-		}
-	}
-	
-	private boolean repetitionContained(long zobristHash) {
-		return repetitionTable.containsKey(zobristHash);
-	}
-
-	public void printRepetitionInfo() {
-		Logging.printLine(Integer.toString(repetitionTable.size()));
-	}
-
-	public int getPieceAdvancement(int index) {
-		return pieceAdvancement[index];
-	}
 
 	public int getMoveNumber() {
 		return moveNumber;
@@ -820,25 +550,6 @@ public class Board implements BoardInterface {
 		if (!toMove) {
 			zobristHash ^= blackToMove;
 		}
-		zobristHash ^= Long.rotateRight(enPassantKey, enPassant);
-		if ((castlingRights & 0b00100000) != 0) {
-			zobristHash ^= castlingKeys[0];
-		}
-		if ((castlingRights & 0b00010000) != 0) {
-			zobristHash ^= castlingKeys[1];
-		}
-		if ((castlingRights & 0b00001000) != 0) {
-			zobristHash ^= castlingKeys[2];
-		}
-		if ((castlingRights & 0b00000100) != 0) {
-			zobristHash ^= castlingKeys[3];
-		}
-		if ((castlingRights & 0b00000010) != 0) {
-			zobristHash ^= castlingKeys[4];
-		}
-		if ((castlingRights & 0b00000001) != 0) {
-			zobristHash ^= castlingKeys[5];
-		}
 		return zobristHash;
 	}
 
@@ -852,8 +563,6 @@ public class Board implements BoardInterface {
 	}
 
 	public void setEnPassant(byte enPassant) {
-		long change = Long.rotateRight(enPassantKey, this.enPassant) ^ Long.rotateRight(enPassantKey, enPassant);
-		zobristHash ^= change;
 		this.enPassant = enPassant;
 	}
 
@@ -863,14 +572,6 @@ public class Board implements BoardInterface {
 
 	public void setRootMoves(int[] rootMoves) {
 		this.rootMoves = rootMoves;
-	}
-
-	public int getDangerToWhiteKing() {
-		return dangerToWhiteKing;
-	}
-
-	public int getDangerToBlackKing() {
-		return dangerToBlackKing;
 	}
 
 	private static byte pieceLetterToByte(char piece) {
@@ -897,25 +598,11 @@ public class Board implements BoardInterface {
 		return moveGenerator;
 	}
 
-	public EvaluationInterface getEvaluation() {
-		return evaluation;
-	}
-
-	public SearchInterface getSearch() {
-		return search;
-	}
-
 	public void resetBoard() {
         setFENPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 		moveGenerator.resetMoveGenerator();
 		captureGenerator.resetCaptureGenerator();
-		checkMoveGenerator.resetCheckMoveGenerator();
-		evaluation.resetEvaluation();
-		search.resetSearch();
-		mateFinder.resetMateFinder();
-		repetitionTable.clear();
 		infoStack.reset();
-		putRepetitionEntry(getZobristHash());
 	}
 
 	private static long[] initializeZobrist() {
@@ -968,16 +655,6 @@ public class Board implements BoardInterface {
 	}
 
 	@Override
-	public String getBestmove() {
-		return bestmove;
-	}
-
-	@Override
-	public void setBestmove(String bestmove) {
-		this.bestmove = bestmove;
-	}
-
-	@Override
 	public AttackBoard getAttackBoard() {
 		return attackBoard;
 	}
@@ -987,21 +664,9 @@ public class Board implements BoardInterface {
 		return bitboard;
 	}
 
-	public MateFinder getMateFinder() {
-		return mateFinder;
-	}
-
 	@Override
 	public CaptureGeneratorInterface getCaptureGenerator() {
 		return captureGenerator;
-	}
-
-	public CheckMoveGeneratorInterface getCheckMoveGenerator() {
-		return checkMoveGenerator;
-	}
-
-	public int getPieceSquareTable() {
-		return pieceSquareTable;
 	}
 
 	private static class MakeMoveCache implements Serializable {

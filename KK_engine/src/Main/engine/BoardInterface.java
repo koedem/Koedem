@@ -7,10 +7,6 @@ import java.io.Serializable;
  */
 public interface BoardInterface extends Serializable {
 
-	String getBestmove();
-
-	void setBestmove(String bestmove);
-
 	void printBoard();
 
 	/**
@@ -56,27 +52,9 @@ public interface BoardInterface extends Serializable {
 
 	void addCastlingRights(byte castlingRights);
 
-	//void putRepetitionEntry(long zobristHash);
-
-	//void removeRepetitionEntry(long zobristHash);
-
-	//boolean repetitionContained(long zobristHash);
-
-	void printRepetitionInfo();
-
 	long getZobristHash();
 
 	void changeToMove();
-
-	int getPieceAdvancement(int piece);
-
-	short getMaterialCount();
-
-	int getPiecesLeft();
-
-	int getDangerToWhiteKing();
-
-	int getDangerToBlackKing();
 
 	void setSquare(int file, int row, byte value);
 
@@ -84,24 +62,14 @@ public interface BoardInterface extends Serializable {
 
 	AttackBoard getAttackBoard();
 
-	SearchInterface getSearch();
-
 	MoveGeneratorInterface getMoveGenerator();
 
 	CaptureGeneratorInterface getCaptureGenerator();
-
-	CheckMoveGeneratorInterface getCheckMoveGenerator();
-
-	EvaluationInterface getEvaluation();
-
-	MateFinder getMateFinder();
 
 	BitBoardInterface getBitboard();
 
 	void resetBoard();
 
 	int isFreeSquare(int file, int row, boolean toMove);
-
-	int getPieceSquareTable();
 
 }
