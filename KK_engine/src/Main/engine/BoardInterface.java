@@ -62,6 +62,8 @@ public interface BoardInterface extends Serializable {
 
 	AttackBoard getAttackBoard();
 
+	String squareString();
+
 	MoveGeneratorInterface getMoveGenerator();
 
 	CaptureGeneratorInterface getCaptureGenerator();

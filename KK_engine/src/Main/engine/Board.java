@@ -458,7 +458,17 @@ public class Board implements BoardInterface {
 	 */
 	public void changeToMove() {
 		this.toMove = (!toMove);
-		zobristHash ^= blackToMove;
+		//zobristHash ^= blackToMove;
+	}
+
+	public String squareString() {
+		StringBuilder str = new StringBuilder();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				str.append(Transformation.numberToPiece(square[i][j]));
+			}
+		}
+		return str.toString();
 	}
 
 	/**
@@ -614,7 +624,7 @@ public class Board implements BoardInterface {
 			}
 		}
 		if (!toMove) {
-			zobristHash ^= blackToMove;
+			//zobristHash ^= blackToMove;
 		}
 		return zobristHash;
 	}
