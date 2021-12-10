@@ -12,9 +12,10 @@ import java.util.LinkedList;
 public class Perft {
 
 	private BoardInterface board;
-	private PerftTT_8 counterHelp[] = { new PerftTT_8(8192), new PerftTT_8(8192), new PerftTT_8(8192) };
-	private PerftTT_8 perftTT = new PerftTT_8(UCI.TT_SIZE_MB);
-	private ForbiddenTT oldUnique = new ForbiddenTT(64);
+	private static PerftTT_8 counterHelp[] = { new PerftTT_8(4096), new PerftTT_8(4096), new PerftTT_8(4096) };
+	private static PerftTT_8 perftTT = new PerftTT_8(UCI.TT_SIZE_MB);
+	private static ForbiddenTT oldUnique = new ForbiddenTT(64);
+	private static final boolean memoryIsSpare = false;
 
 	LinkedList<String> dissimilarPositions = new LinkedList<String>();
 
@@ -37,7 +38,7 @@ public class Perft {
 		perftTT.printCounts();
 
 		oldTime = System.currentTimeMillis(); // count deep positions
-		result = countDeepPositions(depth + 3, 0, false); // TODO if changed, change the inCheck check
+		result = countDeepPositions(depth + 5, 0, false); // TODO if changed, change the inCheck check
 		elapsedTime = System.currentTimeMillis() - oldTime;
 		elapsedTime = elapsedTime != 0 ? elapsedTime : 1; // make sure it's not 0 so we don't divide by 0 for speed
 		Logging.printLine(depth + ": " + result + "\ttime: " + elapsedTime + " knps: " + (result / elapsedTime));
@@ -97,6 +98,14 @@ public class Perft {
 		if (depth == 1) {
 			return incrementFinalDepth(ruined);
 		}
+
+		if (memoryIsSpare) { // if our bottleneck is memory, don't store depth one results, therefore store up here
+			long hash = board.getZobristHash() + depth;
+			if (counterHelp[(int) ((hash % 3) + 3) % 3].incrementToLimit(hash, 2, depth) >= 2) {
+				return 1;
+			}
+		}
+
 		int[] moves = board.getMoveGenerator().collectMoves(board.getToMove(), movesStorage[depth], unused);
 		long nodes = 0;
 		if (moves[0] == -1) { // illegal position
@@ -106,11 +115,13 @@ public class Perft {
 		for (int i = 1; i <= moves[0]; i++) {
 			int move = moves[i];
 			board.makeMove(move);
-			long hash = board.getZobristHash() + depth;
-			if (counterHelp[(int) ((hash % 3) + 3) % 3].incrementToLimit(hash, 2, depth) >= 2) {
-				board.unmakeMove(move);
-				nodes++;
-				continue;
+			if (!memoryIsSpare) {
+				long hash = board.getZobristHash() + depth;
+				if (counterHelp[(int) ((hash % 3) + 3) % 3].incrementToLimit(hash, 2, depth) >= 2) {
+					board.unmakeMove(move);
+					nodes++;
+					continue;
+				}
 			}
 			nodes += countDeepPositions(depth - 1, depthSoFar + 1, ruined || oldUnique.isPresent(board.getZobristHash()) < depthSoFar); // we get ruined by an old unique position
 			board.unmakeMove(move);
