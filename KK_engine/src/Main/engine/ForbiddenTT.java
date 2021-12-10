@@ -21,45 +21,32 @@ public class ForbiddenTT {
 		entries = new long[size];
 	}
 
-	public boolean isPresent(long hash) {
+	public long isPresent(long hash) {
 		int bucket = (int) (hash & mask);
-		if (entries[8 * bucket] == hash || entries[8 * bucket + 1] == hash || entries[8 * bucket + 2] == hash || entries[8 * bucket + 3] == hash ||
-		    entries[8 * bucket + 4] == hash || entries[8 * bucket + 5] == hash || entries[8 * bucket + 6] == hash || entries[8 * bucket + 7] == hash) {
-			return true;
-		} else {
-			return false;
+		for (int i = 0; i < 8; i++) {
+			if ((entries[8 * bucket + i] & (~mask)) == (hash & (~mask))) {
+				return entries[8 * bucket + i] & mask;
+			}
 		}
+		return 100;
 	}
 
-	public void put(long hash) {
+	public void put(long hash, int depthSoFar) {
 		int bucket = (int) (hash & mask);
-		if (entries[8 * bucket] == 0) {
-			entries[8 * bucket] = hash;
-			entryCount++;
-		} else if (entries[8 * bucket + 1] == 0) {
-			entries[8 * bucket + 1] = hash;
-			entryCount++;
-		} else if (entries[8 * bucket + 2] == 0) {
-			entries[8 * bucket + 2] = hash;
-			entryCount++;
-		} else if (entries[8 * bucket + 3] == 0) {
-			entries[8 * bucket + 3] = hash;
-			entryCount++;
-		} else if (entries[8 * bucket + 4] == 0) {
-			entries[8 * bucket + 4] = hash;
-			entryCount++;
-		} else if (entries[8 * bucket + 5] == 0) {
-			entries[8 * bucket + 5] = hash;
-			entryCount++;
-		} else if (entries[8 * bucket + 6] == 0) {
-			entries[8 * bucket + 6] = hash;
-			entryCount++;
-		} else if (entries[8 * bucket + 7] == 0) {
-			entries[8 * bucket + 7] = hash;
-			entryCount++;
-		} else {
-			collisionCount++;
+		for (int i = 0; i < 8; i++) {
+			if ((entries[8 * bucket + i] & (~mask)) == (hash & (~mask))) { // TODO could it be entered at different depths?
+				int a = 0; // this should be impossible once proper implementation happened
+				return;
+			}
 		}
+		for (int i = 0; i < 8; i++) {
+			if (entries[8 * bucket + i] == 0) {
+				entries[8 * bucket] = (hash & (~mask)) + depthSoFar;
+				entryCount++;
+				return;
+			}
+		}
+		collisionCount++;
 	}
 
 	public void printCounts() {

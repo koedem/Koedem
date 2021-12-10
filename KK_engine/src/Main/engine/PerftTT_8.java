@@ -59,13 +59,13 @@ public class PerftTT_8 {
 		}
 	}
 
-	public void incrementPosition(long hash) {
+	public void incrementPosition(long hash, boolean ruined) {
 		int bucket = (int) (hash & mask);
 		for (int i = 0; i < 8; i++) {
 			if ((entries[8 * bucket + i] & (~mask)) == (hash & (~mask))) {
 				long count;
 				if ((count = entries[8 * bucket + i] & mask) < mask) { // once we reach the mask, i.e. equals, we stop incrementing
-					entries[8 * bucket + i] = (entries[8 * bucket + i] & (~mask)) + count + 1;
+					entries[8 * bucket + i] = (entries[8 * bucket + i] & (~mask)) + count + (ruined ? 2 : 1);
 				}
 				break;
 			}
@@ -76,7 +76,7 @@ public class PerftTT_8 {
 		int bucket = (int) (hash & mask);
 		for (int i = 0; i < 8; i++) {
 			if ((entries[8 * bucket + i] & (~mask)) == (hash & (~mask))) {
-				if ((entries[8 * bucket + i] & mask) == 2 || (entries[8 * bucket + i] & mask) == 3) { // two means once created then once reached from higher depth
+				if ((entries[8 * bucket + i] & mask) == 2) { // two means once created then once reached from higher depth
 					return true;
 				}
 				break;

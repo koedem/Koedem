@@ -15,7 +15,7 @@ public final class UCI {
 
 	public static boolean shuttingDown = false;
 
-	public static final int     TT_SIZE_MB = 256;
+	public static final int     TT_SIZE_MB = 4096;
 	public static  boolean logging       = false;
 
 	private static int threadCount = 1;
@@ -27,7 +27,7 @@ public final class UCI {
 	public static void main(String[] args) {
 		Logging.setup();
 		Logging.printLine(engineName + " by Kolja Kühn.");
-		for (int i = 1; i < 7; i++) {
+		for (int i = 1; i < 8; i++) {
 			perft.basePerft(i);
 		}
 		shuttingDown = true;
