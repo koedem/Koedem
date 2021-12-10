@@ -15,7 +15,7 @@ public final class UCI {
 
 	public static boolean shuttingDown = false;
 
-	public static final int     TT_SIZE_MB = 4096;
+	public static final int     TT_SIZE_MB = 2048;
 	public static  boolean logging       = false;
 
 	private static int threadCount = 1;

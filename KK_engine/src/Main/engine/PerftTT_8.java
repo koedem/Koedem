@@ -14,6 +14,7 @@ public class PerftTT_8 {
 	private final long mask;
 	private final int    FREQUENCY_CAP = 8;
 	private final long[] entries;
+	private final long[] limitHitsPerDepth = new long[10];
 
 	private long entryCount = 0, dupeCount = 0, collisionCount = 0;
 
@@ -85,13 +86,15 @@ public class PerftTT_8 {
 		return false;
 	}
 
-	public long incrementToLimit(long hash, int limit) {
+	public long incrementToLimit(long hash, int limit, int depth) {
 		int bucket = (int) (hash & mask);
 		for (int i = 0; i < 8; i++) {
 			if ((entries[8 * bucket + i] & (~mask)) == (hash & (~mask))) {
 				long count;
 				if ((count = entries[8 * bucket + i] & mask) < limit) { // once we reach the limit, i.e. equals, we stop incrementing
 					entries[8 * bucket + i] = (entries[8 * bucket + i] & (~mask)) + count + 1;
+				} else {
+					limitHitsPerDepth[depth]++;
 				}
 				dupeCount++;
 				return count;
@@ -134,6 +137,12 @@ public class PerftTT_8 {
 		Logging.printLine("Fill: " + String.format("%.2f", (double) entryCount * 100 / (double) size) + "%; "
 		                  + "duplication factor: " + String.format("%.2f", (double) dupeCount / (double) entryCount) + "; "
 		                  + "loss percentage: " + String.format("%.2f", (double) collisionCount * 100 / (double) entryCount) + "%.");
+
+		for (int depth = 0; depth < 10; depth++) {
+			if (limitHitsPerDepth[depth] > 0) {
+				Logging.printLine("Depth " + depth + " hits: " + limitHitsPerDepth[depth]);
+			}
+		}
 	}
 
 	public void printFrequencies() {
@@ -155,6 +164,7 @@ public class PerftTT_8 {
 
 	public void reset() {
 		Arrays.fill(entries, 0);
+		Arrays.fill(limitHitsPerDepth, 0);
 		entryCount = 0;
 		dupeCount = 0;
 		collisionCount = 0;

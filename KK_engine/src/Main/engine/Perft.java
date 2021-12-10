@@ -12,9 +12,9 @@ import java.util.LinkedList;
 public class Perft {
 
 	private BoardInterface board;
+	private PerftTT_8 counterHelp[] = { new PerftTT_8(8192), new PerftTT_8(8192), new PerftTT_8(8192) };
 	private PerftTT_8 perftTT = new PerftTT_8(UCI.TT_SIZE_MB);
-	private PerftTT_8 counterHelp = new PerftTT_8(16384);
-	private ForbiddenTT oldUnique = new ForbiddenTT(256);
+	private ForbiddenTT oldUnique = new ForbiddenTT(64);
 
 	LinkedList<String> dissimilarPositions = new LinkedList<String>();
 
@@ -24,7 +24,9 @@ public class Perft {
 
 	public void basePerft(int depth) {
 		perftTT.reset();
-		counterHelp.reset();
+		counterHelp[0].reset();
+		counterHelp[1].reset();
+		counterHelp[2].reset();
 		long oldTime = System.currentTimeMillis();
 		long result = 0;
 
@@ -35,12 +37,14 @@ public class Perft {
 		perftTT.printCounts();
 
 		oldTime = System.currentTimeMillis(); // count deep positions
-		result = countDeepPositions(depth + 2, 0, false); // TODO if changed, change the inCheck check
+		result = countDeepPositions(depth + 3, 0, false); // TODO if changed, change the inCheck check
 		elapsedTime = System.currentTimeMillis() - oldTime;
 		elapsedTime = elapsedTime != 0 ? elapsedTime : 1; // make sure it's not 0 so we don't divide by 0 for speed
 		Logging.printLine(depth + ": " + result + "\ttime: " + elapsedTime + " knps: " + (result / elapsedTime));
 		perftTT.printFrequencies();
-		counterHelp.printCounts();
+		counterHelp[0].printCounts();
+		counterHelp[1].printCounts();
+		counterHelp[2].printCounts();
 
 		collectUniquePositions(depth, 0);
 		oldUnique.printCounts();
@@ -71,7 +75,7 @@ public class Perft {
 		if (board.getAttackBoard().inCheck(!board.getToMove())) { // illegal position
 			return 0;
 		} else if (depth == 0) {
-			if (perftTT.isUnique(board.getZobristHash()) && dissimilar()) { // in odd depth settings && !board.getAttackBoard().inCheck(board.getToMove())
+			if (perftTT.isUnique(board.getZobristHash()) && dissimilar() && !board.getAttackBoard().inCheck(board.getToMove())) { // in odd depth settings && !board.getAttackBoard().inCheck(board.getToMove())
 				board.printBoard();
 				oldUnique.put(board.getZobristHash(), depthSoFar);
 			}
@@ -102,7 +106,8 @@ public class Perft {
 		for (int i = 1; i <= moves[0]; i++) {
 			int move = moves[i];
 			board.makeMove(move);
-			if (counterHelp.incrementToLimit(board.getZobristHash() + depth, 2) >= 2) {
+			long hash = board.getZobristHash() + depth;
+			if (counterHelp[(int) ((hash % 3) + 3) % 3].incrementToLimit(hash, 2, depth) >= 2) {
 				board.unmakeMove(move);
 				nodes++;
 				continue;
