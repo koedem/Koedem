@@ -77,7 +77,7 @@ public class PerftTT_8 {
 		int bucket = (int) (hash & mask);
 		for (int i = 0; i < 8; i++) {
 			if ((entries[8 * bucket + i] & (~mask)) == (hash & (~mask))) {
-				if ((entries[8 * bucket + i] & mask) == 2) { // two means once created then once reached from higher depth
+				if ((entries[8 * bucket + i] & mask) <= 7 && (entries[8 * bucket + i] & mask) > 1) { // two means once created then once reached from higher depth
 					return true;
 				}
 				break;

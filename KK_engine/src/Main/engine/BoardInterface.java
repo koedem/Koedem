@@ -64,6 +64,8 @@ public interface BoardInterface extends Serializable {
 
 	String squareString();
 
+	boolean stuckPosition();
+
 	MoveGeneratorInterface getMoveGenerator();
 
 	CaptureGeneratorInterface getCaptureGenerator();

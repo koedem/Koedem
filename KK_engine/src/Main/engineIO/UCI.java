@@ -15,14 +15,15 @@ public final class UCI {
 
 	public static boolean shuttingDown = false;
 
-	public static final int     TT_SIZE_MB = 2048;
+	public static final int     TT_SIZE_MB = 256;
 	public static  boolean logging       = false;
 
 	private static int threadCount = 1;
 
 	static         String            engineName       = "Koedem";
 	static         BoardInterface    board            = new Board();
-	static         Perft             perft            = new Perft(board);
+	//static         Perft             perft            = new Perft(board);
+	static ImpossiblePositions perft = new ImpossiblePositions(board);
 	
 	public static void main(String[] args) {
 		Logging.setup();

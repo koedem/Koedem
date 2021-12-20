@@ -694,6 +694,34 @@ public class Board implements BoardInterface {
 		return zobristKeys;
 	}
 
+	/**
+	 * A position where no tempo can be lost since it is locked up
+	 */
+	public boolean stuckPosition() {
+		if (Long.bitCount(getBitboard().getAllPieces(getToMove() ? 0 : 1)) < 16) {
+			return false;
+		}
+		if (toMove) {
+			if (getSquare(1, 1) != 1 || getSquare(2, 1) != 1 || getSquare(3, 1) != 1 || getSquare(4, 1) != 1
+			    || getSquare(5, 1) != 1 || getSquare(6, 1) != 1 || (getSquare(0, 1) != 1 && getSquare(0,2) != 1)
+			    || (getSquare(7, 1) != 1 && getSquare(7,2) != 1)) {
+				//if (getSquare(5, 2) != 1) {
+					return false;
+				//}
+			}
+		} else {
+			if (getSquare(1, 6) != -1 || getSquare(2, 6) != -1 || getSquare(3, 6) != -1 || getSquare(4, 6) != -1
+			    || getSquare(5, 6) != -1 || getSquare(6, 6) != -1 || (getSquare(0, 6) != -1 && getSquare(0,5) != -1)
+			    || (getSquare(7, 6) != -1 && getSquare(7,5) != -1)) {
+				//if (getSquare(5, 5) != -1) {
+					return false;
+				//}
+			}
+		}
+
+		return true;
+	}
+
 
 	/**
 	 *

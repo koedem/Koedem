@@ -1,7 +1,6 @@
 package Main.engine;
 
 import Main.engineIO.Logging;
-import Main.engineIO.Transformation;
 import Main.engineIO.UCI;
 
 import java.util.LinkedList;
@@ -9,13 +8,13 @@ import java.util.LinkedList;
 /**
  *
  */
-public class Perft {
+public class ImpossiblePositions {
 
 	private BoardInterface board;
 	private PerftTT_8 counterHelp[] = { new PerftTT_8(8192), new PerftTT_8(8192), new PerftTT_8(8192) };
 	private PerftTT_8 perftTT = new PerftTT_8(UCI.TT_SIZE_MB);
-	private ForbiddenTT oldUnique = new ForbiddenTT(64);
-	private static final boolean memoryIsSpare = false;
+	private ForbiddenTT          oldUnique      = new ForbiddenTT(64);
+	private static final boolean memoryIsSparse = true;
 
 	LinkedList<String> dissimilarPositions = new LinkedList<>();
 
@@ -56,8 +55,10 @@ public class Perft {
 		long nodes = 0;
 		if (board.getAttackBoard().inCheck(!board.getToMove())) { // illegal position
 			return 0;
-		} else if (depth == 0) {
-			perftTT.putEmpty(board.getZobristHash());
+		} else if (depth == 0) { // if the position is stuck this is hopeless anyway
+			if (!board.stuckPosition()) {
+				perftTT.putEmpty(board.getZobristHash());
+			}
 			return 1;
 		}
 		int[] moves = board.getMoveGenerator().collectMoves(board.getToMove(), movesStorage[depth], unused);
@@ -100,9 +101,9 @@ public class Perft {
 			return incrementFinalDepth(ruined);
 		}
 
-		if (memoryIsSpare) { // if our bottleneck is memory, don't store depth one results, therefore store up here
+		if (memoryIsSparse) { // if our bottleneck is memory, don't store depth one results, therefore store up here
 			long hash = board.getZobristHash() + depth;
-			if (counterHelp[(int) ((hash % 3) + 3) % 3].incrementToLimit(hash, 2, depth) >= 2) {
+			if (counterHelp[(int) ((hash % 3) + 3) % 3].incrementToLimit(hash, 2, depth) >= 1) {
 				return 1;
 			}
 		}
@@ -116,9 +117,9 @@ public class Perft {
 		for (int i = 1; i <= moves[0]; i++) {
 			int move = moves[i];
 			board.makeMove(move);
-			if (!memoryIsSpare) {
+			if (!memoryIsSparse) {
 				long hash = board.getZobristHash() + depth;
-				if (counterHelp[(int) ((hash % 3) + 3) % 3].incrementToLimit(hash, 2, depth) >= 2) {
+				if (counterHelp[(int) ((hash % 3) + 3) % 3].incrementToLimit(hash, 2, depth) >= 1) {
 					board.unmakeMove(move);
 					nodes++;
 					continue;
@@ -142,7 +143,7 @@ public class Perft {
 		return 1; // makes the perft become perft - 1 because we don't check for legality in this depth
 	}
 
-	public Perft(BoardInterface board) {
+	public ImpossiblePositions(BoardInterface board) {
 		this.board = board;
 	}
 
