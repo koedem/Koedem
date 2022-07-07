@@ -1,31 +1,20 @@
-# Eclipse
-.metadata
-KK_engine/.classpath
-KK_engine/.project
-KK_engine/.settings/**
-.recommenders/
-bin/
+
 
 #logs
-2016*
-KK_engine/Koedem-Logs/20*
-*Logfile202*
+Koedem-Logs
 
-#other programs
-FastInvSqrt/**
-StringParser/**
-Zombie-Schach/**
 
 #IntelliJ
-KK_engine/.idea/**
+.idea/**
+.metadata
+.settings
 
 
 #Zeug
-KK_engine.ini
-KK_engine.pgn
-KK_engine/KK_engine.iml
-KK_engine/Ködem-0.2.2.jar
-KK_engine/classes/**
-KK_engine/src/META-INF/**
-KK_engine/out/**
-KK_engine/CC-Organisation/**
+Koedem.ini
+Koedem.iml
+classes/**
+src/META-INF/**
+out/**
+bin/**
+CC-Organisation/**
