@@ -33,14 +33,16 @@ public class ThreadOrganization {
 	}
 
 	public static void go(int depth, int timeLimit, long hardTimeLimit) {
-        thread[0].setDepth(depth);
-        thread[0].setTimeLimit(timeLimit);
-        thread[0].setHardTimeLimit(hardTimeLimit);
-		((MultiThreadSearch) thread[0]).setStandard(true);
-        synchronized (thread[0]) {
-	        UCI.setThreadFinished(false);
-            thread[0].notify();
-        }
+		for (int i = 0; i < threadCount; i++) {
+			thread[i].setDepth(depth);
+			thread[i].setTimeLimit(timeLimit);
+			thread[i].setHardTimeLimit(hardTimeLimit);
+			((MultiThreadSearch) thread[i]).setStandard(true);
+			synchronized (thread[i]) {
+				UCI.setThreadFinished(false);
+				thread[i].notify();
+			}
+		}
         Thread.yield(); // give the cpu to the calculating thread
     }
 
@@ -72,9 +74,9 @@ public class ThreadOrganization {
 
 	public static void setUp(BoardInterface board) {
 	    executor.submit(thread[0] = new MultiThreadSearch(boards[0] = board.cloneBoard(), 0, true));
-	    executor.submit(thread[1] = new MateFinderThread(boards[1] = board.cloneBoard(), true, true));
-        executor.submit(thread[2] = new MateFinderThread(boards[2] = board.cloneBoard(), false, true));
-        executor.submit(thread[3] = new NonLosingThread(boards[3] = board.cloneBoard(), true, true));
-        executor.submit(thread[4] = new NonLosingThread(boards[4] = board.cloneBoard(), false, true));
+	    executor.submit(thread[1] = new MultiThreadSearch(boards[1] = board.cloneBoard(), 1, true));
+        executor.submit(thread[2] = new MultiThreadSearch(boards[2] = board.cloneBoard(), 2, true));
+        executor.submit(thread[3] = new MultiThreadSearch(boards[3] = board.cloneBoard(), 3, true));
+        executor.submit(thread[4] = new MultiThreadSearch(boards[4] = board.cloneBoard(), 4, true));
 	}
 }

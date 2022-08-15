@@ -3,6 +3,8 @@ package Main.engine;
 import Main.Utility.Constants;
 import Main.engineIO.UCI;
 
+import java.util.Random;
+
 /**
  * 
  * @author Anon
@@ -36,6 +38,9 @@ public class MoveGenerator implements MoveGeneratorInterface {
      * Array to put captures to test for castling legality in.
      */
     private final int[] castlingTestCaptures = new int[MAX_MOVE_COUNT];
+
+	private static Random random = new Random();
+	private static boolean randomize = true;
 
 	public MoveGenerator(BoardInterface board) {
 		this.board = board;
@@ -121,6 +126,9 @@ public class MoveGenerator implements MoveGeneratorInterface {
 				int destPos = allMoves[0] + 1; // plus one because allMoves[0] doesn't store a move (oversimplified)
 				System.arraycopy(captures[piece], 1, allMoves, destPos, captures[piece][0]);
 				allMoves[0] += captures[piece][0];
+			}
+			if (randomize) {
+				shuffle(nonCaptures, nonCaptures[0]);
 			}
 			System.arraycopy(nonCaptures, 1, allMoves, allMoves[0] + 1, nonCaptures[0]);
 			allMoves[0] += nonCaptures[0];
@@ -1121,6 +1129,20 @@ public class MoveGenerator implements MoveGeneratorInterface {
 	public int[] activityEval(boolean toMove, int[] storage, int[]movesSize) {
 		collectMoves(toMove, storage, movesSize);
 		return movesSize;
+	}
+
+	private	static void shuffle(int[] array, int n) {
+		// Loop over array.
+		for (int i = 1; i < n + 1; i++) { // TODO document this, we start at 1
+			// Get a random index of the array past the current index.
+			// ... The argument is an exclusive bound.
+			//     It will not go past the array's end.
+			int randomValue = i + random.nextInt(n + 1 - i);
+			// Swap the random element with the present element.
+			int randomElement = array[randomValue];
+			array[randomValue] = array[i];
+			array[i] = randomElement;
+		}
 	}
 
 	/**
